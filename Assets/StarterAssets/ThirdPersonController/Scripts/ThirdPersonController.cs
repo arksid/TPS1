@@ -108,6 +108,7 @@ namespace StarterAssets
         private CharacterController _controller;
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
+        private RigManager _rigManager;
 
         private const float _threshold = 0.01f;
 
@@ -121,6 +122,8 @@ namespace StarterAssets
         private float _aimLayerWieght = 0;
         private bool _reloading = false;
         private Vector2 _aimedMovingAnimtionsInput = Vector2.zero;
+        private float aimRigWieght = 0;
+        private float leftHandWeight = 0;
         private bool IsCurrentDeviceMouse
         {
             get
@@ -136,6 +139,7 @@ namespace StarterAssets
 
         private void Awake()
         {
+            _rigManager = GetComponent<RigManager>();
             _mainCamera = CameraManager.maincamera.gameObject;
             CameraManager.playerCamera.m_Follow = CinemachineCameraTarget.transform;
             CameraManager.aimingCamera.m_Follow = CinemachineCameraTarget.transform;
@@ -179,6 +183,13 @@ namespace StarterAssets
             _aimLayerWieght = Mathf.Lerp(_aimLayerWieght, _aiming || _reloading ? 1f : 0f, 10 * Time.deltaTime);
             _animator.SetLayerWeight(1, _aimLayerWieght);
 
+            aimRigWieght = Mathf.Lerp(aimRigWieght, _aiming &&  !_reloading ? 1f : 0f, 10f * Time.deltaTime);
+            leftHandWeight = Mathf.Lerp(leftHandWeight, (_aiming || _controller.isGrounded) && !_reloading ? 1f : 0f, 10f * Time.deltaTime);
+
+
+            _rigManager.aimTarget = CameraManager.singleton.aimTargetPiont;
+            _rigManager.aimWeight = aimRigWieght;
+            _rigManager.leftHandWeight = leftHandWeight;
 
             if (_input.walk)
             {
