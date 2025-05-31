@@ -20,6 +20,12 @@ public class Weapon : Item
     [SerializeField] private Vector3 _rightHandPosition = Vector3.zero; public Vector3 rightHandPosition { get { return _rightHandPosition; } }
     [SerializeField] private Vector3 _rightHandRotation = Vector3.zero; public Vector3 rightHandRotation { get { return _rightHandRotation; } }
 
+
+    [Header("Referances")]
+    [SerializeField] private Transform _muzzle = null;
+
+    [Header("Prefabs")]
+    [SerializeField] private Projectile _projectile = null;
     public enum Handle
     {
         oneHanded = 1, TwoHanded = 2
@@ -36,7 +42,8 @@ public class Weapon : Item
         if(passedTime>= _fireRate)
         {
             _fierTimer = Time.realtimeSinceStartup;
-
+            Projectile projectile = Instantiate(_projectile, _muzzle.position, Quaternion.identity);
+            projectile.Initialize(character, target, _damage);
             return true;
         }
 
