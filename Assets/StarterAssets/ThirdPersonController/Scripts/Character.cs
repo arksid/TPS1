@@ -27,8 +27,9 @@ public class Character : MonoBehaviour
                 Item prefab = PrefabManager.singleton.GetItemPrefab(itemData.Key);
                 if (prefab != null && itemData.Value > 0)
                 {
-                    for (int i = 0; i <= itemData.Value; i++)
+                    for (int i = 0; i < itemData.Value; i++)
                     {
+                        bool done = false;
                         Item item = Instantiate(prefab, transform);
 
                         if (item.GetType() == typeof(Weapon))
@@ -42,12 +43,23 @@ public class Character : MonoBehaviour
                                 firstWeaponIndex = _items.Count;
                             }   
                         }
+                        else if (item.GetType() == typeof(Ammo))
+                        {
+                            Ammo a = (Ammo)item;
+                            a.amount = itemData.Value; 
+                            done = true;
+
+                        }
                         item.gameObject.SetActive(false);
                         _items.Add(item);
+                        if (done)
+                        {
+                            break;
+                        }
                     }
                 }
             }
-            if(firstWeaponIndex >=0 && _weapon ==null)
+            if(firstWeaponIndex >=0 && _weapon == null)
             {
                 EquipWeapon((Weapon)_items[firstWeaponIndex]);
             }
@@ -60,9 +72,28 @@ public class Character : MonoBehaviour
         {
             Holsterweapon();
         }
+
+        // 이 줄은 _weapon을 초기화한 후이므로 다시 null이므로 조건은 필요 없음
+        if (weapon.transform.parent != _weaponHolder)
+        {
+            weapon.transform.SetParent(_weaponHolder);
+            weapon.transform.localPosition = weapon.rightHandPosition;
+            weapon.transform.localEulerAngles = weapon.rightHandRotation;
+        }
+        _rigManager.SetLeftHandGrioData(weapon.leftHandPosition, weapon.leftHandRotation);
+        weapon.gameObject.SetActive(true);
+        _weapon = weapon;
+    }
+    //원래스크립트
+   /* public void EquipWeapon(Weapon weapon)
+    {
         if (_weapon != null)
         {
-            if(weapon.transform.parent != _weaponHolder)
+            Holsterweapon();
+        }
+        if (_weapon != null)
+        {
+            if (weapon.transform.parent != _weaponHolder)
             {
                 weapon.transform.SetParent(_weaponHolder);
                 weapon.transform.localPosition = weapon.rightHandPosition;
@@ -73,9 +104,7 @@ public class Character : MonoBehaviour
             _weapon = weapon;
         }
     }
-
-
-    
+   */
 
     public void Holsterweapon()
     {

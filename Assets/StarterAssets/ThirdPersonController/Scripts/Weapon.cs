@@ -24,5 +24,22 @@ public class Weapon : Item
     {
         oneHanded = 1, TwoHanded = 2
     }
+    private float _fierTimer = 0;
 
+    private void Awake()
+    {
+        _fierTimer += Time.realtimeSinceStartup;
+    }
+    public bool Shoot(Character character, Vector3 target)
+    {
+        float passedTime = Time.realtimeSinceStartup - _fierTimer;
+        if(passedTime>= _fireRate)
+        {
+            _fierTimer = Time.realtimeSinceStartup;
+
+            return true;
+        }
+
+        return false;
+    }
 }
