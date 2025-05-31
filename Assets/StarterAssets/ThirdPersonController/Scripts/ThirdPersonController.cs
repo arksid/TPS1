@@ -214,8 +214,20 @@ namespace StarterAssets
             _aimedMovingAnimtionsInput = Vector2.Lerp(_aimedMovingAnimtionsInput, _input.move.normalized * _speedAnimationMultiplier,SpeedChangeRate * Time.deltaTime);
             _animator.SetFloat("Speed_X", _aimedMovingAnimtionsInput.x);
             _animator.SetFloat("Speed_Y", _aimedMovingAnimtionsInput.y);
+
+            if (_input.reload)
+            {
+                _input.reload = false;
+                _animator.SetTrigger("Reload");
+                _reloading = true;
+            }
+
             Move();
             Rotate();
+        }
+        public void ReloadFinished()
+        {
+            _reloading = false;
         }
 
         private void Rotate()
@@ -265,8 +277,8 @@ namespace StarterAssets
                 //Don't multiply mouse input by Time.deltaTime;
                 float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
 
-                _cinemachineTargetYaw += _input.look.x * deltaTimeMultiplier;
-                _cinemachineTargetPitch += _input.look.y * deltaTimeMultiplier;
+                _cinemachineTargetYaw += _input.look.x * CameraManager.singleton.sensitivity * deltaTimeMultiplier;
+                _cinemachineTargetPitch += _input.look.y * CameraManager.singleton.sensitivity * deltaTimeMultiplier;
             }
 
             // clamp our rotations so our values are limited 360 degrees
