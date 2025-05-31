@@ -120,7 +120,7 @@ namespace StarterAssets
         private bool _sprinting = false;
         private float _aimLayerWieght = 0;
         private bool _reloading = false;
-
+        private Vector2 _aimedMovingAnimtionsInput = Vector2.zero;
         private bool IsCurrentDeviceMouse
         {
             get
@@ -200,6 +200,9 @@ namespace StarterAssets
             {
                 _speedAnimationMultiplier = 2;
             }
+            _aimedMovingAnimtionsInput = Vector2.Lerp(_aimedMovingAnimtionsInput, _input.move.normalized * _speedAnimationMultiplier,SpeedChangeRate * Time.deltaTime);
+            _animator.SetFloat("Speed_X", _aimedMovingAnimtionsInput.x);
+            _animator.SetFloat("Speed_Y", _aimedMovingAnimtionsInput.y);
             Move();
             Rotate();
         }
