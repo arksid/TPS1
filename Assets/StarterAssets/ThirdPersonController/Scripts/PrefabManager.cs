@@ -29,7 +29,7 @@ public class PrefabManager : MonoBehaviour
         {
             for (int i=0; i<_items.Length; i++)
             {
-                if (_items[i] != null && _items[i].Id == id)
+                if (_items[i] != null && _items[i].id == id)
                 {
                     return _items[i];
                 }

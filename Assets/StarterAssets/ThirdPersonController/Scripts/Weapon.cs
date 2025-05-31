@@ -8,9 +8,10 @@ public class Weapon : Item
     [Header("Settings")]
 
     [SerializeField] private Handle _type = Handle.TwoHanded; public Handle type { get { return _type; } }
+    [SerializeField] private string _ammoID = ""; public string ammoID { get { return _ammoID; } }
     [SerializeField] private float _damage = 10f;
     [SerializeField] private float _fireRate = 0.2f;
-    [SerializeField] private int _clipSize = 30;
+    [SerializeField] private int _clipSize = 30; public int clipSize { get { return _clipSize; }}
 
     [SerializeField] private float _handKick = 5f; public float handKick { get { return _handKick; } }
     [SerializeField] private float _bodyKick = 5f; public float bodyKick { get { return _bodyKick; } }
@@ -32,7 +33,7 @@ public class Weapon : Item
         oneHanded = 1, TwoHanded = 2
     }
     private float _fierTimer = 0;
-
+    private int _ammo = 0; public int ammo { get { return _ammo; } set { _ammo = value; } }
     private void Awake()
     {
         _fierTimer += Time.realtimeSinceStartup;
@@ -40,8 +41,9 @@ public class Weapon : Item
     public bool Shoot(Character character, Vector3 target)
     {
         float passedTime = Time.realtimeSinceStartup - _fierTimer;
-        if(passedTime>= _fireRate)
+        if(_ammo > 0 && passedTime>= _fireRate)
         {
+            _ammo -= 1;
             _fierTimer = Time.realtimeSinceStartup;
             Projectile projectile = Instantiate(_projectile, _muzzle.position, Quaternion.identity);
             projectile.Initialize(character, target, _damage);

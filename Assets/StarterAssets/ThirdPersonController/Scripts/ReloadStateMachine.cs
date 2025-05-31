@@ -5,9 +5,9 @@ using UnityEngine;
 
 public class ReloadStateMachine : StateMachineBehaviour
 {
-     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+    public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        ThirdPersonController controller = animator.gameObject.GetComponent<ThirdPersonController>();
+        Character controller = animator.GetComponent<Character>();
         if (controller != null)
         {
             controller.ReloadFinished();

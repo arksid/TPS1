@@ -1,19 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 
 public class Character : MonoBehaviour
 {
     [SerializeField] private Transform _weaponHolder = null;
 
     private Weapon _weapon = null; public Weapon weapon { get { return _weapon; } }
+    private Ammo _ammo = null; public Ammo ammo { get { return _ammo; } }
     private List<Item> _items = new List<Item>();
+    private Animator _animator = null;
     private RigManager _rigManager = null;
+    private bool _reloading = false; public bool reloading { get { return _reloading; } }
 
     private void Awake()
     {
         _rigManager = GetComponent<RigManager>();
-        Initialized(new Dictionary<string, int> { { "PP-19",1 } });
+        _animator = GetComponent<Animator>();
+        Initialized(new Dictionary<string, int> { { "EVO-3",1 },{"9mm", 1000 } });
 
     }
 
@@ -66,32 +71,15 @@ public class Character : MonoBehaviour
         }
     }
 
+
+    /* 기존스크립트
     public void EquipWeapon(Weapon weapon)
     {
         if (_weapon != null)
         {
             Holsterweapon();
         }
-
-        // 이 줄은 _weapon을 초기화한 후이므로 다시 null이므로 조건은 필요 없음
-        if (weapon.transform.parent != _weaponHolder)
-        {
-            weapon.transform.SetParent(_weaponHolder);
-            weapon.transform.localPosition = weapon.rightHandPosition;
-            weapon.transform.localEulerAngles = weapon.rightHandRotation;
-        }
-        _rigManager.SetLeftHandGrioData(weapon.leftHandPosition, weapon.leftHandRotation);
-        weapon.gameObject.SetActive(true);
-        _weapon = weapon;
-    }
-    //원래스크립트
-   /* public void EquipWeapon(Weapon weapon)
-    {
-        if (_weapon != null)
-        {
-            Holsterweapon();
-        }
-        if (_weapon != null)
+        if(weapon != null)
         {
             if (weapon.transform.parent != _weaponHolder)
             {
@@ -102,21 +90,83 @@ public class Character : MonoBehaviour
             _rigManager.SetLeftHandGrioData(weapon.leftHandPosition, weapon.leftHandRotation);
             weapon.gameObject.SetActive(true);
             _weapon = weapon;
+            _ammo = null;
+            for (int i = 0; i < _items.Count; i++)
+            {
+                if (_items[i] != null && _items[i].GetType() == typeof(Ammo) && _weapon.ammoID == _items[i].id)
+                {
+                    _ammo = (Ammo)_items[i];
+                    break;
+                }
+            }
         }
-    }
-   */
+    }*/
 
-    public void Holsterweapon()
+    public void EquipWeapon(Weapon weapon)
+ {
+     if (_weapon != null)
+     {
+         Holsterweapon();
+     }
+    
+         if (weapon.transform.parent != _weaponHolder)
+         {
+             weapon.transform.SetParent(_weaponHolder);
+             weapon.transform.localPosition = weapon.rightHandPosition;
+             weapon.transform.localEulerAngles = weapon.rightHandRotation;
+         }
+         _rigManager.SetLeftHandGrioData(weapon.leftHandPosition, weapon.leftHandRotation);
+         weapon.gameObject.SetActive(true);
+         _weapon = weapon;
+         _ammo = null;
+            for (int i = 0; i < _items.Count; i++)
+            {
+                if (_items[i] != null && _items[i].GetType() == typeof(Ammo) && _weapon.ammoID == _items[i].id)
+                {
+                    _ammo = (Ammo)_items[i];
+                    break;
+                }  
+
+            }
+ }
+
+
+  public void Holsterweapon()
+  {
+      if(_weapon != null)
+      {
+          _weapon.gameObject.SetActive(false);
+          _weapon = null;
+      }
+  }
+
+  public void ApplyDamage(Character shooter,Transform hit, float damage)
+  {
+
+  }
+
+  public  void Reload()
     {
-        if(_weapon != null)
+        if(_weapon != null && !_reloading && _weapon.ammo < _weapon.clipSize && _ammo != null && _ammo.amount > 0)
         {
-            _weapon.gameObject.SetActive(false);
-            _weapon = null;
+            _animator.SetTrigger("Reload");
+            _reloading = true;
         }
-    }
-
-    public void ApplyDamage(Character shooter,Transform hit, float damage)
-    {
+      
         
+    }
+   public void ReloadFinished()
+    {
+        if (_weapon != null && _weapon.ammo < _weapon.clipSize && _ammo != null && _ammo.amount > 0)
+        {
+            int amount = _weapon.clipSize - _weapon.ammo;
+            if (_ammo.amount < amount)
+            {
+                amount = _ammo.amount;
+            }
+            _ammo.amount -= amount;
+            _weapon.ammo += amount;
+        }
+        _reloading = false;
     }
 }
