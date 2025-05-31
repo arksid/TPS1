@@ -16,5 +16,10 @@ public class RigManager : MonoBehaviour
 
     public float aimWeight { set { _rightHand.weight = value; _body.weight = value; } }
 
+    public void SetLeftHandGrioData(Vector3 position, Vector3 rotation)
+    {
+        _lefthand.data.target.localPosition = position;
+        _lefthand.data.target.localEulerAngles = rotation;
+    }
 
 }
