@@ -23,6 +23,7 @@ public class Weapon : Item
 
     [Header("Referances")]
     [SerializeField] private Transform _muzzle = null;
+    [SerializeField] private ParticleSystem _flash = null;
 
     [Header("Prefabs")]
     [SerializeField] private Projectile _projectile = null;
@@ -44,6 +45,10 @@ public class Weapon : Item
             _fierTimer = Time.realtimeSinceStartup;
             Projectile projectile = Instantiate(_projectile, _muzzle.position, Quaternion.identity);
             projectile.Initialize(character, target, _damage);
+            if (_flash != null)
+            {
+                _flash.Play();
+            }
             return true;
         }
 
