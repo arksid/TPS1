@@ -30,5 +30,36 @@ public class CameraManager : MonoBehaviour
     }
 
     private bool _aiming = false; public bool aiming { get { return _aiming; } set { _aiming = value; } }
-    private
+    private Vector3 _aimTargetPiont = Vector3.zero; public Vector3 aimTargetPiont { get { return _aimTargetPiont; } }
+
+    private void Awake()
+    {
+       _cameraBrain.m_DefaultBlend.m_Time = 0.1f;
+    }
+    private void Update()
+    {
+        _aimingCamera.gameObject.SetActive(_aiming);
+        SetAimTarget();
+    }
+    private void SetAimTarget()
+    {
+        Ray ray = _camera.ScreenPointToRay(new Vector2(Screen.width / 2f, Screen.height / 2f));
+        if (Physics.Raycast(ray, out RaycastHit hit, 1000f, _aimLayer))
+        {
+            _aimTargetPiont = hit.point;
+        }
+        else
+        {
+            _aimTargetPiont = ray.GetPoint(1000);
+        }
+    }
+#if UNITY_EDITOR
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(_aimTargetPiont, 0.1f);
+    }
+#endif
+
 }
+
