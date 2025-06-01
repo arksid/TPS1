@@ -84,8 +84,8 @@ MonoBehaviour:
   _damage: 10
   _fireRate: 0.05
   _clipSize: 30
-  _handKick: 5
-  _bodyKick: 5
+  _handKick: 10
+  _bodyKick: 10
   _leftHandPosition: {x: 0.0067, y: 0.2237, z: -0.0844}
   _leftHandRotation: {x: 28.21, y: -1147.487, z: 298.753}
   _rightHandPosition: {x: 0.02, y: 0.078, z: -0.05}
