@@ -183,11 +183,11 @@ namespace StarterAssets
             _animator.SetFloat("Armed", armed ? 1f : 0f);
             _animator.SetFloat("Aimed", _input.aim ? 1f : 0f);
 
-            _aimLayerWieght = Mathf.Lerp(_aimLayerWieght,armed && (_aiming || _character.reloading) ? 1f : 0f, 10 * Time.deltaTime);
+            _aimLayerWieght = Mathf.Lerp(_aimLayerWieght, _character.switchingWeapon || (armed && (_aiming || _character.reloading)) ? 1f : 0f, 10 * Time.deltaTime);
             _animator.SetLayerWeight(1, _aimLayerWieght);
 
             aimRigWieght = Mathf.Lerp(aimRigWieght, armed && _aiming &&  !_character.reloading ? 1f : 0f, 10f * Time.deltaTime);
-            leftHandWeight = Mathf.Lerp(leftHandWeight, armed && !_character.reloading && (_aiming || (_controller.isGrounded && _character.weapon.type == Weapon.Handle.TwoHanded))  ? 1f : 0f, 10f * Time.deltaTime);
+            leftHandWeight = Mathf.Lerp(leftHandWeight, armed&& _character.switchingWeapon == false && !_character.reloading && (_aiming || (_controller.isGrounded && _character.weapon.type == Weapon.Handle.TwoHanded))  ? 1f : 0f, 10f * Time.deltaTime);
 
 
             _rigManager.aimTarget = CameraManager.singleton.aimTargetPiont;
@@ -230,7 +230,10 @@ namespace StarterAssets
                 _input.reload = false;
                 _character.Reload();
             }
-
+            if(_input.switchWeapon != 0)
+            {
+                _character.ChangeWeapon(_input.switchWeapon);
+            }
             Move();
             Rotate();
         }
