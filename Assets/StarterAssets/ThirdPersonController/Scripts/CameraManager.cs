@@ -14,7 +14,8 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private CinemachineBrain _cameraBrain = null;
     [SerializeField] private LayerMask _aimLayer;
 
-    private static CameraManager _singleton = null; 
+    private static CameraManager _singleton = null;
+
 
     public static CameraManager singleton
     {
@@ -36,6 +37,7 @@ public class CameraManager : MonoBehaviour
     private void Awake()
     {
        _cameraBrain.m_DefaultBlend.m_Time = 0.1f;
+
     }
     private void Update()
     {
@@ -54,6 +56,7 @@ public class CameraManager : MonoBehaviour
             _aimTargetPiont = ray.GetPoint(1000);
         }
     }
+
 #if UNITY_EDITOR
     private void OnDrawGizmos()
     {

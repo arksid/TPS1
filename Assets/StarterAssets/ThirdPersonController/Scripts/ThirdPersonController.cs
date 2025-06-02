@@ -222,7 +222,9 @@ namespace StarterAssets
             if(_input.shoot && armed && !_character.reloading && _aiming && _character.weapon.Shoot(_character,CameraManager.singleton.aimTargetPiont))
             {
                _rigManager.ApplyWeaponKick(_character.weapon.handKick, _character.weapon.bodyKick);
-               
+
+
+
             }
 
             if (_input.reload && !_character.reloading)

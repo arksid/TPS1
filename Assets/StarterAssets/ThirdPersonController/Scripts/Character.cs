@@ -5,7 +5,9 @@ using UnityEngine.TextCore.Text;
 
 public class Character : MonoBehaviour
 {
+    [SerializeField] private MonoBehaviour[] scriptsToDisableOnDeath;
     [SerializeField] private Transform _weaponHolder = null;
+    [SerializeField] private int _health = 100;
 
     private Weapon _weapon = null; public Weapon weapon { get { return _weapon; } }
     private Ammo _ammo = null; public Ammo ammo { get { return _ammo; } }
@@ -22,6 +24,14 @@ public class Character : MonoBehaviour
         _animator = GetComponent<Animator>();
         Initialized(new Dictionary<string, int> { { "EVO-3",1 }, { "PP-19", 1 },{ "9mm", 1000 } });
 
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.K)) // K 키를 눌러서 죽음 테스트
+        {
+            ApplyDamage(null, null, 999f);
+        }
     }
 
     public void Initialized(Dictionary<string, int> items)
@@ -215,12 +225,24 @@ public class Character : MonoBehaviour
 
     }
 
-    public void ApplyDamage(Character shooter,Transform hit, float damage)
-  {
+    public void ApplyDamage(Character shooter, Transform hit, float damage)
+    {
+        _health -= (int)damage;
 
-  }
+        if (_health <= 0)
+        {
+            GetComponent<RagdollController>()?.ActivateRagdoll();
 
-  public  void Reload()
+            foreach (var script in scriptsToDisableOnDeath)
+            {
+                if (script != null) script.enabled = false;
+            }
+
+            Destroy(this); // 선택사항: Character 자체를 제거
+        }
+    }
+
+    public  void Reload()
     {
         if(_weapon != null && !_reloading && _weapon.ammo < _weapon.clipSize && _ammo != null && _ammo.amount > 0)
         {
