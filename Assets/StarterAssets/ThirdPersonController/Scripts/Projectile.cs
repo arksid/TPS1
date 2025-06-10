@@ -10,6 +10,7 @@ public class Projectile : MonoBehaviour
     [SerializeField] private Transform _defaultImpact = null;
 
     private float _damage = 1f;
+    public float damage { get { return _damage; } }
     private bool _intitialized = false;
     private Character _shooter = null;
     private Rigidbody _rigidbody = null;
