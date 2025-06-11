@@ -11,6 +11,11 @@ public class EnemyController : MonoBehaviour
     [Header("Health Settings")]
     public float maxHealth = 100f;
     private float currentHealth;
+    public void SetPlayer(Transform target)
+    {
+        Debug.Log("플레이어 설정됨: " + target?.name);
+        player = target;
+    }
 
     void Start()
     {
