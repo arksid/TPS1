@@ -1,11 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 public class EnemyWaveSpawner : MonoBehaviour
 {
-    public GameObject enemyPrefab;
+    public GameObject[] enemyPrefabs; //  다양한 적 프리팹
     public Transform[] spawnPoints;
     public Transform playerTransform;
 
@@ -13,18 +12,26 @@ public class EnemyWaveSpawner : MonoBehaviour
     public int enemiesPerWave = 5;
     public float spawnDelay = 0.5f;
     public float waveDelay = 5f;
-    public int maxWaves = 5;  //  추가: 최대 웨이브 수
+    public int maxWaves = 5;
 
     private int currentWave = 1;
     private List<GameObject> aliveEnemies = new List<GameObject>();
     private bool isSpawning = false;
-    public TextMeshProUGUI waveText;
+    private bool gameCleared = false;
+
     void Update()
     {
-        if (currentWave > maxWaves)
-            return; //  최대 웨이브 넘으면 아무것도 안 함
+        if (gameCleared)
+            return;
 
         aliveEnemies.RemoveAll(e => e == null);
+
+        if (currentWave > maxWaves && aliveEnemies.Count == 0)
+        {
+            Debug.Log("게임 클리어!");
+            gameCleared = true;
+            return;
+        }
 
         if (!isSpawning && aliveEnemies.Count == 0)
         {
@@ -35,20 +42,14 @@ public class EnemyWaveSpawner : MonoBehaviour
     IEnumerator SpawnWave()
     {
         isSpawning = true;
-
-        // UI 업데이트
-        if (waveText != null)
-        {
-            if (currentWave <= maxWaves)
-                waveText.text = $"Wave: {currentWave}";
-            else
-                waveText.text = "All Waves Cleared!";
-        }
         Debug.Log($"Wave {currentWave} 시작!");
+
         for (int i = 0; i < enemiesPerWave; i++)
         {
             Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
-            GameObject newEnemy = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
+
+            GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+            GameObject newEnemy = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
 
             EnemyController controller = newEnemy.GetComponent<EnemyController>();
             if (controller != null)
@@ -58,9 +59,8 @@ public class EnemyWaveSpawner : MonoBehaviour
             yield return new WaitForSeconds(spawnDelay);
         }
 
-        // 다음 웨이브 준비
         currentWave++;
-        enemiesPerWave += 2; // 점점 증가 (옵션)
+        enemiesPerWave += 2;
         yield return new WaitForSeconds(waveDelay);
         isSpawning = false;
     }
