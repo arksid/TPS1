@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2027746737154388169}
   - component: {fileID: 3376531310972393195}
   - component: {fileID: 5755938034613559080}
+  - component: {fileID: -967949935673063151}
   m_Layer: 0
   m_Name: Projectile
   m_TagString: Projectile
@@ -121,3 +122,30 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.012668684, y: 0.014628536, z: 0.013451154}
   m_Center: {x: 4.656613e-10, y: 4.656613e-10, z: 0.006274423}
+--- !u!54 &-967949935673063151
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7224008019258272649}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0

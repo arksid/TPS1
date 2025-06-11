@@ -27,7 +27,7 @@ public class Projectile : MonoBehaviour
         _intitialized = true;
 
         _rigidbody = GetComponent<Rigidbody>();
-        if(_rigidbody == null)
+        if (_rigidbody == null)
         {
             _rigidbody = gameObject.AddComponent<Rigidbody>();
         }
@@ -35,14 +35,14 @@ public class Projectile : MonoBehaviour
         _rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
         _collider = GetComponent<Collider>();
-        if(_collider == null)
+        if (_collider == null)
         {
             _collider = gameObject.AddComponent<SphereCollider>();
         }
         _collider.isTrigger = false;
         _collider.tag = "Projectile";
     }
-    public void Initialize(Character shooter,Vector3 target, float damage)
+    public void Initialize(Character shooter, Vector3 target, float damage)
     {
         Initialize();
         _shooter = shooter;
@@ -54,23 +54,26 @@ public class Projectile : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if((_shooter != null && collision.transform.root == _shooter.transform.root) || collision.gameObject.tag == "Projectile")
+        if ((_shooter != null && collision.transform.root == _shooter.transform.root) || collision.gameObject.tag == "Projectile")
         {
             Physics.IgnoreCollision(collision.collider, _collider);
             return;
         }
 
-        Character character = collision.transform.root.GetComponent<Character>();
-        if (character != null)
+        EnemyController enemy = collision.transform.GetComponentInParent<EnemyController>();
+        if (enemy != null)
         {
-            character.ApplyDamage(_shooter,collision.transform, _damage);   
+            Debug.Log("적에게 데미지 적용 중: " + _damage);
+            enemy.TakeDamage(_damage);
         }
-        else if (_defaultImpact != null)
+
+        if (_defaultImpact != null)
         {
             Transform impact = Instantiate(_defaultImpact, collision.contacts[0].point, Quaternion.FromToRotation(Vector3.up, collision.contacts[0].normal));
             Destroy(impact.gameObject, 30f);
         }
+
         Destroy(gameObject);
     }
-   
 }
+

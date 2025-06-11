@@ -1,31 +1,42 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemyController : MonoBehaviour
 {
-    public Transform player; // 추적할 대상
-    public float moveSpeed = 3f;
+    public Transform player;
+    private NavMeshAgent agent;
+
+    [Header("Health Settings")]
+    public float maxHealth = 100f;
+    private float currentHealth;
+
+    void Start()
+    {
+        currentHealth = maxHealth;
+        agent = GetComponent<NavMeshAgent>();
+    }
 
     void Update()
     {
-        if (player != null)
+        if (player != null && agent != null)
         {
-            // 플레이어를 향해 이동
-            Vector3 direction = (player.position - transform.position).normalized;
-            transform.position += direction * moveSpeed * Time.deltaTime;
+            agent.SetDestination(player.position);
         }
     }
 
-    // 필요하다면 충돌 처리
-    void OnCollisionEnter(Collision collision)
+    public void TakeDamage(float damage)
     {
-        if (collision.gameObject.CompareTag("Player"))
+        currentHealth -= damage;
+        if (currentHealth <= 0f)
         {
-            // 예: 플레이어에게 데미지 주기
-            // PlayerHealth playerHp = collision.gameObject.GetComponent<PlayerHealth>();
-            // if (playerHp != null) playerHp.TakeDamage(10);
+            Die();
         }
+    }
+
+    private void Die()
+    {
+        Destroy(gameObject);
     }
 }
-
