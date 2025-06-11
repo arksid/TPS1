@@ -1,18 +1,28 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class EnemyProjectile : MonoBehaviour
 {
     public float speed = 20f;
     public float damage = 10f;
-    private Rigidbody rb;
 
-    void Start()
+    private void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        rb.velocity = transform.forward * speed;
-        Destroy(gameObject, 5f); // 일정 시간 후 제거
+        Collider[] myColliders = GetComponents<Collider>();
+        Collider[] enemyColliders = FindObjectsOfType<EnemyController>().SelectMany(e => e.GetComponentsInChildren<Collider>()).ToArray();
+
+        foreach (var myCol in myColliders)
+        {
+            foreach (var enemyCol in enemyColliders)
+            {
+                Physics.IgnoreCollision(myCol, enemyCol);
+            }
+        }
+
+        GetComponent<Rigidbody>().velocity = transform.forward * speed;
+        Destroy(gameObject, 5f);
     }
 
     private void OnCollisionEnter(Collision collision)

@@ -9,9 +9,10 @@ public class EnemyController : MonoBehaviour
     public Transform firePoint;
     public float fireRate = 2f;
     public float fireRange = 10f;
-
     private float fireTimer = 0f;
-
+    public float meleeDamage = 10f;
+    public float meleeCooldown = 1f;
+    private float lastMeleeTime = -999f;
 
     public Transform player;
     private NavMeshAgent agent;
@@ -43,15 +44,16 @@ public class EnemyController : MonoBehaviour
         if (player != null && agent != null)
         {
             agent.SetDestination(player.position);
-        }
-        float distance = Vector3.Distance(transform.position, player.position);
-        if (distance <= fireRange)
-        {
-            fireTimer += Time.deltaTime;
-            if (fireTimer >= fireRate)
+
+            float distance = Vector3.Distance(transform.position, player.position);
+            if (distance <= fireRange)
             {
-                FireAtPlayer();
-                fireTimer = 0f;
+                fireTimer += Time.deltaTime;
+                if (fireTimer >= fireRate)
+                {
+                    FireAtPlayer();
+                    fireTimer = 0f;
+                }
             }
         }
     }
@@ -59,9 +61,25 @@ public class EnemyController : MonoBehaviour
     {
         if (projectilePrefab != null && firePoint != null)
         {
-            Vector3 direction = (player.position - firePoint.position).normalized;
+            Vector3 targetPoint = player.position + Vector3.up * 1.5f; //  상체 보정
+            Vector3 direction = (targetPoint - firePoint.position).normalized;
             Quaternion lookRotation = Quaternion.LookRotation(direction);
             Instantiate(projectilePrefab, firePoint.position, lookRotation);
+        }
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            if (Time.time - lastMeleeTime >= meleeCooldown)
+            {
+                Character player = collision.transform.GetComponentInParent<Character>();
+                if (player != null)
+                {
+                    player.ApplyDamage(null, collision.transform, meleeDamage);
+                    lastMeleeTime = Time.time;
+                }
+            }
         }
     }
     public void TakeDamage(float damage)

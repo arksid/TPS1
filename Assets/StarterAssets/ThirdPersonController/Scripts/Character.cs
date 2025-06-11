@@ -26,13 +26,7 @@ public class Character : MonoBehaviour
 
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.K)) // K 키를 눌러서 죽음 테스트
-        {
-            ApplyDamage(null, null, 999f);
-        }
-    }
+   
 
     public void Initialized(Dictionary<string, int> items)
     {
@@ -238,7 +232,7 @@ public class Character : MonoBehaviour
                 if (script != null) script.enabled = false;
             }
 
-            Destroy(this); // 선택사항: Character 자체를 제거
+            Destroy(this); // 또는 비활성화
         }
     }
 
