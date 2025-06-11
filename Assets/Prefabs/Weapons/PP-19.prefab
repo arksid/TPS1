@@ -80,11 +80,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _id: PP-19
-  _shakeDuration: 5
-  _shakeMagnitude: 5
   _type: 2
   _ammoID: 9mm
-  _damage: 10
+  _damage: 40
   _fireRate: 0.1
   _clipSize: 30
   _handKick: 5

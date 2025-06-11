@@ -79,11 +79,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _id: EVO-3
-  _shakeDuration: 0.1
-  _shakeMagnitude: 0.05
   _type: 2
   _ammoID: 9mm
-  _damage: 10
+  _damage: 30
   _fireRate: 0.05
   _clipSize: 40
   _handKick: 10
