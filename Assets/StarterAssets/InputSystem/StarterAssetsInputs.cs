@@ -17,8 +17,10 @@ namespace StarterAssets
 		public bool walk;
 		public bool reload;
 		public float switchWeapon;
+
         public bool switchToPrimary;
         public bool switchToSecondary;
+
         [Header("Movement Settings")]
 		public bool analogMovement;
 
@@ -55,6 +57,7 @@ namespace StarterAssets
         }
         public void OnSwitchToPrimary(InputValue value)
         {
+            Debug.Log("Pressed 1 Key");
             switchToPrimary = value.isPressed;
         }
 

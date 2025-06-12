@@ -139,12 +139,12 @@ public class Character : MonoBehaviour
     }
 
     public void EquipWeapon(Weapon weapon)
- {
-    if (_switchingWeapon || weapon == null)
     {
-         return;
-    }
+        if (_switchingWeapon || weapon == null || _weapon == weapon)
+            return;
+
         _weaponToEquip = weapon;
+
         if (_weapon != null)
         {
             Holsterweapon();
@@ -154,7 +154,8 @@ public class Character : MonoBehaviour
             _switchingWeapon = true;
             _animator.SetTrigger("Equip");
         }
-}
+    }
+
 
     public void _EquipWeapon()
     {
