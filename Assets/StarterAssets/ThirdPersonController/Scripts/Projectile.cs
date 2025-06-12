@@ -15,7 +15,7 @@ public class Projectile : MonoBehaviour
     private Character _shooter = null;
     private Rigidbody _rigidbody = null;
     private Collider _collider = null;
-
+    public GameObject shooter; // 누가 발사했는지
     private void Awake()
     {
         Initialize();
@@ -54,23 +54,21 @@ public class Projectile : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if ((_shooter != null && collision.transform.root == _shooter.transform.root) || collision.gameObject.tag == "Projectile")
+        if (collision.gameObject == shooter)
+            return; // 자기 자신 무시
+
+        // 세미보스 데미지 처리
+        SemiBossController boss = collision.transform.GetComponentInParent<SemiBossController>();
+        if (boss != null && shooter != boss.gameObject)
         {
-            Physics.IgnoreCollision(collision.collider, _collider);
-            return;
+            boss.TakeDamage(damage);
         }
 
+        // 일반 적
         EnemyController enemy = collision.transform.GetComponentInParent<EnemyController>();
-        if (enemy != null)
+        if (enemy != null && shooter != enemy.gameObject)
         {
-            Debug.Log("적에게 데미지 적용 중: " + _damage);
-            enemy.TakeDamage(_damage);
-        }
-
-        if (_defaultImpact != null)
-        {
-            Transform impact = Instantiate(_defaultImpact, collision.contacts[0].point, Quaternion.FromToRotation(Vector3.up, collision.contacts[0].normal));
-            Destroy(impact.gameObject, 30f);
+            enemy.TakeDamage(damage);
         }
 
         Destroy(gameObject);

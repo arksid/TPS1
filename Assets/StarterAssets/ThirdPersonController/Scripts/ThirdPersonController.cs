@@ -236,10 +236,36 @@ namespace StarterAssets
             {
                 _character.ChangeWeapon(_input.switchWeapon);
             }
+            if (_input.switchToPrimary)
+            {
+                _input.switchToPrimary = false;
+                SwitchWeaponByIndex(0);
+            }
+            else if (_input.switchToSecondary)
+            {
+                _input.switchToSecondary = false;
+                SwitchWeaponByIndex(1);
+            }
             Move();
             Rotate();
         }
-        
+        private void SwitchWeaponByIndex(int index)
+        {
+            int weaponCount = 0;
+            for (int i = 0; i < _character.weaponItems.Count; i++)
+            {
+                if (_character.weaponItems[i] != null && _character.weaponItems[i] is Weapon)
+                {
+                    if (weaponCount == index)
+                    {
+                        Debug.Log($"Switching to weapon at index {index}");
+                        _character.EquipWeapon((Weapon)_character.weaponItems[i]);
+                        break;
+                    }
+                    weaponCount++;
+                }
+            }
+        }
 
         private void Rotate()
         {

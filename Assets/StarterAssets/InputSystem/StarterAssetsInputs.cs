@@ -17,7 +17,8 @@ namespace StarterAssets
 		public bool walk;
 		public bool reload;
 		public float switchWeapon;
-
+        public bool switchToPrimary;
+        public bool switchToSecondary;
         [Header("Movement Settings")]
 		public bool analogMovement;
 
@@ -52,7 +53,15 @@ namespace StarterAssets
         {
             SwitchWeaponInput(value.Get<float>());
         }
+        public void OnSwitchToPrimary(InputValue value)
+        {
+            switchToPrimary = value.isPressed;
+        }
 
+        public void OnSwitchToSecondary(InputValue value)
+        {
+            switchToSecondary = value.isPressed;
+        }
         public void OnLook(InputValue value)
 		{
 			if(cursorInputForLook)

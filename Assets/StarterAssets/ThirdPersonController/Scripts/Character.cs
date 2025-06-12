@@ -15,6 +15,7 @@ public class Character : MonoBehaviour
     private Animator _animator = null;
     private RigManager _rigManager = null;
     private Weapon _weaponToEquip = null;
+    public List<Item> weaponItems => _items;
     private bool _reloading = false; public bool reloading { get { return _reloading; } }
     private bool _switchingWeapon = false; public bool switchingWeapon { get { return _switchingWeapon; } }
 
@@ -22,7 +23,7 @@ public class Character : MonoBehaviour
     {
         _rigManager = GetComponent<RigManager>();
         _animator = GetComponent<Animator>();
-        Initialized(new Dictionary<string, int> { { "EVO-3",1 }, { "PP-19", 1 },{ "9mm", 1000 } });
+        Initialized(new Dictionary<string, int> { { "EVO-3",1 }, { "PP-19", 1 },{ "9mm", 30 } });
 
     }
 

@@ -52,7 +52,10 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   playerTransform: {fileID: 0}
-  enemiesPerWave: 5
+  enemiesPerWave: 1
   spawnDelay: 0.5
   waveDelay: 5
-  maxWaves: 4
+  maxWaves: 10
+  semiBossPrefab: {fileID: 1586153474678188177, guid: 809ec271ecaba284a9b4dc268fd1c56c,
+    type: 3}
+  semiBossWaveInterval: 5

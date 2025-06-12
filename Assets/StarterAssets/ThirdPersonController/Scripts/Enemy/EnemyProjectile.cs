@@ -33,6 +33,12 @@ public class EnemyProjectile : MonoBehaviour
             player.ApplyDamage(null, collision.transform, damage);
         }
 
+        SemiBossController boss = collision.transform.GetComponentInParent<SemiBossController>();
+        if (boss != null)
+        {
+            boss.TakeDamage(damage);
+        }
+
         Destroy(gameObject);
     }
 }
