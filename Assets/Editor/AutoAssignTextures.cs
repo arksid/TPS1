@@ -23,12 +23,18 @@ public class AutoAssignTextures : EditorWindow
             {
                 string texPath = AssetDatabase.GUIDToAssetPath(guid);
                 Texture tex = AssetDatabase.LoadAssetAtPath<Texture>(texPath);
-                if (tex == null) continue; // <- 여기를 추가
+                if (tex == null) continue;
 
                 string texName = tex.name.ToLower();
 
-                if (texName.Contains("albedo") || texName.Contains("diffuse"))
-                    mat.SetTexture("_MainTex", tex);
+                if (texName.Contains("albedo") || texName.Contains("diffuse") || texName.Contains("base"))
+                {
+                    // Base Map 적용 (URP or HDRP 지원)
+                    if (mat.HasProperty("_BaseMap"))
+                        mat.SetTexture("_BaseMap", tex);
+                    else
+                        mat.SetTexture("_MainTex", tex);
+                }
                 else if (texName.Contains("normal"))
                 {
                     mat.SetTexture("_BumpMap", tex);
@@ -54,6 +60,6 @@ public class AutoAssignTextures : EditorWindow
             }
         }
 
-        Debug.Log("텍스처 자동 연결 완료!");
+        Debug.Log("Base Map 포함 텍스처 자동 연결 완료!");
     }
 }
