@@ -5011,6 +5011,11 @@ PrefabInstance:
       propertyPath: SprintSpeed
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: 928212217850049380, guid: 0289f982c54709c43b51cf436cda4f7a,
+        type: 3}
+      propertyPath: DashDuration
+      value: 0.25
+      objectReference: {fileID: 0}
     - target: {fileID: 4180728075985822753, guid: 0289f982c54709c43b51cf436cda4f7a,
         type: 3}
       propertyPath: m_LocalPosition.x

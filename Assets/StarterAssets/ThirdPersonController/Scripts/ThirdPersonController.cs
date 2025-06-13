@@ -95,13 +95,16 @@ namespace StarterAssets
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
 
-        private float _lastDashTime = -10f;
+        private bool _isRolling = false;
+        private float _lastRollTime = -10f;
         private float _lastSprintKeyTime = -1f;
-        private bool _isDashing = false;
 
-        public float DashCooldown = 1f;
-        public float DashDuration = 0.2f;
-        public float DashSpeed = 12f;
+        public float RollCooldown = 1f;
+        public float RollDuration = 0.6f;
+        public float RollSpeed = 6f;
+
+        private int rollHash; // 애니메이션 트리거
+
 
         // animation IDs
         private int _animIDSpeed;
@@ -175,6 +178,7 @@ namespace StarterAssets
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
             _input.OnSprintKeyPressed += HandleSprintKeyPressed;
+            rollHash = Animator.StringToHash("Roll");
         }
 
         private void Update()
@@ -228,15 +232,7 @@ namespace StarterAssets
             _animator.SetFloat("Speed_Y", _aimedMovingAnimtionsInput.y);
 
 
-            if (_input.sprintPressedThisFrame && Time.time - _lastDashTime > DashCooldown)
-            {
-                if (Time.time - _lastSprintKeyTime < 0.3f)
-                {
-                    StartCoroutine(Dash());
-                    _lastDashTime = Time.time;
-                }
-                _lastSprintKeyTime = Time.time;
-            }
+            
 
 
             if (_input.shoot && armed && !_character.reloading && _aiming && _character.weapon.Shoot(_character,CameraManager.singleton.aimTargetPiont))
@@ -266,7 +262,7 @@ namespace StarterAssets
                 _input.switchToSecondary = false;
                 SwitchWeaponByIndex(1);
             }
-            if (_isDashing) return;
+            if (_isRolling) return;
 
             Move();
             Rotate();
@@ -489,41 +485,37 @@ namespace StarterAssets
         }
         private void HandleSprintKeyPressed()
         {
-            if (Time.time - _lastDashTime > DashCooldown)
+            if (Time.time - _lastRollTime > RollCooldown)
             {
                 if (Time.time - _lastSprintKeyTime < 0.3f)
                 {
-                    StartCoroutine(Dash());
-                    _lastDashTime = Time.time;
+                    StartCoroutine(Roll());
+                    _lastRollTime = Time.time;
                 }
                 _lastSprintKeyTime = Time.time;
             }
         }
 
-        private IEnumerator Dash()
+        private IEnumerator Roll()
         {
-            _isDashing = true;
-            float startTime = Time.time;
+            _isRolling = true;
 
             Vector3 inputDirection = new Vector3(_input.move.x, 0, _input.move.y).normalized;
+            Vector3 rollDirection = inputDirection.magnitude > 0.1f
+                ? Quaternion.Euler(0, CameraManager.maincamera.transform.eulerAngles.y, 0) * inputDirection
+                : transform.forward;
 
-            Vector3 dashDirection;
-            if (inputDirection.magnitude > 0.1f)
-            {
-                dashDirection = Quaternion.Euler(0, _mainCamera.transform.eulerAngles.y, 0) * inputDirection;
-            }
-            else
-            {
-                dashDirection = transform.forward;
-            }
+            _animator.SetTrigger(rollHash);
 
-            while (Time.time < startTime + DashDuration)
+            float timer = 0f;
+            while (timer < RollDuration)
             {
-                _controller.Move(dashDirection * DashSpeed * Time.deltaTime);
+                _controller.Move(rollDirection * RollSpeed * Time.deltaTime);
+                timer += Time.deltaTime;
                 yield return null;
             }
 
-            _isDashing = false;
+            _isRolling = false;
         }
 
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
