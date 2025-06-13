@@ -3,7 +3,47 @@ guid: 3d2f0b5685f9b73449ac414122e6de31
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KB3D_WZN_ConcreteBroken
+    second: {fileID: 2100000, guid: d7787549b719d724798e96a73b146be3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KB3D_WZN_ConcreteMix
+    second: {fileID: 2100000, guid: 26cc0756a1408974fa67fb75f44c9120, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KB3D_WZN_Debris
+    second: {fileID: 2100000, guid: 5f61ad05a54a118498f9ed4c19bc7fe2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KB3D_WZN_GlassDirty
+    second: {fileID: 2100000, guid: 2dba009f3aefd8146802b47b6b7c794c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KB3D_WZN_MetalPitted
+    second: {fileID: 2100000, guid: ac9ec79ce8bba4945947dee6b48976a7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KB3D_WZN_PlasticBlackWorn
+    second: {fileID: 2100000, guid: 5c4b5268e977564468bbcd9bfacbebfd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KB3D_WZN_Rust
+    second: {fileID: 2100000, guid: fd9b15b1703188d4fbd26fe16eebaa67, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KB3D_WZN_WoodBeam
+    second: {fileID: 2100000, guid: d2e14f654aa1ff642a6e0c88e8bf21a1, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
