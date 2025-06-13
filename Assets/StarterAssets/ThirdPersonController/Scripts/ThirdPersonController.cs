@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
@@ -94,6 +95,14 @@ namespace StarterAssets
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
 
+        private float _lastDashTime = -10f;
+        private float _lastSprintKeyTime = -1f;
+        private bool _isDashing = false;
+
+        public float DashCooldown = 1f;
+        public float DashDuration = 0.2f;
+        public float DashSpeed = 12f;
+
         // animation IDs
         private int _animIDSpeed;
         private int _animIDGrounded;
@@ -151,7 +160,6 @@ namespace StarterAssets
         private void Start()
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
-            
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
@@ -166,6 +174,7 @@ namespace StarterAssets
             // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
+            _input.OnSprintKeyPressed += HandleSprintKeyPressed;
         }
 
         private void Update()
@@ -219,7 +228,18 @@ namespace StarterAssets
             _animator.SetFloat("Speed_Y", _aimedMovingAnimtionsInput.y);
 
 
-            if(_input.shoot && armed && !_character.reloading && _aiming && _character.weapon.Shoot(_character,CameraManager.singleton.aimTargetPiont))
+            if (_input.sprintPressedThisFrame && Time.time - _lastDashTime > DashCooldown)
+            {
+                if (Time.time - _lastSprintKeyTime < 0.3f)
+                {
+                    StartCoroutine(Dash());
+                    _lastDashTime = Time.time;
+                }
+                _lastSprintKeyTime = Time.time;
+            }
+
+
+            if (_input.shoot && armed && !_character.reloading && _aiming && _character.weapon.Shoot(_character,CameraManager.singleton.aimTargetPiont))
             {
                _rigManager.ApplyWeaponKick(_character.weapon.handKick, _character.weapon.bodyKick);
 
@@ -246,6 +266,8 @@ namespace StarterAssets
                 _input.switchToSecondary = false;
                 SwitchWeaponByIndex(1);
             }
+            if (_isDashing) return;
+
             Move();
             Rotate();
         }
@@ -464,6 +486,44 @@ namespace StarterAssets
             {
                 _verticalVelocity += Gravity * Time.deltaTime;
             }
+        }
+        private void HandleSprintKeyPressed()
+        {
+            if (Time.time - _lastDashTime > DashCooldown)
+            {
+                if (Time.time - _lastSprintKeyTime < 0.3f)
+                {
+                    StartCoroutine(Dash());
+                    _lastDashTime = Time.time;
+                }
+                _lastSprintKeyTime = Time.time;
+            }
+        }
+
+        private IEnumerator Dash()
+        {
+            _isDashing = true;
+            float startTime = Time.time;
+
+            Vector3 inputDirection = new Vector3(_input.move.x, 0, _input.move.y).normalized;
+
+            Vector3 dashDirection;
+            if (inputDirection.magnitude > 0.1f)
+            {
+                dashDirection = Quaternion.Euler(0, _mainCamera.transform.eulerAngles.y, 0) * inputDirection;
+            }
+            else
+            {
+                dashDirection = transform.forward;
+            }
+
+            while (Time.time < startTime + DashDuration)
+            {
+                _controller.Move(dashDirection * DashSpeed * Time.deltaTime);
+                yield return null;
+            }
+
+            _isDashing = false;
         }
 
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)

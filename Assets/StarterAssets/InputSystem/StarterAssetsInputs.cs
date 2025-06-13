@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -17,7 +18,8 @@ namespace StarterAssets
 		public bool walk;
 		public bool reload;
 		public float switchWeapon;
-
+        public bool sprintPressedThisFrame;
+        public event Action OnSprintKeyPressed;
         public bool switchToPrimary;
         public bool switchToSecondary;
 
@@ -78,14 +80,21 @@ namespace StarterAssets
 			JumpInput(value.isPressed);
 		}
 
-		public void OnSprint(InputValue value)
-		{
-			SprintInput(value.isPressed);
-		}
+        public void OnSprint(InputValue value)
+        {
+            bool pressed = value.isPressed;
+
+            if (pressed && OnSprintKeyPressed != null)
+            {
+                OnSprintKeyPressed.Invoke(); // 눌린 순간만 감지
+            }
+
+            sprint = pressed;
+        }
 #endif
 
 
-		public void MoveInput(Vector2 newMoveDirection)
+        public void MoveInput(Vector2 newMoveDirection)
 		{
 			move = newMoveDirection;
 		} 

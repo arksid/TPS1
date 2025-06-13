@@ -757,8 +757,19 @@ PrefabInstance:
       propertyPath: m_Name
       value: KB3D_WZN_BldgMD_C_grp
       objectReference: {fileID: 0}
+    - target: {fileID: 7744711602663866514, guid: 21ff703f08acec54ab6da3f7c0b04b2f,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.97
+      objectReference: {fileID: 0}
+    - target: {fileID: 7744711602663866514, guid: 21ff703f08acec54ab6da3f7c0b04b2f,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -9.7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 8300276711469069281, guid: 21ff703f08acec54ab6da3f7c0b04b2f, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 21ff703f08acec54ab6da3f7c0b04b2f, type: 3}
@@ -4984,6 +4995,11 @@ PrefabInstance:
         type: 3}
       propertyPath: RunSpeed
       value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 928212217850049380, guid: 0289f982c54709c43b51cf436cda4f7a,
+        type: 3}
+      propertyPath: DashSpeed
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 928212217850049380, guid: 0289f982c54709c43b51cf436cda4f7a,
         type: 3}
