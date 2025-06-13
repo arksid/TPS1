@@ -499,13 +499,30 @@ namespace StarterAssets
         private IEnumerator Roll()
         {
             _isRolling = true;
+            // 조준 해제
+            CameraManager.singleton.aiming = false;
+            _input.aim = false;
+            // _animator.SetBool("Aim", false); // Animator에 Aim 파라미터 있으면 사용
+            CanvasManager.singleton?.HideAimUI();
 
-            Vector3 inputDirection = new Vector3(_input.move.x, 0, _input.move.y).normalized;
-            Vector3 rollDirection = inputDirection.magnitude > 0.1f
-                ? Quaternion.Euler(0, CameraManager.maincamera.transform.eulerAngles.y, 0) * inputDirection
-                : transform.forward;
+            // 방향 계산: 입력값 → 카메라 기준 방향
+            Vector2 inputMove = _input.move;
+            Vector3 inputDirection = new Vector3(inputMove.x, 0, inputMove.y).normalized;
 
-            _animator.SetTrigger(rollHash);
+            Vector3 rollDirection;
+
+            if (inputDirection.magnitude > 0.1f)
+            {
+                float cameraY = CameraManager.maincamera.transform.eulerAngles.y;
+                rollDirection = Quaternion.Euler(0, cameraY, 0) * inputDirection;
+            }
+            else
+            {
+                rollDirection = transform.forward;
+            }
+
+            // 애니메이션 재생
+            _animator.SetTrigger("Roll"); // Animator에 Roll 트리거 있어야 함
 
             float timer = 0f;
             while (timer < RollDuration)
@@ -516,6 +533,14 @@ namespace StarterAssets
             }
 
             _isRolling = false;
+            // 조준 복귀
+            if (Mouse.current.rightButton.isPressed)
+            {
+                _input.aim = true;
+                CameraManager.singleton.aiming = true;
+                // _animator.SetBool("Aim", true); // Animator에 Aim 파라미터 있으면 사용
+                CanvasManager.singleton?.ShowAimUI();
+            }
         }
 
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
