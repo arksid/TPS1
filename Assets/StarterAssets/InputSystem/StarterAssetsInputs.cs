@@ -22,7 +22,7 @@ namespace StarterAssets
         public event Action OnSprintKeyPressed;
         public bool switchToPrimary;
         public bool switchToSecondary;
-
+        public bool canAim = true; // 조준 허용 여부
         [Header("Movement Settings")]
 		public bool analogMovement;
 
@@ -34,7 +34,8 @@ namespace StarterAssets
 
         public void OnAim(InputValue value)
         {
-           AimInput(value.isPressed);
+            if (!canAim) return;        // 구르기 중에는 조준 차단
+            AimInput(value.isPressed);
         }
 
         public void OnShoot(InputValue value)

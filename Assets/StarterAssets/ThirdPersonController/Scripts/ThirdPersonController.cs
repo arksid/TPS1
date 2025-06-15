@@ -104,6 +104,8 @@ namespace StarterAssets
         public float RollSpeed = 6f;
 
         private int rollHash; // 애니메이션 트리거
+        private bool _isInvincible = false;
+        public float InvincibleDuration = 0.4f;
 
 
         // animation IDs
@@ -485,6 +487,9 @@ namespace StarterAssets
         }
         private void HandleSprintKeyPressed()
         {
+            //  공중 상태에서는 구르기 금지
+            if (!Grounded) return;
+
             if (Time.time - _lastRollTime > RollCooldown)
             {
                 if (Time.time - _lastSprintKeyTime < 0.3f)
@@ -499,31 +504,44 @@ namespace StarterAssets
         private IEnumerator Roll()
         {
             _isRolling = true;
-            // 조준 해제
-            CameraManager.singleton.aiming = false;
-            _input.aim = false;
-            // _animator.SetBool("Aim", false); // Animator에 Aim 파라미터 있으면 사용
-            CanvasManager.singleton?.HideAimUI();
 
-            // 방향 계산: 입력값 → 카메라 기준 방향
-            Vector2 inputMove = _input.move;
-            Vector3 inputDirection = new Vector3(inputMove.x, 0, inputMove.y).normalized;
+            // 1. 방향 계산
+            Vector2 moveInput = _input.move;
+            Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y);
 
             Vector3 rollDirection;
-
-            if (inputDirection.magnitude > 0.1f)
-            {
-                float cameraY = CameraManager.maincamera.transform.eulerAngles.y;
-                rollDirection = Quaternion.Euler(0, cameraY, 0) * inputDirection;
-            }
-            else
+            if (inputDirection.sqrMagnitude < 0.01f)
             {
                 rollDirection = transform.forward;
             }
+            else
+            {
+                //  카메라 기준 방향 계산
+                float cameraY = CameraManager.maincamera.transform.eulerAngles.y;
+                Vector3 camForward = Quaternion.Euler(0, cameraY, 0) * Vector3.forward;
+                Vector3 camRight = Quaternion.Euler(0, cameraY, 0) * Vector3.right;
+                rollDirection = (camForward * moveInput.y + camRight * moveInput.x).normalized;
 
-            // 애니메이션 재생
-            _animator.SetTrigger("Roll"); // Animator에 Roll 트리거 있어야 함
+                //  플레이어가 그 방향을 바라보게 회전
+                transform.rotation = Quaternion.LookRotation(rollDirection);
+            }
 
+            // 3. 조준 상태 해제
+            _input.aim = false;
+            _input.canAim = false;
+            CameraManager.singleton.aiming = false;
+
+            // 무적 시작
+            _isInvincible = true;
+            _character.isInvincible = true;
+            Invoke(nameof(EndInvincibility), InvincibleDuration);
+
+            _animator.SetTrigger("Roll");
+
+            // 4. 애니메이션
+            _animator.SetTrigger("Roll");
+
+            // 5. 실제 이동
             float timer = 0f;
             while (timer < RollDuration)
             {
@@ -533,16 +551,13 @@ namespace StarterAssets
             }
 
             _isRolling = false;
-            // 조준 복귀
-            if (Mouse.current.rightButton.isPressed)
-            {
-                _input.aim = true;
-                CameraManager.singleton.aiming = true;
-                // _animator.SetBool("Aim", true); // Animator에 Aim 파라미터 있으면 사용
-                CanvasManager.singleton?.ShowAimUI();
-            }
+            _input.canAim = true;
         }
-
+        private void EndInvincibility()
+        {
+            _isInvincible = false;
+            _character.isInvincible = false;
+        }
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
         {
             if (lfAngle < -360f) lfAngle += 360f;

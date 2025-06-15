@@ -7,7 +7,8 @@ public class Character : MonoBehaviour
 {
     [SerializeField] private MonoBehaviour[] scriptsToDisableOnDeath;
     [SerializeField] private Transform _weaponHolder = null;
-    [SerializeField] private int _health = 100;
+    [SerializeField] private int _health;
+    [SerializeField] public int MaxHealth = 100;
 
     private Weapon _weapon = null; public Weapon weapon { get { return _weapon; } }
     private Ammo _ammo = null; public Ammo ammo { get { return _ammo; } }
@@ -18,6 +19,7 @@ public class Character : MonoBehaviour
     public List<Item> weaponItems => _items;
     private bool _reloading = false; public bool reloading { get { return _reloading; } }
     private bool _switchingWeapon = false; public bool switchingWeapon { get { return _switchingWeapon; } }
+    public bool isInvincible = false;
 
     private void Awake()
     {
@@ -27,7 +29,15 @@ public class Character : MonoBehaviour
 
     }
 
-   
+    public int Health
+    {
+        get => _health;
+        set
+        {
+            _health = Mathf.Clamp(value, 0, MaxHealth);
+            CanvasManager.singleton.UpdateHealth(_health, MaxHealth);
+        }
+    }
 
     public void Initialized(Dictionary<string, int> items)
     {
@@ -163,6 +173,9 @@ public class Character : MonoBehaviour
         {
             _weapon = _weaponToEquip;
             _weaponToEquip = null;
+
+            CanvasManager.singleton.UpdateWeapon(_weapon.id);
+            CanvasManager.singleton.UpdateAmmo(_weapon.ammo, _ammo?.amount ?? 0);
             if (_weapon.transform.parent != _weaponHolder)
             {
                 _weapon.transform.SetParent(_weaponHolder);
@@ -223,7 +236,9 @@ public class Character : MonoBehaviour
 
     public void ApplyDamage(Character shooter, Transform hit, float damage)
     {
-        _health -= (int)damage;
+        if (isInvincible) return;
+
+        Health -= (int)damage; //  이제 프로퍼티로 갱신되면서 UI도 자동 반영
 
         if (_health <= 0)
         {
@@ -234,7 +249,7 @@ public class Character : MonoBehaviour
                 if (script != null) script.enabled = false;
             }
 
-            Destroy(this); // 또는 비활성화
+            Destroy(this);
         }
     }
 
@@ -261,6 +276,7 @@ public class Character : MonoBehaviour
             _weapon.ammo += amount;
         }
         _reloading = false;
+        CanvasManager.singleton.UpdateAmmo(_weapon.ammo, _ammo.amount);
     }
     public void HolsterFinished()
     {
