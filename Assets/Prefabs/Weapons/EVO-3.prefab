@@ -88,7 +88,7 @@ MonoBehaviour:
   _bodyKick: 10
   _leftHandPosition: {x: 0.0067, y: 0.2237, z: -0.0844}
   _leftHandRotation: {x: 28.21, y: -1147.487, z: 298.753}
-  _rightHandPosition: {x: 0.02, y: 0.078, z: -0.05}
+  _rightHandPosition: {x: 0.0224, y: 0.0923, z: -0.0446}
   _rightHandRotation: {x: -87.638, y: -59.031, z: -2.778}
   _muzzle: {fileID: 6228583458239016068}
   _flash: {fileID: 6437869772668138058}

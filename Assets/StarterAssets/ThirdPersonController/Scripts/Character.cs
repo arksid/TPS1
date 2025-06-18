@@ -25,7 +25,7 @@ public class Character : MonoBehaviour
     {
         _rigManager = GetComponent<RigManager>();
         _animator = GetComponent<Animator>();
-        Initialized(new Dictionary<string, int> { { "EVO-3",1 }, { "GLOCK19", 1 },{ "9mm", 1000 } });
+        Initialized(new Dictionary<string, int> { { "HK416",1 }, { "KG-9", 1 },{ "9mm", 1000 } });
 
     }
 
@@ -182,7 +182,15 @@ public class Character : MonoBehaviour
                 _weapon.transform.localPosition = _weapon.rightHandPosition;
                 _weapon.transform.localEulerAngles = _weapon.rightHandRotation;
             }
-            _rigManager.SetLeftHandGrioData(_weapon.leftHandPosition, _weapon.leftHandRotation);
+            
+            if (_weapon.leftHandPosition != null && _weapon.leftHandRotation != null)
+            {
+                _rigManager.SetLeftHandGrioData(_weapon.leftHandPosition, _weapon.leftHandRotation);
+            }
+            else
+            {
+                Debug.LogWarning($"[무기 장착 오류] 무기 {_weapon.id}의 왼손 위치 또는 회전이 설정되지 않았습니다.");
+            }
             _weapon.gameObject.SetActive(true);
             _ammo = null;
             for (int i = 0; i < _items.Count; i++)
