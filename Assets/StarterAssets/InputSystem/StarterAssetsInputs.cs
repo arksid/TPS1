@@ -22,6 +22,7 @@ namespace StarterAssets
         public event Action OnSprintKeyPressed;
         public bool switchToPrimary;
         public bool switchToSecondary;
+        public bool switchToThird;
         public bool canAim = true; // 조준 허용 여부
         [Header("Movement Settings")]
 		public bool analogMovement;
@@ -66,7 +67,13 @@ namespace StarterAssets
 
         public void OnSwitchToSecondary(InputValue value)
         {
+            Debug.Log("Pressed 2 Key");
             switchToSecondary = value.isPressed;
+        }
+        public void OnSwitchToThird(InputValue value)
+        {
+            Debug.Log("Pressed 3 Key");
+            switchToThird = value.isPressed;
         }
         public void OnLook(InputValue value)
 		{

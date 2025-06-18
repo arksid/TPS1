@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
+using UnityEngine.TextCore.Text;
 #endif
 
 /* Note: animations are called via the controller for both the character and capsule using animator null checks
@@ -186,6 +187,7 @@ namespace StarterAssets
         private void Update()
         {
             bool armed = _character.weapon != null;
+
             _aiming = _input.aim;
             _sprinting = _input.sprint && _aiming == false;
 
@@ -193,7 +195,6 @@ namespace StarterAssets
 
             JumpAndGravity();
             GroundedCheck();
-            
             CameraManager.singleton.aiming = _aiming;
             _animator.SetFloat("Armed", armed ? 1f : 0f);
             _animator.SetFloat("Aimed", _input.aim ? 1f : 0f);
@@ -250,10 +251,6 @@ namespace StarterAssets
                 _input.reload = false;
                 _character.Reload();
             }
-            if(_input.switchWeapon != 0)
-            {
-                _character.ChangeWeapon(_input.switchWeapon);
-            }
             if (_input.switchToPrimary)
             {
                 _input.switchToPrimary = false;
@@ -264,6 +261,12 @@ namespace StarterAssets
                 _input.switchToSecondary = false;
                 SwitchWeaponByIndex(1);
             }
+            else if (_input.switchToThird) // 3번 무기 전환
+            {
+                _input.switchToThird = false;
+                SwitchWeaponByIndex(2);
+            }
+
             if (_isRolling) return;
 
             Move();
@@ -286,6 +289,7 @@ namespace StarterAssets
                 }
             }
         }
+    
 
         private void Rotate()
         {

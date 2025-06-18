@@ -25,7 +25,7 @@ public class Character : MonoBehaviour
     {
         _rigManager = GetComponent<RigManager>();
         _animator = GetComponent<Animator>();
-        Initialized(new Dictionary<string, int> { { "HK416",1 }, { "KG-9", 1 },{ "9mm", 1000 } });
+        Initialized(new Dictionary<string, int> { { "HK416", 1 },{ "K-2", 1 } ,{ "KG-9", 1 },{ "9mm", 1000 } });
 
     }
 
