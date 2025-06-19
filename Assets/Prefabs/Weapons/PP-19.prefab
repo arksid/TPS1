@@ -82,8 +82,15 @@ MonoBehaviour:
   _id: PP-19
   _type: 2
   _ammoID: 9mm
+<<<<<<< Updated upstream
   _damage: 40
   _fireRate: 0.1
+=======
+  _damage: 20
+  _rpm: 600
+  _fireRate: 0
+  _verticalRecoil: 15
+>>>>>>> Stashed changes
   _clipSize: 30
   _handKick: 5
   _bodyKick: 5

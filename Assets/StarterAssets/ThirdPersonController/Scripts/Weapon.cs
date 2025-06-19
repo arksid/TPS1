@@ -13,7 +13,10 @@ public class Weapon : Item
     [SerializeField] private Handle _type = Handle.TwoHanded; public Handle type { get { return _type; } }
     [SerializeField] private string _ammoID = ""; public string ammoID { get { return _ammoID; } }
     [SerializeField] private float _damage = 10f;
+    [SerializeField] private float _rpm = 600f;
     [SerializeField] private float _fireRate = 0.2f;
+    [SerializeField] private float _verticalRecoil = 3f;//반동
+    public float verticalRecoil => _verticalRecoil;
     [SerializeField] private int _clipSize = 30; public int clipSize { get { return _clipSize; }}
 
     [SerializeField] private float _handKick = 5f; public float handKick { get { return _handKick; } }
@@ -40,6 +43,7 @@ public class Weapon : Item
     private void Awake()
     {
         _fierTimer += Time.realtimeSinceStartup;
+        _fireRate = 60f / _rpm; // RPM을 fireRate(초)로 변환
     }
     public bool Shoot(Character character, Vector3 target)
     {

@@ -14,6 +14,12 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private CinemachineBrain _cameraBrain = null;
     [SerializeField] private LayerMask _aimLayer;
 
+    [SerializeField] private float rotationSpeed = 1.5f;
+    [SerializeField] private float recoilRecoverSpeed = 10f;
+
+    private float recoilY = 0f;
+    private float _targetPitch = 0f;
+
     private static CameraManager _singleton = null;
 
 
@@ -42,7 +48,22 @@ public class CameraManager : MonoBehaviour
     private void Update()
     {
         _aimingCamera.gameObject.SetActive(_aiming);
+
+        float mouseY = Input.GetAxis("Mouse Y");
+
+        if (recoilY > 0)
+        {
+            mouseY -= recoilY;
+            recoilY = Mathf.MoveTowards(recoilY, 0f, recoilRecoverSpeed * Time.deltaTime);
+        }
+
+        _targetPitch += mouseY * rotationSpeed;
+        _targetPitch = Mathf.Clamp(_targetPitch, -80f, 80f); // 시야 제한
+
+        transform.localEulerAngles = new Vector3(_targetPitch, transform.localEulerAngles.y, 0f);
+
         SetAimTarget();
+
     }
     private void SetAimTarget()
     {
@@ -55,6 +76,10 @@ public class CameraManager : MonoBehaviour
         {
             _aimTargetPiont = ray.GetPoint(1000);
         }
+    }
+    public void ApplyRecoil(float amount)
+    {
+        recoilY += amount;
     }
 
 #if UNITY_EDITOR
