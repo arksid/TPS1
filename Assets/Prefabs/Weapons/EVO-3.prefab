@@ -81,15 +81,8 @@ MonoBehaviour:
   _id: EVO-3
   _type: 2
   _ammoID: 9mm
-<<<<<<< Updated upstream
   _damage: 30
   _fireRate: 0.05
-=======
-  _damage: 5
-  _rpm: 850
-  _fireRate: 0
-  _verticalRecoil: 10
->>>>>>> Stashed changes
   _clipSize: 40
   _handKick: 10
   _bodyKick: 10

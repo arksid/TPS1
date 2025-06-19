@@ -68,16 +68,7 @@ public class Projectile : MonoBehaviour
         EnemyController enemy = collision.transform.GetComponentInParent<EnemyController>();
         if (enemy != null && shooter != enemy.gameObject)
         {
-<<<<<<< Updated upstream
             enemy.TakeDamage(damage);
-=======
-            character.ApplyDamage(_shooter,collision.transform, _damage);   
-        }
-        else if (_defaultImpact != null)
-        {
-            Transform impact = Instantiate(_defaultImpact, collision.contacts[0].point, Quaternion.FromToRotation(Vector3.up, collision.contacts[0].normal));
-            Destroy(impact.gameObject, 3f);
->>>>>>> Stashed changes
         }
 
         Destroy(gameObject);

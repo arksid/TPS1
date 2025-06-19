@@ -7,12 +7,8 @@ public class Character : MonoBehaviour
 {
     [SerializeField] private MonoBehaviour[] scriptsToDisableOnDeath;
     [SerializeField] private Transform _weaponHolder = null;
-<<<<<<< Updated upstream
     [SerializeField] private int _health;
     [SerializeField] public int MaxHealth = 100;
-=======
-    [SerializeField] private int _health = 200;
->>>>>>> Stashed changes
 
     private Weapon _weapon = null; public Weapon weapon { get { return _weapon; } }
     private Ammo _ammo = null; public Ammo ammo { get { return _ammo; } }
@@ -29,11 +25,7 @@ public class Character : MonoBehaviour
     {
         _rigManager = GetComponent<RigManager>();
         _animator = GetComponent<Animator>();
-<<<<<<< Updated upstream
         Initialized(new Dictionary<string, int> { { "HK416", 1 },{ "K-2", 1 } ,{ "KG-9", 1 },{ "9mm", 1000 } });
-=======
-        Initialized(new Dictionary<string, int> { { "EVO-3",1 }, { "Colt 9mm", 1 },{ "9mm", 1000 } });
->>>>>>> Stashed changes
 
     }
 
