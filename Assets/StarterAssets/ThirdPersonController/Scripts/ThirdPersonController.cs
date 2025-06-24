@@ -235,36 +235,59 @@ namespace StarterAssets
             _animator.SetFloat("Speed_Y", _aimedMovingAnimtionsInput.y);
 
 
-            
 
 
-            if (_input.shoot && armed && !_character.reloading && _aiming && _character.weapon.Shoot(_character,CameraManager.singleton.aimTargetPiont))
+
+        
+
+            // 사격 로직
+            if (armed && !_character.reloading && _aiming)
             {
-               _rigManager.ApplyWeaponKick(_character.weapon.handKick, _character.weapon.bodyKick);
+                var weapon = _character.weapon;
 
-
-
+                if (weapon.fireMode == Weapon.FireMode.SemiAuto)
+                {
+                    if (_input.shoot) // 클릭한 프레임에만 발사
+                    {
+                        _character.weapon.StartFiring(_character, () => CameraManager.singleton.aimTargetPiont, this);
+                        _input.shoot = false; // 클릭 한 번만 처리
+                        _rigManager.ApplyWeaponKick(weapon.handKick, weapon.bodyKick);
+                    }
+                }
+                else if (weapon.fireMode == Weapon.FireMode.Burst || weapon.fireMode == Weapon.FireMode.FullAuto)
+                {
+                    if (_input.shoot)
+                    {
+                        _character.weapon.StartFiring(_character, () => CameraManager.singleton.aimTargetPiont, this);
+                    }
+                    else
+                    {
+                        weapon.StopFiring();
+                    }
+                }
             }
 
             if (_input.reload && !_character.reloading)
             {
                 _input.reload = false;
+                _character.weapon?.StopFiring(); // 발사 중단
                 _character.Reload();
             }
+
             if (_input.switchToPrimary)
             {
                 _input.switchToPrimary = false;
-                SwitchWeaponByIndex(0);
+                TryEquipWeaponBySlot(0); // 1번 슬롯: 주무기
             }
             else if (_input.switchToSecondary)
             {
                 _input.switchToSecondary = false;
-                SwitchWeaponByIndex(1);
+                TryEquipWeaponBySlot(1); // 2번 슬롯: 주무기
             }
-            else if (_input.switchToThird) // 3번 무기 전환
+            else if (_input.switchToThird)
             {
                 _input.switchToThird = false;
-                SwitchWeaponByIndex(2);
+                TryEquipWeaponBySlot(2); // 3번 슬롯: 보조무기
             }
 
             if (_isRolling) return;
@@ -272,24 +295,19 @@ namespace StarterAssets
             Move();
             Rotate();
         }
-        private void SwitchWeaponByIndex(int index)
+        private void TryEquipWeaponBySlot(int slotIndex)
         {
-            int weaponCount = 0;
-            for (int i = 0; i < _character.weaponItems.Count; i++)
+            Weapon weapon = _character.GetWeaponBySlotIndex(slotIndex);
+            if (weapon != null)
             {
-                if (_character.weaponItems[i] != null && _character.weaponItems[i] is Weapon)
-                {
-                    if (weaponCount == index)
-                    {
-                        Debug.Log($"Switching to weapon at index {index}");
-                        _character.EquipWeapon((Weapon)_character.weaponItems[i]);
-                        break;
-                    }
-                    weaponCount++;
-                }
+                _character.EquipWeapon(weapon);
+            }
+            else
+            {
+                Debug.LogWarning($"슬롯 {slotIndex + 1}에 장비 가능한 무기가 없습니다.");
             }
         }
-    
+
 
         private void Rotate()
         {

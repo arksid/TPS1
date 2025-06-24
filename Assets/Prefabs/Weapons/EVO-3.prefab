@@ -80,10 +80,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: EVO-3
   _type: 2
+  _fireMode: 2
   _ammoID: 9mm
   _damage: 30
   _fireRate: 0.05
   _clipSize: 40
+  _burstCount: 3
+  _burstInterval: 0.1
   _handKick: 10
   _bodyKick: 10
   _leftHandPosition: {x: 0.0067, y: 0.2237, z: -0.0844}
