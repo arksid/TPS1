@@ -1,59 +1,120 @@
-using System.Collections;
-using System.Collections.Generic;
+// RigManager.cs
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
+
 public class RigManager : MonoBehaviour
 {
+    [Header("Aim / Hand Weights (driven by controller)")]
+    public Transform aimTarget;
+    public float aimWeight;          // 에임 리그 가중치 (리그 그래프가 이 값을 사용)
+    public float leftHandWeight;     // 왼손(그립) 리그 가중치
 
-    [SerializeField] private MultiAimConstraint _rightHand = null;
-    [SerializeField] private TwoBoneIKConstraint _lefthand = null;
-    [SerializeField] private MultiAimConstraint _body = null;
-    [SerializeField] private Transform _aimTarget = null;
-    [SerializeField] private Vector3 _weaponHandKickDirection = new Vector3(0, 0.5f, -1);
-    [SerializeField] private Vector3 _weaponBodyKickDirection = new Vector3(0, 0.5f, -1);
-    public Vector3 aimTarget { set { _aimTarget.position = value; } }
+    [Header("Left Arm IK (TwoBone)")]
+    public TwoBoneIKConstraint leftArmIK; // CombatRig/LeftArmIK
+    public float leftArmWeight = 0f;      // 왼팔 전체 고정 가중치
 
-    public float leftHandWeight { set { _lefthand.weight = value; } }
+    [Header("Auto Elbow Hint (when Weapon has no hint)")]
+    public bool enableAutoElbowHint = true;
+    [Tooltip("어깨→손 타깃 방향 전진 배수(팔 길이 기준)")]
+    public float autoHintForward = 0.75f;
+    [Tooltip("옆 방향 오프셋 배수(팔 길이 기준)")]
+    public float autoHintSide = 0.5f;
+    [Tooltip("자동 힌트의 기준 위벡터")]
+    public Vector3 autoHintUp = Vector3.up;
 
-    public float aimWeight { set { _rightHand.weight = value; _body.weight = value; } }
+    // 기존 프로젝트 호환용(왼손 리그 데이터)
+    private Transform _leftHandTarget;
+    private Transform _leftHandRotationRef;
 
+    // 자동 힌트 캐시
+    private Transform _autoElbowHint;
 
-    private Vector3 _originalRightHandOffsetPosition = Vector3.zero;
-    private Vector3 _originalBodyOffsetPosition = Vector3.zero;
-
-    private void Awake()
+    /// <summary>기존 API 호환: 왼손 그립(Transform 2개)</summary>
+    public void SetLeftHandGrioData(Transform leftHandTarget, Transform leftHandRotation)
     {
-        _originalRightHandOffsetPosition = _rightHand.data.offset;
-        _originalBodyOffsetPosition = _body.data.offset;
+        _leftHandTarget = leftHandTarget;
+        _leftHandRotationRef = leftHandRotation;
+        // 실제 왼손 리그(멀티 레퍼런스/멀티 에임 등)는 에디터에서 leftHandWeight를 참조하도록 구성
     }
-    public void SetLeftHandGrioData(Vector3 position, Vector3 rotation)
+
+    /// <summary>무기 장착 시 왼팔 IK 타깃/힌트 갱신(힌트 null 허용)</summary>
+    public void SetLeftArmTargets(Transform handTarget, Transform elbowHint)
     {
-        if(_lefthand.data.target != null)
+        if (leftArmIK == null) return;
+
+        var data = leftArmIK.data;
+        if (handTarget != null) data.target = handTarget;
+
+        if (elbowHint != null)
         {
-            _lefthand.data.target.localPosition = position;
-            _lefthand.data.target.localEulerAngles = rotation;
+            data.hint = elbowHint;
         }
-        
-    }
-    public void ApplyWeaponKick(float hand, float body)
-    {
-        Transform owner = transform;
-
-        Vector3 localHandKick = owner.TransformDirection(_weaponHandKickDirection * hand);
-        Vector3 localBodyKick = owner.TransformDirection(_weaponBodyKickDirection * body);
-
-        _rightHand.data.offset = _originalRightHandOffsetPosition + localHandKick;
-        _body.data.offset = _originalBodyOffsetPosition + localBodyKick;
-    }
-    private void Update()
-    {
-        if(_rightHand.data.offset != _originalRightHandOffsetPosition)
+        else
         {
-            _rightHand.data.offset = Vector3.Lerp(_rightHand.data.offset,_originalRightHandOffsetPosition, 10f * Time.deltaTime);
+            if (enableAutoElbowHint)
+            {
+                EnsureAutoElbowHintExists();
+                UpdateAutoElbowHintPosition(handTarget);
+                data.hint = _autoElbowHint;
+            }
+            else
+            {
+                data.hint = null;
+            }
         }
-        if (_body.data.offset != _originalBodyOffsetPosition)
+
+        leftArmIK.data = data;
+    }
+
+    private void LateUpdate()
+    {
+        if (leftArmIK != null)
+            leftArmIK.weight = leftArmWeight;
+
+        // 자동 힌트 활성 시, 손 타깃 이동에 맞춰 힌트 동기화
+        if (enableAutoElbowHint && _autoElbowHint != null && leftArmIK != null)
         {
-            _body.data.offset = Vector3.Lerp(_body.data.offset, _originalBodyOffsetPosition, 10f * Time.deltaTime);
+            UpdateAutoElbowHintPosition(leftArmIK.data.target);
         }
     }
+
+    private void EnsureAutoElbowHintExists()
+    {
+        if (_autoElbowHint != null) return;
+
+        var go = new GameObject("AutoElbowHint_L");
+        go.transform.SetParent(leftArmIK != null ? leftArmIK.transform : transform, worldPositionStays: false);
+        _autoElbowHint = go.transform;
+    }
+
+    private void UpdateAutoElbowHintPosition(Transform handTarget)
+    {
+        if (leftArmIK == null || handTarget == null) return;
+
+        var data = leftArmIK.data;
+        var root = data.root; // UpperArm(L)
+        var mid = data.mid;  // LowerArm(L)
+        var tip = data.tip;  // Hand(L)
+        if (root == null || mid == null || tip == null) return;
+
+        Vector3 rootPos = root.position;
+        Vector3 midPos = mid.position;
+        Vector3 tipTargetPos = handTarget.position;
+
+        float upperLen = Vector3.Distance(rootPos, midPos);
+        float fwdDist = Mathf.Max(0.01f, upperLen * Mathf.Abs(autoHintForward));
+        float sideDist = Mathf.Max(0.00f, upperLen * Mathf.Abs(autoHintSide));
+
+        Vector3 dir = (tipTargetPos - rootPos).normalized;
+        Vector3 up = autoHintUp.sqrMagnitude > 0.001f ? autoHintUp.normalized : Vector3.up;
+        Vector3 side = Vector3.Cross(up, dir).normalized;
+
+        Vector3 hintPos = rootPos + dir * fwdDist + side * sideDist;
+
+        _autoElbowHint.position = hintPos;
+        _autoElbowHint.rotation = Quaternion.LookRotation(dir, up);
+    }
+
+    // 반동 훅(프로젝트 맞게 구현)
+    public void ApplyWeaponKick(float handKick, float bodyKick) { /* Camera recoil etc. */ }
 }

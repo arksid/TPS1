@@ -5671,6 +5671,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 6470422239647905689, guid: 0289f982c54709c43b51cf436cda4f7a,
+        type: 3}
+      propertyPath: m_Weight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7266435798642757542, guid: 0289f982c54709c43b51cf436cda4f7a,
+        type: 3}
+      propertyPath: m_Data.m_MaintainTargetPositionOffset
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7266435798642757542, guid: 0289f982c54709c43b51cf436cda4f7a,
+        type: 3}
+      propertyPath: m_Data.m_MaintainTargetRotationOffset
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8092356008001768333, guid: 0289f982c54709c43b51cf436cda4f7a,
         type: 3}
       propertyPath: _health
