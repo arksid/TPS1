@@ -172,7 +172,7 @@ namespace StarterAssets
             {
                 _character.weapon?.StopFiring();
                 _input.shoot = false;
-                UpdateCrosshairUI(); // 구르기 중에도 UI는 갱신
+                UpdateCrosshairUI();
                 return;
             }
 
@@ -184,7 +184,6 @@ namespace StarterAssets
 
             HandleShooting();
 
-            // === 크로스헤어 UI 갱신 ===
             UpdateCrosshairUI();
         }
 
@@ -321,13 +320,16 @@ namespace StarterAssets
                 return;
             }
 
+            // 🔁 모든 발사모드 공통: 카메라 보정 타겟 사용
+            Func<Vector3> getFinalTarget = () => CameraManager.singleton.GetFinalAimPoint(weapon.muzzle);
+
             if (weapon.fireMode == Weapon.FireMode.SemiAuto)
             {
                 if (_input.shoot)
                 {
                     weapon.StartFiring(
                         _character,
-                        () => CameraManager.singleton.aimTargetPiont,
+                        getFinalTarget,
                         this,
                         () => _aiming,
                         () => _input.move.magnitude,
@@ -343,7 +345,7 @@ namespace StarterAssets
                 {
                     weapon.StartFiring(
                         _character,
-                        () => CameraManager.singleton.aimTargetPiont,
+                        getFinalTarget,
                         this,
                         () => _aiming,
                         () => _input.move.magnitude,
@@ -357,7 +359,7 @@ namespace StarterAssets
             }
         }
 
-        // ===== 크로스헤어 UI 갱신 =====
+        // === 크로스헤어 UI 갱신 ===
         private void UpdateCrosshairUI()
         {
             var w = _character != null ? _character.weapon : null;
