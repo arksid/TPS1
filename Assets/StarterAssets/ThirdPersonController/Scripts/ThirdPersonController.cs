@@ -21,11 +21,9 @@ namespace StarterAssets
 
         public float AimRotationSpeed = 20f;
 
-        [Tooltip("How fast the character turns to face movement direction")]
         [Range(0.0f, 0.3f)]
         public float RotationSmoothTime = 0.12f;
 
-        [Tooltip("Acceleration and deceleration")]
         public float SpeedChangeRate = 10.0f;
 
         public AudioClip LandingAudioClip;
@@ -33,30 +31,17 @@ namespace StarterAssets
         [Range(0, 1)] public float FootstepAudioVolume = 0.5f;
 
         [Space(10)]
-        [Tooltip("The height the player can jump")]
         public float JumpHeight = 1.2f;
-
-        [Tooltip("The character uses its own gravity value. The engine default is -9.81f")]
         public float Gravity = -15.0f;
 
         [Space(10)]
-        [Tooltip("Time required to pass before being able to jump again. Set to 0f to instantly jump again")]
         public float JumpTimeout = 0.50f;
-
-        [Tooltip("Time required to pass before entering the fall state. Useful for walking down stairs")]
         public float FallTimeout = 0.15f;
 
         [Header("Player Grounded")]
-        [Tooltip("If the character is grounded or not. Not part of the CharacterController built in grounded check")]
         public bool Grounded = true;
-
-        [Tooltip("Useful for rough ground")]
         public float GroundedOffset = -0.14f;
-
-        [Tooltip("The radius of the grounded check. Should match the radius of the CharacterController")]
         public float GroundedRadius = 0.28f;
-
-        [Tooltip("What layers the character uses as ground")]
         public LayerMask GroundLayers;
 
         [Header("Cinemachine")]
@@ -66,11 +51,9 @@ namespace StarterAssets
         public float CameraAngleOverride = 0.0f;
         public bool LockCameraPosition = false;
 
-        // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
 
-        // player
         private float _speed;
         private float _animationBlend;
         private float _targetRotation = 0.0f;
@@ -78,7 +61,6 @@ namespace StarterAssets
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
 
-        // timeout deltatime
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
 
@@ -95,7 +77,6 @@ namespace StarterAssets
         private bool _isInvincible = false;
         public float InvincibleDuration = 0.4f;
 
-        // animation IDs
         private int _animIDSpeed;
         private int _animIDGrounded;
         private int _animIDJump;
@@ -139,7 +120,6 @@ namespace StarterAssets
             }
         }
 
-        // --- Convenience predicates ---
         private bool Armed => _character != null && _character.weapon != null;
         private bool CanAim => _input != null && _input.canAim;
         private bool CanFire => Armed && _aiming && !_character.reloading && !_isRolling;
@@ -177,45 +157,41 @@ namespace StarterAssets
 
         private void Update()
         {
-            // Cache frequently used flags
             _hasAnimator = TryGetComponent(out _animator);
             _aiming = _input.aim && CanAim;
             _sprinting = _input.sprint && !_aiming;
 
-            // Core simulation
             JumpAndGravity();
             GroundedCheck();
 
-            // Per-frame systems
             HandleCameraAimingAndLayers();
             HandleWalkToggle();
             UpdateTargetSpeedAndAnimationMultiplier();
 
-            // === 구르기 중 강제 정지(핵심 추가) ===
             if (_isRolling)
             {
-                _character.weapon?.StopFiring(); // 자동사격/버스트 즉시 중단
-                _input.shoot = false;            // 잔여 입력 소거
-                return;                          // 이동/회전/사격 모두 차단
+                _character.weapon?.StopFiring();
+                _input.shoot = false;
+                UpdateCrosshairUI(); // 구르기 중에도 UI는 갱신
+                return;
             }
 
             Move();
             Rotate();
 
-            // 입력 기반 행위
             HandleReloadInput();
             HandleWeaponSlotInputs();
 
-            // 단일 사격 처리 진입점
             HandleShooting();
+
+            // === 크로스헤어 UI 갱신 ===
+            UpdateCrosshairUI();
         }
 
         private void LateUpdate()
         {
             CameraRotation();
         }
-
-        #region Setup & Utility
 
         private void AssignAnimationIDs()
         {
@@ -232,10 +208,6 @@ namespace StarterAssets
             if (lfAngle > 360f) lfAngle -= 360f;
             return Mathf.Clamp(lfAngle, lfMin, lfMax);
         }
-
-        #endregion
-
-        #region High-level Handlers
 
         private void HandleCameraAimingAndLayers()
         {
@@ -314,7 +286,7 @@ namespace StarterAssets
             if (_input.reload && !_character.reloading)
             {
                 _input.reload = false;
-                _character.weapon?.StopFiring(); // 재장전 시 즉시 발사 중단
+                _character.weapon?.StopFiring();
                 _character.Reload();
             }
         }
@@ -342,21 +314,26 @@ namespace StarterAssets
         {
             var weapon = _character.weapon;
 
-            // 조준이 아니면 항상 발사 중단(풀오토 안전장치)
             if (!CanFire)
             {
                 weapon?.StopFiring();
-                _input.shoot = false; // 세미오토 잔여 입력 제거
+                _input.shoot = false;
                 return;
             }
 
-            // 조준 + 무기 존재 + 재장전 아님 + 구르기 아님 → 발사 허용
             if (weapon.fireMode == Weapon.FireMode.SemiAuto)
             {
                 if (_input.shoot)
                 {
-                    weapon.StartFiring(_character, () => CameraManager.singleton.aimTargetPiont, this);
-                    _input.shoot = false; // 단발 입력 소비
+                    weapon.StartFiring(
+                        _character,
+                        () => CameraManager.singleton.aimTargetPiont,
+                        this,
+                        () => _aiming,
+                        () => _input.move.magnitude,
+                        () => _sprinting
+                    );
+                    _input.shoot = false;
                     _rigManager.ApplyWeaponKick(weapon.handKick, weapon.bodyKick);
                 }
             }
@@ -364,7 +341,14 @@ namespace StarterAssets
             {
                 if (_input.shoot)
                 {
-                    weapon.StartFiring(_character, () => CameraManager.singleton.aimTargetPiont, this);
+                    weapon.StartFiring(
+                        _character,
+                        () => CameraManager.singleton.aimTargetPiont,
+                        this,
+                        () => _aiming,
+                        () => _input.move.magnitude,
+                        () => _sprinting
+                    );
                 }
                 else
                 {
@@ -373,9 +357,20 @@ namespace StarterAssets
             }
         }
 
-        #endregion
+        // ===== 크로스헤어 UI 갱신 =====
+        private void UpdateCrosshairUI()
+        {
+            var w = _character != null ? _character.weapon : null;
+            bool visible = w != null;
+            float degrees = 0f;
 
-        #region Movement / Rotation / Camera
+            if (w != null)
+            {
+                degrees = w.VisualSpreadDeg(_aiming, _input.move.magnitude, _sprinting);
+            }
+
+            CanvasManager.singleton?.UpdateCrosshair(degrees, _aiming, visible);
+        }
 
         private void Move()
         {
@@ -405,7 +400,7 @@ namespace StarterAssets
                 _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + _mainCamera.transform.eulerAngles.y;
                 float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity, RotationSmoothTime);
 
-                if (!_aiming) // 비조준 시 이동 방향으로 회전
+                if (!_aiming)
                 {
                     transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
                 }
@@ -454,10 +449,6 @@ namespace StarterAssets
                 _cinemachineTargetPitch + CameraAngleOverride, _cinemachineTargetYaw, 0.0f
             );
         }
-
-        #endregion
-
-        #region Ground / Jump / Gravity
 
         private void GroundedCheck()
         {
@@ -527,10 +518,6 @@ namespace StarterAssets
             }
         }
 
-        #endregion
-
-        #region Roll
-
         private void HandleSprintKeyPressed()
         {
             if (!Grounded) return;
@@ -550,11 +537,9 @@ namespace StarterAssets
         {
             _isRolling = true;
 
-            // === 롤 시작 즉시 발사 차단(핵심 추가) ===
             _character.weapon?.StopFiring();
             _input.shoot = false;
 
-            // 방향 계산
             Vector2 moveInput = _input.move;
             Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y);
 
@@ -573,19 +558,16 @@ namespace StarterAssets
                 transform.rotation = Quaternion.LookRotation(rollDirection);
             }
 
-            // 조준 해제 및 차단
             _input.aim = false;
             _input.canAim = false;
             CameraManager.singleton.aiming = false;
 
-            // 무적
             _isInvincible = true;
             _character.isInvincible = true;
             Invoke(nameof(EndInvincibility), InvincibleDuration);
 
             _animator.SetTrigger(rollHash);
 
-            // 실제 이동
             float timer = 0f;
             while (timer < RollDuration)
             {
@@ -604,10 +586,6 @@ namespace StarterAssets
             _character.isInvincible = false;
         }
 
-        #endregion
-
-        #region Weapons
-
         private void TryEquipWeaponBySlot(int slotIndex)
         {
             Weapon weapon = _character.GetWeaponBySlotIndex(slotIndex);
@@ -620,10 +598,6 @@ namespace StarterAssets
                 Debug.LogWarning($"슬롯 {slotIndex + 1}에 장비 가능한 무기가 없습니다.");
             }
         }
-
-        #endregion
-
-        #region Gizmos / Audio Events
 
         private void OnDrawGizmosSelected()
         {
@@ -657,7 +631,5 @@ namespace StarterAssets
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
             }
         }
-
-        #endregion
     }
 }

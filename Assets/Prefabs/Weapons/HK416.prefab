@@ -82,6 +82,7 @@ MonoBehaviour:
   _id: HK416
   _type: 2
   _fireMode: 2
+  _category: 0
   _ammoID: 9mm
   _damage: 50
   _fireRate: 0.05
@@ -98,6 +99,14 @@ MonoBehaviour:
   _flash: {fileID: 2048064469067572148}
   _projectile: {fileID: 3376531310972393195, guid: bb1eae606ce4c8d4cb589dc255477dd5,
     type: 3}
+  _spreadPreset: {fileID: 11400000, guid: 2c729c1075cc546428c9c5f3c57b4d49, type: 2}
+  _hipFireSpread: 3
+  _aimSpread: 1
+  _moveSpread: 2
+  _sprintSpread: 6
+  _bloomPerShot: 0.3
+  _bloomDecayPerSec: 2
+  _maxBloom: 5
 --- !u!1 &5852047493590396901
 GameObject:
   m_ObjectHideFlags: 0

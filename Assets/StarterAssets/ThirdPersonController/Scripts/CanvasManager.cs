@@ -11,6 +11,9 @@ public class CanvasManager : MonoBehaviour
     public TMP_Text weaponNameText;
     public TMP_Text ammoText;
 
+    [Header("Crosshair")]
+    [SerializeField] private CrosshairController crosshair; // ★ 추가
+
     public static CanvasManager singleton;
 
     private void Awake()
@@ -44,5 +47,24 @@ public class CanvasManager : MonoBehaviour
     {
         if (ammoText != null)
             ammoText.text = $"{current} / {total}";
+    }
+
+    // ★ 신규: 크로스헤어 갱신 (degrees = 무기 총 퍼짐)
+    public void UpdateCrosshair(float degrees, bool aiming, bool visible)
+    {
+        if (crosshair != null)
+        {
+            // aimUI가 있다면 함께 표시 상태 동기화(선택)
+            if (aimUI != null && aimUI.activeSelf != visible)
+                aimUI.SetActive(visible);
+
+            crosshair.SetSpreadDegrees(degrees, aiming, visible);
+        }
+        else
+        {
+            // fallback: aimUI만 on/off
+            if (aimUI != null)
+                aimUI.SetActive(visible);
+        }
     }
 }
