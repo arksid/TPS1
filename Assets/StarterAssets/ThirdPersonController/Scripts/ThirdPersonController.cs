@@ -6,9 +6,6 @@ using UnityEngine.InputSystem;
 using UnityEngine.TextCore.Text;
 #endif
 
-/* Note: animations are called via the controller for both the character and capsule using animator null checks
- */
-
 namespace StarterAssets
 {
     [RequireComponent(typeof(CharacterController))]
@@ -17,8 +14,6 @@ namespace StarterAssets
 #endif
     public class ThirdPersonController : MonoBehaviour
     {
-        
-
         [Header("Player")]
         public float WalkSpeed = 2.0f;
         public float RunSpeed = 4f;
@@ -65,19 +60,10 @@ namespace StarterAssets
         public LayerMask GroundLayers;
 
         [Header("Cinemachine")]
-        [Tooltip("The follow target set in the Cinemachine Virtual Camera that the camera will follow")]
         public GameObject CinemachineCameraTarget;
-
-        [Tooltip("How far in degrees can you move the camera up")]
         public float TopClamp = 70.0f;
-
-        [Tooltip("How far in degrees can you move the camera down")]
         public float BottomClamp = -30.0f;
-
-        [Tooltip("Additional degress to override the camera. Useful for fine tuning camera position when locked")]
         public float CameraAngleOverride = 0.0f;
-
-        [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
         // cinemachine
@@ -100,14 +86,14 @@ namespace StarterAssets
         private float _lastRollTime = -10f;
         private float _lastSprintKeyTime = -1f;
 
+        [Header("Roll")]
         public float RollCooldown = 1f;
         public float RollDuration = 0.6f;
         public float RollSpeed = 6f;
 
-        private int rollHash; // 애니메이션 트리거
+        private int rollHash;
         private bool _isInvincible = false;
         public float InvincibleDuration = 0.4f;
-
 
         // animation IDs
         private int _animIDSpeed;
@@ -140,6 +126,7 @@ namespace StarterAssets
         private Vector2 _aimedMovingAnimtionsInput = Vector2.zero;
         private float aimRigWieght = 0;
         private float leftHandWeight = 0;
+
         private bool IsCurrentDeviceMouse
         {
             get
@@ -147,20 +134,24 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM
                 return _playerInput.currentControlScheme == "KeyboardMouse";
 #else
-				return false;
+                return false;
 #endif
             }
         }
 
+        // --- Convenience predicates ---
+        private bool Armed => _character != null && _character.weapon != null;
+        private bool CanAim => _input != null && _input.canAim;
+        private bool CanFire => Armed && _aiming && !_character.reloading && !_isRolling;
 
         private void Awake()
         {
             _rigManager = GetComponent<RigManager>();
             _character = GetComponent<Character>();
+
             _mainCamera = CameraManager.maincamera.gameObject;
             CameraManager.playerCamera.m_Follow = CinemachineCameraTarget.transform;
             CameraManager.aimingCamera.m_Follow = CinemachineCameraTarget.transform;
-
         }
 
         private void Start()
@@ -172,50 +163,127 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
 #else
-			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
+            Debug.LogError("Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
 
             AssignAnimationIDs();
 
-            // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
+
             _input.OnSprintKeyPressed += HandleSprintKeyPressed;
             rollHash = Animator.StringToHash("Roll");
         }
 
         private void Update()
         {
-            bool armed = _character.weapon != null;
-
-            _aiming = _input.aim;
-            _sprinting = _input.sprint && _aiming == false;
-
+            // Cache frequently used flags
             _hasAnimator = TryGetComponent(out _animator);
+            _aiming = _input.aim && CanAim;
+            _sprinting = _input.sprint && !_aiming;
 
+            // Core simulation
             JumpAndGravity();
             GroundedCheck();
-            CameraManager.singleton.aiming = _aiming;
-            _animator.SetFloat("Armed", armed ? 1f : 0f);
-            _animator.SetFloat("Aimed", _input.aim ? 1f : 0f);
 
-            _aimLayerWieght = Mathf.Lerp(_aimLayerWieght, _character.switchingWeapon || (armed && (_aiming || _character.reloading)) ? 1f : 0f, 10 * Time.deltaTime);
+            // Per-frame systems
+            HandleCameraAimingAndLayers();
+            HandleWalkToggle();
+            UpdateTargetSpeedAndAnimationMultiplier();
+
+            // === 구르기 중 강제 정지(핵심 추가) ===
+            if (_isRolling)
+            {
+                _character.weapon?.StopFiring(); // 자동사격/버스트 즉시 중단
+                _input.shoot = false;            // 잔여 입력 소거
+                return;                          // 이동/회전/사격 모두 차단
+            }
+
+            Move();
+            Rotate();
+
+            // 입력 기반 행위
+            HandleReloadInput();
+            HandleWeaponSlotInputs();
+
+            // 단일 사격 처리 진입점
+            HandleShooting();
+        }
+
+        private void LateUpdate()
+        {
+            CameraRotation();
+        }
+
+        #region Setup & Utility
+
+        private void AssignAnimationIDs()
+        {
+            _animIDSpeed = Animator.StringToHash("Speed");
+            _animIDGrounded = Animator.StringToHash("Grounded");
+            _animIDJump = Animator.StringToHash("Jump");
+            _animIDFreeFall = Animator.StringToHash("FreeFall");
+            _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
+        }
+
+        private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
+        {
+            if (lfAngle < -360f) lfAngle += 360f;
+            if (lfAngle > 360f) lfAngle -= 360f;
+            return Mathf.Clamp(lfAngle, lfMin, lfMax);
+        }
+
+        #endregion
+
+        #region High-level Handlers
+
+        private void HandleCameraAimingAndLayers()
+        {
+            CameraManager.singleton.aiming = _aiming;
+
+            bool armed = Armed;
+            _animator.SetFloat("Armed", armed ? 1f : 0f);
+            _animator.SetFloat("Aimed", _aiming ? 1f : 0f);
+
+            _aimLayerWieght = Mathf.Lerp(
+                _aimLayerWieght,
+                _character.switchingWeapon || (armed && (_aiming || _character.reloading)) ? 1f : 0f,
+                10f * Time.deltaTime
+            );
             _animator.SetLayerWeight(1, _aimLayerWieght);
 
-            aimRigWieght = Mathf.Lerp(aimRigWieght, armed && _aiming &&  !_character.reloading ? 1f : 0f, 10f * Time.deltaTime);
-            leftHandWeight = Mathf.Lerp(leftHandWeight, armed&& _character.switchingWeapon == false && !_character.reloading && (_aiming || (_controller.isGrounded && _character.weapon.type == Weapon.Handle.TwoHanded))  ? 1f : 0f, 10f * Time.deltaTime);
+            aimRigWieght = Mathf.Lerp(
+                aimRigWieght,
+                armed && _aiming && !_character.reloading ? 1f : 0f,
+                10f * Time.deltaTime
+            );
 
+            leftHandWeight = Mathf.Lerp(
+                leftHandWeight,
+                armed && !_character.switchingWeapon && !_character.reloading &&
+                (_aiming || (_controller.isGrounded && _character.weapon.type == Weapon.Handle.TwoHanded))
+                    ? 1f : 0f,
+                10f * Time.deltaTime
+            );
 
             _rigManager.aimTarget = CameraManager.singleton.aimTargetPiont;
             _rigManager.aimWeight = aimRigWieght;
             _rigManager.leftHandWeight = leftHandWeight;
+        }
 
+        private void HandleWalkToggle()
+        {
             if (_input.walk)
             {
                 _input.walk = false;
                 _walking = !_walking;
             }
+        }
+
+        private void UpdateTargetSpeedAndAnimationMultiplier()
+        {
             targetSpeed = RunSpeed;
+
             if (_sprinting)
             {
                 targetSpeed = SprintSpeed;
@@ -230,170 +298,96 @@ namespace StarterAssets
             {
                 _speedAnimationMultiplier = 2;
             }
-            _aimedMovingAnimtionsInput = Vector2.Lerp(_aimedMovingAnimtionsInput, _input.move.normalized * _speedAnimationMultiplier,SpeedChangeRate * Time.deltaTime);
+
+            _aimedMovingAnimtionsInput = Vector2.Lerp(
+                _aimedMovingAnimtionsInput,
+                _input.move.normalized * _speedAnimationMultiplier,
+                SpeedChangeRate * Time.deltaTime
+            );
+
             _animator.SetFloat("Speed_X", _aimedMovingAnimtionsInput.x);
             _animator.SetFloat("Speed_Y", _aimedMovingAnimtionsInput.y);
+        }
 
-
-
-
-
-        
-
-            // 사격 로직
-            if (armed && !_character.reloading && _aiming)
-            {
-                var weapon = _character.weapon;
-
-                if (weapon.fireMode == Weapon.FireMode.SemiAuto)
-                {
-                    if (_input.shoot) // 클릭한 프레임에만 발사
-                    {
-                        _character.weapon.StartFiring(_character, () => CameraManager.singleton.aimTargetPiont, this);
-                        _input.shoot = false; // 클릭 한 번만 처리
-                        _rigManager.ApplyWeaponKick(weapon.handKick, weapon.bodyKick);
-                    }
-                }
-                else if (weapon.fireMode == Weapon.FireMode.Burst || weapon.fireMode == Weapon.FireMode.FullAuto)
-                {
-                    if (_input.shoot)
-                    {
-                        _character.weapon.StartFiring(_character, () => CameraManager.singleton.aimTargetPiont, this);
-                    }
-                    else
-                    {
-                        weapon.StopFiring();
-                    }
-                }
-            }
-
+        private void HandleReloadInput()
+        {
             if (_input.reload && !_character.reloading)
             {
                 _input.reload = false;
-                _character.weapon?.StopFiring(); // 발사 중단
+                _character.weapon?.StopFiring(); // 재장전 시 즉시 발사 중단
                 _character.Reload();
             }
+        }
 
+        private void HandleWeaponSlotInputs()
+        {
             if (_input.switchToPrimary)
             {
                 _input.switchToPrimary = false;
-                TryEquipWeaponBySlot(0); // 1번 슬롯: 주무기
+                TryEquipWeaponBySlot(0);
             }
             else if (_input.switchToSecondary)
             {
                 _input.switchToSecondary = false;
-                TryEquipWeaponBySlot(1); // 2번 슬롯: 주무기
+                TryEquipWeaponBySlot(1);
             }
             else if (_input.switchToThird)
             {
                 _input.switchToThird = false;
-                TryEquipWeaponBySlot(2); // 3번 슬롯: 보조무기
+                TryEquipWeaponBySlot(2);
             }
-
-            if (_isRolling) return;
-
-            Move();
-            Rotate();
         }
-        private void TryEquipWeaponBySlot(int slotIndex)
+
+        private void HandleShooting()
         {
-            Weapon weapon = _character.GetWeaponBySlotIndex(slotIndex);
-            if (weapon != null)
+            var weapon = _character.weapon;
+
+            // 조준이 아니면 항상 발사 중단(풀오토 안전장치)
+            if (!CanFire)
             {
-                _character.EquipWeapon(weapon);
+                weapon?.StopFiring();
+                _input.shoot = false; // 세미오토 잔여 입력 제거
+                return;
             }
-            else
+
+            // 조준 + 무기 존재 + 재장전 아님 + 구르기 아님 → 발사 허용
+            if (weapon.fireMode == Weapon.FireMode.SemiAuto)
             {
-                Debug.LogWarning($"슬롯 {slotIndex + 1}에 장비 가능한 무기가 없습니다.");
+                if (_input.shoot)
+                {
+                    weapon.StartFiring(_character, () => CameraManager.singleton.aimTargetPiont, this);
+                    _input.shoot = false; // 단발 입력 소비
+                    _rigManager.ApplyWeaponKick(weapon.handKick, weapon.bodyKick);
+                }
             }
-        }
-
-
-        private void Rotate()
-        {
-            if(_aiming)
+            else // Burst / FullAuto
             {
-                Vector3 aimTarget = CameraManager.singleton.aimTargetPiont;
-                aimTarget.y = transform.position.y; 
-                Vector3 aimDirection = (aimTarget - transform.position).normalized;
-                transform.forward = Vector3.Lerp(transform.forward, aimDirection, AimRotationSpeed * Time.deltaTime);
-            }
-        }
-        private void LateUpdate()
-        {
-            CameraRotation();
-        }
-
-        private void AssignAnimationIDs()
-        {
-            _animIDSpeed = Animator.StringToHash("Speed");
-            _animIDGrounded = Animator.StringToHash("Grounded");
-            _animIDJump = Animator.StringToHash("Jump");
-            _animIDFreeFall = Animator.StringToHash("FreeFall");
-            _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
-        }
-
-        private void GroundedCheck()
-        {
-            // set sphere position, with offset
-            Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset,
-                transform.position.z);
-            Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers,
-                QueryTriggerInteraction.Ignore);
-
-            // update animator if using character
-            if (_hasAnimator)
-            {
-                _animator.SetBool(_animIDGrounded, Grounded);
+                if (_input.shoot)
+                {
+                    weapon.StartFiring(_character, () => CameraManager.singleton.aimTargetPiont, this);
+                }
+                else
+                {
+                    weapon.StopFiring();
+                }
             }
         }
 
-        private void CameraRotation()
-        {
-            // if there is an input and camera position is not fixed
-            if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
-            {
-                //Don't multiply mouse input by Time.deltaTime;
-                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
+        #endregion
 
-                _cinemachineTargetYaw += _input.look.x * CameraManager.singleton.sensitivity * deltaTimeMultiplier;
-                _cinemachineTargetPitch += _input.look.y * CameraManager.singleton.sensitivity * deltaTimeMultiplier;
-            }
-
-            // clamp our rotations so our values are limited 360 degrees
-            _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
-            _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
-
-            // Cinemachine will follow this target
-            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(_cinemachineTargetPitch + CameraAngleOverride,
-                _cinemachineTargetYaw, 0.0f);
-        }
+        #region Movement / Rotation / Camera
 
         private void Move()
         {
- 
-            // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
-
-            // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is no input, set the target speed to 0
             if (_input.move == Vector2.zero) targetSpeed = 0.0f;
 
-            // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-
             float speedOffset = 0.1f;
             float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
 
-            // accelerate or decelerate to target speed
-            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-                currentHorizontalSpeed > targetSpeed + speedOffset)
+            if (currentHorizontalSpeed < targetSpeed - speedOffset || currentHorizontalSpeed > targetSpeed + speedOffset)
             {
-                // creates curved result rather than a linear one giving a more organic speed change
-                // note T in Lerp is clamped, so we don't need to clamp our speed
-                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-                    Time.deltaTime * SpeedChangeRate);
-
-                // round speed to 3 decimal places
+                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude, Time.deltaTime * SpeedChangeRate);
                 _speed = Mathf.Round(_speed * 1000f) / 1000f;
             }
             else
@@ -404,34 +398,26 @@ namespace StarterAssets
             _animationBlend = Mathf.Lerp(_animationBlend, _input.move == Vector2.zero ? 0 : _speedAnimationMultiplier, Time.deltaTime * SpeedChangeRate);
             if (_animationBlend < 0.01f) _animationBlend = 0f;
 
-            // normalise input direction
             Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
 
-            // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is a move input rotate player when the player is moving
             if (_input.move != Vector2.zero)
             {
-                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-                                  _mainCamera.transform.eulerAngles.y;
-                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                    RotationSmoothTime);
+                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + _mainCamera.transform.eulerAngles.y;
+                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity, RotationSmoothTime);
 
-                // rotate to face input direction relative to camera position
-                if (_aiming == false)
+                if (!_aiming) // 비조준 시 이동 방향으로 회전
                 {
                     transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
                 }
-                   
             }
-
 
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
-            // move the player
-            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
-                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+            _controller.Move(
+                targetDirection.normalized * (_speed * Time.deltaTime) +
+                new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime
+            );
 
-            // update animator if using character
             if (_hasAnimator)
             {
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
@@ -439,40 +425,78 @@ namespace StarterAssets
             }
         }
 
+        private void Rotate()
+        {
+            if (_aiming)
+            {
+                Vector3 aimTarget = CameraManager.singleton.aimTargetPiont;
+                aimTarget.y = transform.position.y;
+
+                Vector3 aimDirection = (aimTarget - transform.position).normalized;
+                transform.forward = Vector3.Lerp(transform.forward, aimDirection, AimRotationSpeed * Time.deltaTime);
+            }
+        }
+
+        private void CameraRotation()
+        {
+            if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
+            {
+                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
+
+                _cinemachineTargetYaw += _input.look.x * CameraManager.singleton.sensitivity * deltaTimeMultiplier;
+                _cinemachineTargetPitch += _input.look.y * CameraManager.singleton.sensitivity * deltaTimeMultiplier;
+            }
+
+            _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
+            _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
+
+            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(
+                _cinemachineTargetPitch + CameraAngleOverride, _cinemachineTargetYaw, 0.0f
+            );
+        }
+
+        #endregion
+
+        #region Ground / Jump / Gravity
+
+        private void GroundedCheck()
+        {
+            Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z);
+            Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers, QueryTriggerInteraction.Ignore);
+
+            if (_hasAnimator)
+            {
+                _animator.SetBool(_animIDGrounded, Grounded);
+            }
+        }
+
         private void JumpAndGravity()
         {
             if (Grounded)
             {
-                // reset the fall timeout timer
                 _fallTimeoutDelta = FallTimeout;
 
-                // update animator if using character
                 if (_hasAnimator)
                 {
                     _animator.SetBool(_animIDJump, false);
                     _animator.SetBool(_animIDFreeFall, false);
                 }
 
-                // stop our velocity dropping infinitely when grounded
                 if (_verticalVelocity < 0.0f)
                 {
                     _verticalVelocity = -2f;
                 }
 
-                // Jump
                 if (_input.jump && _jumpTimeoutDelta <= 0.0f)
                 {
-                    // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
 
-                    // update animator if using character
                     if (_hasAnimator)
                     {
                         _animator.SetBool(_animIDJump, true);
                     }
                 }
 
-                // jump timeout
                 if (_jumpTimeoutDelta >= 0.0f)
                 {
                     _jumpTimeoutDelta -= Time.deltaTime;
@@ -480,36 +504,35 @@ namespace StarterAssets
             }
             else
             {
-                // reset the jump timeout timer
                 _jumpTimeoutDelta = JumpTimeout;
 
-                // fall timeout
                 if (_fallTimeoutDelta >= 0.0f)
                 {
                     _fallTimeoutDelta -= Time.deltaTime;
                 }
                 else
                 {
-                    // update animator if using character
                     if (_hasAnimator)
                     {
                         _animator.SetBool(_animIDFreeFall, true);
                     }
                 }
 
-                // if we are not grounded, do not jump
                 _input.jump = false;
             }
 
-            // apply gravity over time if under terminal (multiply by delta time twice to linearly speed up over time)
             if (_verticalVelocity < _terminalVelocity)
             {
                 _verticalVelocity += Gravity * Time.deltaTime;
             }
         }
+
+        #endregion
+
+        #region Roll
+
         private void HandleSprintKeyPressed()
         {
-            //  공중 상태에서는 구르기 금지
             if (!Grounded) return;
 
             if (Time.time - _lastRollTime > RollCooldown)
@@ -527,7 +550,11 @@ namespace StarterAssets
         {
             _isRolling = true;
 
-            // 1. 방향 계산
+            // === 롤 시작 즉시 발사 차단(핵심 추가) ===
+            _character.weapon?.StopFiring();
+            _input.shoot = false;
+
+            // 방향 계산
             Vector2 moveInput = _input.move;
             Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y);
 
@@ -538,32 +565,27 @@ namespace StarterAssets
             }
             else
             {
-                //  카메라 기준 방향 계산
                 float cameraY = CameraManager.maincamera.transform.eulerAngles.y;
                 Vector3 camForward = Quaternion.Euler(0, cameraY, 0) * Vector3.forward;
                 Vector3 camRight = Quaternion.Euler(0, cameraY, 0) * Vector3.right;
                 rollDirection = (camForward * moveInput.y + camRight * moveInput.x).normalized;
 
-                //  플레이어가 그 방향을 바라보게 회전
                 transform.rotation = Quaternion.LookRotation(rollDirection);
             }
 
-            // 3. 조준 상태 해제
+            // 조준 해제 및 차단
             _input.aim = false;
             _input.canAim = false;
             CameraManager.singleton.aiming = false;
 
-            // 무적 시작
+            // 무적
             _isInvincible = true;
             _character.isInvincible = true;
             Invoke(nameof(EndInvincibility), InvincibleDuration);
 
-            _animator.SetTrigger("Roll");
+            _animator.SetTrigger(rollHash);
 
-            // 4. 애니메이션
-            _animator.SetTrigger("Roll");
-
-            // 5. 실제 이동
+            // 실제 이동
             float timer = 0f;
             while (timer < RollDuration)
             {
@@ -575,30 +597,45 @@ namespace StarterAssets
             _isRolling = false;
             _input.canAim = true;
         }
+
         private void EndInvincibility()
         {
             _isInvincible = false;
             _character.isInvincible = false;
         }
-        private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
+
+        #endregion
+
+        #region Weapons
+
+        private void TryEquipWeaponBySlot(int slotIndex)
         {
-            if (lfAngle < -360f) lfAngle += 360f;
-            if (lfAngle > 360f) lfAngle -= 360f;
-            return Mathf.Clamp(lfAngle, lfMin, lfMax);
+            Weapon weapon = _character.GetWeaponBySlotIndex(slotIndex);
+            if (weapon != null)
+            {
+                _character.EquipWeapon(weapon);
+            }
+            else
+            {
+                Debug.LogWarning($"슬롯 {slotIndex + 1}에 장비 가능한 무기가 없습니다.");
+            }
         }
+
+        #endregion
+
+        #region Gizmos / Audio Events
 
         private void OnDrawGizmosSelected()
         {
             Color transparentGreen = new Color(0.0f, 1.0f, 0.0f, 0.35f);
             Color transparentRed = new Color(1.0f, 0.0f, 0.0f, 0.35f);
 
-            if (Grounded) Gizmos.color = transparentGreen;
-            else Gizmos.color = transparentRed;
+            Gizmos.color = Grounded ? transparentGreen : transparentRed;
 
-            // when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
             Gizmos.DrawSphere(
                 new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z),
-                GroundedRadius);
+                GroundedRadius
+            );
         }
 
         private void OnFootstep(AnimationEvent animationEvent)
@@ -620,5 +657,7 @@ namespace StarterAssets
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
             }
         }
+
+        #endregion
     }
 }
