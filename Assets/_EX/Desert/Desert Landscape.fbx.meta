@@ -3,7 +3,37 @@ guid: 51509c55d60b7e74c8816a88736de59d
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ls_desertcliff
+    second: {fileID: 2100000, guid: 8092d6f58ff8ee143bb6a0010d3ce2ae, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ls_desertground
+    second: {fileID: 2100000, guid: 9d16e9922139fa846bf44193a38b2490, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ls_desertplateau
+    second: {fileID: 2100000, guid: df3bfab279a844e4da3d8ce6b1f58621, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ls_desertvalley
+    second: {fileID: 2100000, guid: 83f910506fc59ff4fafd7e0bdf871670, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ls_rockydesert
+    second: {fileID: 2100000, guid: 32bff0bc10076634ea2fd084205576b7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ls_sand
+    second: {fileID: 2100000, guid: b928071065000b8429787ad76859d41b, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
