@@ -52,6 +52,14 @@ public class CanvasManager : MonoBehaviour
 
     private void Update()
     {
+        void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.H)) CanvasManager.singleton?.FlashHitmarker();
+            if (Input.GetKeyDown(KeyCode.R)) CanvasManager.singleton?.StartReloadUI(2f);
+            if (Input.GetKeyDown(KeyCode.T)) CanvasManager.singleton?.StopReloadUI();
+            if (Input.GetKeyDown(KeyCode.D)) CanvasManager.singleton?.FlashDamage(1f);
+        }
+
         if (_reloading && reloadRadial)
         {
             _reloadTimer += Time.deltaTime;
