@@ -7,7 +7,11 @@ public class CanvasManager : MonoBehaviour
 {
     [Header("Basic UI")]
     public GameObject aimUI;
+
     public Slider healthSlider;
+    [Header("Health Text")]
+    [SerializeField] private TMP_Text healthText;
+
     public TMP_Text weaponNameText;
     public TMP_Text ammoText;
 
@@ -52,13 +56,11 @@ public class CanvasManager : MonoBehaviour
 
     private void Update()
     {
-        void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.H)) CanvasManager.singleton?.FlashHitmarker();
-            if (Input.GetKeyDown(KeyCode.R)) CanvasManager.singleton?.StartReloadUI(2f);
-            if (Input.GetKeyDown(KeyCode.T)) CanvasManager.singleton?.StopReloadUI();
-            if (Input.GetKeyDown(KeyCode.D)) CanvasManager.singleton?.FlashDamage(1f);
-        }
+        // 임시 테스트 입력
+        if (Input.GetKeyDown(KeyCode.H)) CanvasManager.singleton?.FlashHitmarker();
+        if (Input.GetKeyDown(KeyCode.R)) CanvasManager.singleton?.StartReloadUI(2f);
+        if (Input.GetKeyDown(KeyCode.T)) CanvasManager.singleton?.StopReloadUI();
+        if (Input.GetKeyDown(KeyCode.D)) CanvasManager.singleton?.FlashDamage(1f);
 
         if (_reloading && reloadRadial)
         {
@@ -71,7 +73,18 @@ public class CanvasManager : MonoBehaviour
     public void UpdateHealth(int current, int max)
     {
         if (healthSlider != null)
-            healthSlider.value = (float)current / Mathf.Max(1, max);
+        {
+            healthSlider.maxValue = max;
+            healthSlider.value = current;
+        }
+
+        if (healthText != null)
+        {
+            healthText.text = $"HP: {current} / {max}";
+        }
+
+        Debug.Log($"[CanvasManager] Updated Health UI: {current} / {max}");
+        healthText.text = current.ToString();
     }
 
     public void UpdateWeapon(string weaponName)

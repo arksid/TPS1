@@ -18,5 +18,6 @@ namespace Michsky.UI.Shift
         {
             canvasScaler.referenceResolution = new Vector2(canvasScaler.referenceResolution.x, scale);
         }
+
     }
 }

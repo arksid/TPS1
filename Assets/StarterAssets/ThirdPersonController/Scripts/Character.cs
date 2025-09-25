@@ -45,7 +45,11 @@ public class Character : MonoBehaviour
         get => _health;
         set
         {
+            int oldHealth = _health;
             _health = Mathf.Clamp(value, 0, MaxHealth);
+
+            Debug.Log($"[Character] Health changed: {oldHealth} → {_health} / {MaxHealth}");
+
             if (CanvasManager.singleton != null)
                 CanvasManager.singleton.UpdateHealth(_health, MaxHealth);
         }
@@ -231,10 +235,13 @@ public class Character : MonoBehaviour
     {
         if (isInvincible) return;
 
+        Debug.Log($"[Character] Taking damage: {damage} from {shooter?.name ?? "unknown"}");
         Health -= (int)damage;
 
         if (_health <= 0)
         {
+            Debug.Log("[Character] Character died.");
+
             GetComponent<RagdollController>()?.ActivateRagdoll();
 
             foreach (var script in scriptsToDisableOnDeath)
