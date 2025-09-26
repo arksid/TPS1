@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f6a266f5952c6340b662e830521a535, type: 3}
   m_Name: AR
   m_EditorClassIdentifier: 
-  verticalRecoil: 0.1
-  horizontalRecoil: 0.05
+  verticalRecoil: 0.06
+  horizontalRecoil: 0.04
   recoveryX: 8
   recoveryY: 6

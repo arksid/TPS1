@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f6a266f5952c6340b662e830521a535, type: 3}
   m_Name: SMG
   m_EditorClassIdentifier: 
-  verticalRecoil: 0.1
-  horizontalRecoil: 0.05
-  recoveryX: 8
-  recoveryY: 6
+  verticalRecoil: 0.05
+  horizontalRecoil: 0.06
+  recoveryX: 10
+  recoveryY: 8

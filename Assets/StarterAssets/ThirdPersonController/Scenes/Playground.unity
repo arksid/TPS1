@@ -157,10 +157,8 @@ MonoBehaviour:
   pixelsPerDegree: 3.5
   amplify: 1.6
   response:
-    serializedVersion: 2
     m_Curve:
-    - serializedVersion: 3
-      time: 0
+    - time: 0
       value: 0
       inSlope: 0
       outSlope: 0
@@ -168,8 +166,7 @@ MonoBehaviour:
       weightedMode: 0
       inWeight: 0
       outWeight: 0
-    - serializedVersion: 3
-      time: 10
+    - time: 10
       value: 1
       inSlope: 0
       outSlope: 0
@@ -186,6 +183,8 @@ MonoBehaviour:
   lerpSpeed: 12
   canvasGroup: {fileID: 0}
   showHideLerp: 16
+  _target: 0
+  _current: 0
 --- !u!1 &57482352
 GameObject:
   m_ObjectHideFlags: 0
@@ -998,7 +997,6 @@ MonoBehaviour:
   healthText: {fileID: 2142723157}
   weaponNameText: {fileID: 704967885}
   ammoText: {fileID: 1485155390}
-  crosshair: {fileID: 24893308}
   reloadRadial: {fileID: 904076496}
   rollCooldownRadial: {fileID: 414745180}
   hitMarker: {fileID: 778962647}
@@ -3944,7 +3942,7 @@ PrefabInstance:
     - target: {fileID: 7557639386161898058, guid: 81fbce4d1225bb24187a8a98e5c78d81,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
