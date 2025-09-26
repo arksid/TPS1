@@ -15,8 +15,7 @@ public class CanvasManager : MonoBehaviour
     public TMP_Text weaponNameText;
     public TMP_Text ammoText;
 
-    [Header("Crosshair")]
-    [SerializeField] private CrosshairController crosshair;
+  
 
     [Header("Reload UI")]
     [SerializeField] private Image reloadRadial;
@@ -99,14 +98,7 @@ public class CanvasManager : MonoBehaviour
             ammoText.text = $"{current} / {total}";
     }
 
-    // ===== 크로스헤어 =====
-    public void UpdateCrosshair(float degrees, bool aiming, bool visible)
-    {
-        if (crosshair != null)
-            crosshair.SetSpreadDegrees(degrees, aiming, visible);
-        if (aimUI != null)
-            aimUI.SetActive(visible);
-    }
+
 
     // ===== 재장전 =====
     public void StartReloadUI(float duration)

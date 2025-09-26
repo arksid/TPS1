@@ -168,13 +168,6 @@ namespace StarterAssets
             HandleWalkToggle();
             UpdateTargetSpeedAndAnimationMultiplier();
 
-            if (_isRolling)
-            {
-                _character.weapon?.StopFiring();
-                _input.shoot = false;
-                UpdateCrosshairUI();
-                return;
-            }
 
             Move();
             Rotate();
@@ -184,12 +177,24 @@ namespace StarterAssets
 
             HandleShooting();
 
-            UpdateCrosshairUI();
+    
         }
 
         private void LateUpdate()
         {
             CameraRotation();
+            ApplyRecoil(); // 🔥 반동 적용
+        }
+
+        private void ApplyRecoil()
+        {
+            // Weapon.cs 에서 누적된 반동을 카메라에 반영
+            _cinemachineTargetYaw += Weapon.recoilX;
+            _cinemachineTargetPitch -= Weapon.recoilY;
+
+            // 프리셋의 복원 속도로 서서히 회복
+            Weapon.recoilX = Mathf.Lerp(Weapon.recoilX, 0, Time.deltaTime * Weapon.recoveryX);
+            Weapon.recoilY = Mathf.Lerp(Weapon.recoilY, 0, Time.deltaTime * Weapon.recoveryY);
         }
 
         private void AssignAnimationIDs()
@@ -359,20 +364,7 @@ namespace StarterAssets
             }
         }
 
-        // === 크로스헤어 UI 갱신 ===
-        private void UpdateCrosshairUI()
-        {
-            var w = _character != null ? _character.weapon : null;
-            bool visible = w != null;
-            float degrees = 0f;
 
-            if (w != null)
-            {
-                degrees = w.VisualSpreadDeg(_aiming, _input.move.magnitude, _sprinting);
-            }
-
-            CanvasManager.singleton?.UpdateCrosshair(degrees, _aiming, visible);
-        }
 
         private void Move()
         {

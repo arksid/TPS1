@@ -99,14 +99,7 @@ MonoBehaviour:
   _flash: {fileID: 2048064469067572148}
   _projectile: {fileID: 3376531310972393195, guid: bb1eae606ce4c8d4cb589dc255477dd5,
     type: 3}
-  _spreadPreset: {fileID: 11400000, guid: b68250275ad98a4489bab448c9675c29, type: 2}
-  _hipFireSpread: 3
-  _aimSpread: 1
-  _moveSpread: 2
-  _sprintSpread: 6
-  _bloomPerShot: 0.3
-  _bloomDecayPerSec: 2
-  _maxBloom: 5
+  recoilPreset: {fileID: 11400000, guid: 7153a6a3e0e3df94082ad8f07c70a8a2, type: 2}
 --- !u!1 &5852047493590396901
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,4 @@
-// Weapon.cs
-using System;
+ï»¿using System;
 using System.Collections;
 using UnityEngine;
 
@@ -31,28 +30,25 @@ public class Weapon : Item
     [SerializeField] private Vector3 _rightHandRotation = Vector3.zero;
 
     [Header("References")]
-    [SerializeField] private Transform _muzzle = null;   // ÃÑ±¸ Transform
+    [SerializeField] private Transform _muzzle = null;
     [SerializeField] private ParticleSystem _flash = null;
 
     [Header("Projectile")]
     [SerializeField] private Projectile _projectile = null;
 
-    [Header("Spread (Preset)")]
-    [SerializeField] private WeaponSpreadPreset _spreadPreset;
+    [Header("Recoil Preset")]
+    [SerializeField] private WeaponRecoilPreset recoilPreset;
 
-    [Header("Spread (Local Fallback)")]
-    [SerializeField] private float _hipFireSpread = 3f;
-    [SerializeField] private float _aimSpread = 1f;
-    [SerializeField] private float _moveSpread = 2f;
-    [SerializeField] private float _sprintSpread = 6f;
+    // ëŸ°íƒ€ìž„ ë°˜ë™ ê°’
+    private float verticalRecoil;
+    private float horizontalRecoil;
 
-    [Header("Bloom (Local Fallback)")]
-    [SerializeField] private float _bloomPerShot = 0.3f;
-    [SerializeField] private float _bloomDecayPerSec = 2f;
-    [SerializeField] private float _maxBloom = 5f;
+    public static float recoilX = 0f;
+    public static float recoilY = 0f;
+    public static float recoveryX = 8f;
+    public static float recoveryY = 6f;
 
     // Runtime
-    private float _currentBloom = 0f;
     private int _ammo = 0;
     private float _fireTimer = 0;
     private bool _isFiring = false;
@@ -70,19 +66,25 @@ public class Weapon : Item
     public Vector3 rightHandRotation => _rightHandRotation;
     public int ammo { get => _ammo; set => _ammo = value; }
 
-    // ¡Ú ÃÑ±¸ ÇÁ·ÎÆÛÆ¼ °ø°³
     public Transform muzzle => _muzzle;
 
     private void Awake()
     {
         _fireTimer = Time.realtimeSinceStartup;
+
+        // ðŸ”¥ í”„ë¦¬ì…‹ ë¶ˆëŸ¬ì˜¤ê¸°
+        if (recoilPreset != null)
+        {
+            verticalRecoil = recoilPreset.verticalRecoil;
+            horizontalRecoil = recoilPreset.horizontalRecoil;
+            recoveryX = recoilPreset.recoveryX;
+            recoveryY = recoilPreset.recoveryY;
+        }
     }
 
-    // ±âÁ¸ ½Ã±×´ÏÃ³(È£È¯¼º)
     public void StartFiring(Character character, Func<Vector3> getTarget, MonoBehaviour caller)
         => StartFiring(character, getTarget, caller, null, null, null);
 
-    // »óÅÂ(Á¶ÁØ/ÀÌµ¿/½ºÇÁ¸°Æ®) Àü´Þ ½Ã±×´ÏÃ³
     public void StartFiring(
         Character character,
         Func<Vector3> getTarget,
@@ -98,18 +100,16 @@ public class Weapon : Item
         {
             case FireMode.SemiAuto:
                 {
-                    var targetWithSpread = ComputeTargetWithSpread(getTarget, isAimingProvider, moveMagnitudeProvider, isSprintingProvider);
-                    TryShoot(character, targetWithSpread);
+                    var target = ComputeTarget(getTarget);
+                    TryShoot(character, target);
                     _isFiring = false;
                     break;
                 }
             case FireMode.Burst:
-                caller.StartCoroutine(FireBurst(character, () =>
-                    ComputeTargetWithSpread(getTarget, isAimingProvider, moveMagnitudeProvider, isSprintingProvider)));
+                caller.StartCoroutine(FireBurst(character, () => ComputeTarget(getTarget)));
                 break;
             case FireMode.FullAuto:
-                caller.StartCoroutine(FireContinuously(character, () =>
-                    ComputeTargetWithSpread(getTarget, isAimingProvider, moveMagnitudeProvider, isSprintingProvider)));
+                caller.StartCoroutine(FireContinuously(character, () => ComputeTarget(getTarget)));
                 break;
         }
     }
@@ -129,8 +129,10 @@ public class Weapon : Item
             p.Initialize(character, target, _damage);
             _flash?.Play();
 
-            var cfg = GetSpreadConfig();
-            _currentBloom = Mathf.Min(_currentBloom + cfg.bloomPerShot, cfg.maxBloom);
+            // ðŸ”¥ ë°˜ë™ ëˆ„ì 
+            recoilY += verticalRecoil;
+            recoilX += UnityEngine.Random.Range(-horizontalRecoil, horizontalRecoil);
+
             return true;
         }
         return false;
@@ -155,93 +157,12 @@ public class Weapon : Item
         }
     }
 
-    // UI¿ë ÇöÀç ÆÛÁü(µµ)
-    public float VisualSpreadDeg(bool aiming, float moveMagnitude, bool sprinting)
+    public float VisualSpreadDeg(bool aiming, float moveMagnitude, bool sprinting) => 0f;
+
+    private Vector3 ComputeTarget(Func<Vector3> getTarget)
     {
-        var cfg = GetSpreadConfig();
-
-        float baseSpread = (aiming ? cfg.aim : cfg.hip)
-                         + Mathf.Clamp01(moveMagnitude) * cfg.move
-                         + (sprinting ? cfg.sprint : 0f);
-
-        float sinceLastShot = Time.realtimeSinceStartup - _fireTimer;
-        float decayedBloom = Mathf.Max(0f, _currentBloom - cfg.bloomDecayPerSec * sinceLastShot);
-
-        return Mathf.Min(baseSpread + decayedBloom, baseSpread + cfg.maxBloom);
-    }
-
-    // ¹ß»ç¿ë Å¸°Ù °è»ê(ÆÛÁü/ºí·ë Àû¿ë)
-    private Vector3 ComputeTargetWithSpread(
-        Func<Vector3> getTarget,
-        Func<bool> isAimingProvider,
-        Func<float> moveMagnitudeProvider,
-        Func<bool> isSprintingProvider)
-    {
-        var cfg = GetSpreadConfig();
-
-        Vector3 baseTarget =
-            getTarget != null ? getTarget()
-            : (_muzzle != null ? _muzzle.position + transform.forward * 1000f
-                               : transform.position + transform.forward * 1000f);
-
-        Vector3 muzzlePos = _muzzle != null ? _muzzle.position : transform.position;
-        Vector3 baseDir = (baseTarget - muzzlePos).normalized;
-
-        bool aiming = isAimingProvider != null && isAimingProvider.Invoke();
-        float moveMag = moveMagnitudeProvider != null ? Mathf.Clamp01(moveMagnitudeProvider.Invoke()) : 0f;
-        bool sprinting = isSprintingProvider != null && isSprintingProvider.Invoke();
-
-        float baseSpreadDeg = aiming ? cfg.aim : cfg.hip;
-        baseSpreadDeg += moveMag * cfg.move;
-        if (sprinting) baseSpreadDeg += cfg.sprint;
-
-        float sinceLastShot = Time.realtimeSinceStartup - _fireTimer;
-        _currentBloom = Mathf.Max(0f, _currentBloom - cfg.bloomDecayPerSec * sinceLastShot);
-
-        float totalSpreadDeg = Mathf.Min(baseSpreadDeg + _currentBloom, baseSpreadDeg + cfg.maxBloom);
-
-        Vector3 forward = _muzzle != null ? _muzzle.forward : baseDir;
-        Vector3 right = _muzzle != null ? _muzzle.right : Vector3.right;
-        Vector3 up = _muzzle != null ? _muzzle.up : Vector3.up;
-
-        Vector3 spreadDir = ApplySpread(forward, totalSpreadDeg, right, up);
-        return muzzlePos + spreadDir * 1000f;
-    }
-
-    private Vector3 ApplySpread(Vector3 forward, float degrees, Vector3 localRight, Vector3 localUp)
-    {
-        if (degrees <= 0.001f) return forward.normalized;
-
-        Vector2 offset = UnityEngine.Random.insideUnitCircle * degrees;
-        Quaternion yaw = Quaternion.AngleAxis(offset.x, localUp);
-        Quaternion pitch = Quaternion.AngleAxis(-offset.y, localRight);
-
-        return (yaw * pitch * forward).normalized;
-    }
-
-    // ÇÁ¸®¼Â/·ÎÄÃ ¼±ÅÃ
-    protected (float hip, float aim, float move, float sprint, float bloomPerShot, float bloomDecayPerSec, float maxBloom) GetSpreadConfig()
-    {
-        if (_spreadPreset != null)
-        {
-            return (
-                _spreadPreset.hipFireSpread,
-                _spreadPreset.aimSpread,
-                _spreadPreset.moveSpread,
-                _spreadPreset.sprintSpread,
-                _spreadPreset.bloomPerShot,
-                _spreadPreset.bloomDecayPerSec,
-                _spreadPreset.maxBloom
-            );
-        }
-        return (
-            _hipFireSpread,
-            _aimSpread,
-            _moveSpread,
-            _sprintSpread,
-            _bloomPerShot,
-            _bloomDecayPerSec,
-            _maxBloom
-        );
+        if (getTarget != null) return getTarget();
+        return _muzzle != null ? _muzzle.position + _muzzle.forward * 1000f
+                               : transform.position + transform.forward * 1000f;
     }
 }

@@ -9,13 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 61afe37c2a7b3804bb760fea55d56b83, type: 3}
-  m_Name: Dmr_Preset
+  m_Script: {fileID: 11500000, guid: 0f6a266f5952c6340b662e830521a535, type: 3}
+  m_Name: SMG
   m_EditorClassIdentifier: 
-  hipFireSpread: 3
-  aimSpread: 1
-  moveSpread: 2
-  sprintSpread: 6
-  bloomPerShot: 0.3
-  bloomDecayPerSec: 2
-  maxBloom: 5
+  verticalRecoil: 0.1
+  horizontalRecoil: 0.05
+  recoveryX: 8
+  recoveryY: 6
