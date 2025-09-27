@@ -39,6 +39,10 @@ public class Weapon : Item
     [Header("Recoil Preset")]
     [SerializeField] private WeaponRecoilPreset recoilPreset;
 
+    [Header("Reload Settings")]
+    [SerializeField] private float _reloadDuration = 2.0f;   // 무기별 재장전 시간
+    public float reloadDuration => _reloadDuration;
+
     // 런타임 반동 값
     private float verticalRecoil;
     private float horizontalRecoil;
@@ -82,6 +86,7 @@ public class Weapon : Item
         }
     }
 
+    // ===== 발사 관련 =====
     public void StartFiring(Character character, Func<Vector3> getTarget, MonoBehaviour caller)
         => StartFiring(character, getTarget, caller, null, null, null);
 

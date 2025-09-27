@@ -23,7 +23,7 @@ public class Character : MonoBehaviour
     private bool _switchingWeapon = false; public bool switchingWeapon => _switchingWeapon;
     public bool isInvincible = false;
 
-    // 🔹 Animator hash 캐싱
+    // Animator hash 캐싱
     private static readonly int EquipTrigger = Animator.StringToHash("Equip");
     private static readonly int HolsterTrigger = Animator.StringToHash("Holster");
     private static readonly int ReloadTrigger = Animator.StringToHash("Reload");
@@ -33,7 +33,7 @@ public class Character : MonoBehaviour
         _rigManager = GetComponent<RigManager>();
         _animator = GetComponent<Animator>();
 
-        // 예시 초기화 (프로토타입용)
+        // 테스트용 초기 아이템
         Initialized(new Dictionary<string, int>
         {
             { "HK416", 1 }, { "K-2", 1 }, { "KG-9", 1 }, { "9mm", 1000 }
@@ -48,13 +48,12 @@ public class Character : MonoBehaviour
             int oldHealth = _health;
             _health = Mathf.Clamp(value, 0, MaxHealth);
 
-            Debug.Log($"[Character] Health changed: {oldHealth} → {_health} / {MaxHealth}");
-
             if (CanvasManager.singleton != null)
                 CanvasManager.singleton.UpdateHealth(_health, MaxHealth);
         }
     }
 
+    // ===== 아이템 초기화 =====
     public void Initialized(Dictionary<string, int> items)
     {
         if (items == null || PrefabManager.singleton == null) return;
@@ -100,6 +99,7 @@ public class Character : MonoBehaviour
         }
     }
 
+    // ===== 무기 슬롯 검색 =====
     public Weapon GetWeaponBySlotIndex(int slotIndex)
     {
         Weapon.WeaponCategory categoryToSearch;
@@ -137,6 +137,7 @@ public class Character : MonoBehaviour
         return null;
     }
 
+    // ===== 무기 장착 =====
     public void EquipWeapon(Weapon newWeapon)
     {
         if (_switchingWeapon || newWeapon == null || _weapon == newWeapon)
@@ -179,10 +180,6 @@ public class Character : MonoBehaviour
         {
             _rigManager?.SetLeftHandGrioData(_weapon.leftHandPosition, _weapon.leftHandRotation);
         }
-        else
-        {
-            Debug.LogWarning($"[무기 장착 오류] {_weapon.id} 의 왼손 위치/회전이 설정되지 않음");
-        }
 
         _weapon.gameObject.SetActive(true);
 
@@ -198,16 +195,6 @@ public class Character : MonoBehaviour
         }
     }
 
-    private void HolsterWeaponInternal()
-    {
-        if (_weapon != null)
-        {
-            _weapon.gameObject.SetActive(false);
-            _weapon = null;
-            _ammo = null;
-        }
-    }
-
     public void HolsterWeapon()
     {
         if (_switchingWeapon) return;
@@ -219,9 +206,18 @@ public class Character : MonoBehaviour
         }
     }
 
+    private void HolsterWeaponInternal()
+    {
+        if (_weapon != null)
+        {
+            _weapon.gameObject.SetActive(false);
+            _weapon = null;
+            _ammo = null;
+        }
+    }
+
     // === 애니메이션 이벤트에서 호출됨 ===
     public void OnEquip() => EquipImmediately();
-
     public void OnHolster()
     {
         HolsterWeaponInternal();
@@ -231,17 +227,15 @@ public class Character : MonoBehaviour
         }
     }
 
+    // ===== 데미지 처리 =====
     public void ApplyDamage(Character shooter, Transform hit, float damage)
     {
         if (isInvincible) return;
 
-        Debug.Log($"[Character] Taking damage: {damage} from {shooter?.name ?? "unknown"}");
         Health -= (int)damage;
 
         if (_health <= 0)
         {
-            Debug.Log("[Character] Character died.");
-
             GetComponent<RagdollController>()?.ActivateRagdoll();
 
             foreach (var script in scriptsToDisableOnDeath)
@@ -253,15 +247,46 @@ public class Character : MonoBehaviour
         }
     }
 
+    // ===== 재장전 시작 =====
     public void Reload()
     {
         if (_weapon != null && !_reloading && _weapon.ammo < _weapon.clipSize && _ammo != null && _ammo.amount > 0)
         {
             _animator.SetTrigger(ReloadTrigger);
             _reloading = true;
+
+            float reloadDuration = _weapon.reloadDuration; // 무기별 재장전 시간
+            CanvasManager.singleton?.StartReloadUI(reloadDuration);
+
+            StartCoroutine(CoReloadFinish(reloadDuration));
         }
     }
 
+    private IEnumerator CoReloadFinish(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        ReloadFinished();
+    }
+
+    // ===== Animator 진행률 기반 대기 =====
+    private IEnumerator CoReloadFinish()
+    {
+        yield return null; // 한 프레임 대기 (상태 진입 보장)
+
+        while (true)
+        {
+            AnimatorStateInfo info = _animator.GetCurrentAnimatorStateInfo(0);
+            if (info.IsName("Reload") && info.normalizedTime >= 1f)
+            {
+                break;
+            }
+            yield return null;
+        }
+
+        ReloadFinished();
+    }
+
+    // ===== 재장전 종료 =====
     public void ReloadFinished()
     {
         if (_weapon != null && _weapon.ammo < _weapon.clipSize && _ammo != null && _ammo.amount > 0)
@@ -270,10 +295,14 @@ public class Character : MonoBehaviour
             _ammo.amount -= amount;
             _weapon.ammo += amount;
         }
+
         _reloading = false;
 
         if (CanvasManager.singleton != null)
+        {
             CanvasManager.singleton.UpdateAmmo(_weapon.ammo, _ammo?.amount ?? 0);
+            CanvasManager.singleton.StopReloadUI();
+        }
     }
 
     public void HolsterFinished() => _switchingWeapon = false;

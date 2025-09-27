@@ -1,91 +1,51 @@
-using System.Collections;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class CanvasManager : MonoBehaviour
 {
-    [Header("Basic UI")]
-    public GameObject aimUI;
-
+    [Header("Health UI")]
     public Slider healthSlider;
-    [Header("Health Text")]
     [SerializeField] private TMP_Text healthText;
 
+    [Header("Weapon UI")]
     public TMP_Text weaponNameText;
     public TMP_Text ammoText;
-
-  
 
     [Header("Reload UI")]
     [SerializeField] private Image reloadRadial;
 
-    [Header("Roll Cooldown")]
-    [SerializeField] private Image rollCooldownRadial;
-
-    [Header("Hit Marker")]
-    [SerializeField] private CanvasGroup hitMarker;
-    [SerializeField] private CanvasGroup critMarker;
-
-    [Header("Damage Vignette")]
-    [SerializeField] private CanvasGroup damageVignette;
-
-    [Header("Interaction Prompt")]
-    [SerializeField] private TMP_Text interactionPrompt;
+    [Header("Crosshair UI")]
+    [SerializeField] private GameObject crosshair;   // 🔥 추가
 
     public static CanvasManager singleton;
 
-    private bool _reloading = false;
-    private float _reloadDuration = 0f;
-    private float _reloadTimer = 0f;
-
-    private Coroutine _hitRoutine;
-    private Coroutine _vignetteRoutine;
+    private Coroutine reloadRoutine;
 
     private void Awake()
     {
         singleton = this;
         if (reloadRadial) reloadRadial.fillAmount = 0f;
-        if (rollCooldownRadial) rollCooldownRadial.fillAmount = 0f;
-        if (hitMarker) hitMarker.alpha = 0f;
-        if (critMarker) critMarker.alpha = 0f;
-        if (damageVignette) damageVignette.alpha = 0f;
-        if (interactionPrompt) interactionPrompt.text = "";
     }
 
-    private void Update()
-    {
-        // �ӽ� �׽�Ʈ �Է�
-        if (Input.GetKeyDown(KeyCode.H)) CanvasManager.singleton?.FlashHitmarker();
-        if (Input.GetKeyDown(KeyCode.R)) CanvasManager.singleton?.StartReloadUI(2f);
-        if (Input.GetKeyDown(KeyCode.T)) CanvasManager.singleton?.StopReloadUI();
-        if (Input.GetKeyDown(KeyCode.D)) CanvasManager.singleton?.FlashDamage(1f);
-
-        if (_reloading && reloadRadial)
-        {
-            _reloadTimer += Time.deltaTime;
-            reloadRadial.fillAmount = Mathf.Clamp01(_reloadTimer / Mathf.Max(0.01f, _reloadDuration));
-        }
-    }
-
-    // ===== �⺻ UI =====
-    public void UpdateHealth(int current, int max)
+    private void UpdateHealthUI(int current, int max)
     {
         if (healthSlider != null)
         {
             healthSlider.maxValue = max;
             healthSlider.value = current;
         }
-
         if (healthText != null)
         {
             healthText.text = $"HP: {current} / {max}";
         }
-
-        Debug.Log($"[CanvasManager] Updated Health UI: {current} / {max}");
-        healthText.text = current.ToString();
     }
 
+    // ===== 체력 =====
+    public void UpdateHealth(int current, int max) => UpdateHealthUI(current, max);
+
+    // ===== 무기 & 탄약 =====
     public void UpdateWeapon(string weaponName)
     {
         if (weaponNameText != null)
@@ -98,88 +58,54 @@ public class CanvasManager : MonoBehaviour
             ammoText.text = $"{current} / {total}";
     }
 
-
-
-    // ===== ������ =====
+    // ===== 재장전 =====
     public void StartReloadUI(float duration)
     {
-        _reloading = true;
-        _reloadDuration = duration;
-        _reloadTimer = 0f;
-        if (reloadRadial) reloadRadial.fillAmount = 0f;
+        if (reloadRoutine != null) StopCoroutine(reloadRoutine);
+        reloadRoutine = StartCoroutine(ReloadAnimation(duration));
+
+        // 🔥 재장전 시작 → 크로스헤어 숨기기
+        if (crosshair) crosshair.SetActive(false);
     }
 
     public void StopReloadUI()
     {
-        _reloading = false;
+        if (reloadRoutine != null) StopCoroutine(reloadRoutine);
+        reloadRoutine = null;
+
         if (reloadRadial) reloadRadial.fillAmount = 0f;
+
+        // 🔥 재장전 끝 → 크로스헤어 다시 보이기
+        if (crosshair) crosshair.SetActive(true);
     }
 
-    // ===== ������ ��ٿ� =====
-    public void UpdateRollCooldown(float t)
+    private IEnumerator ReloadAnimation(float duration)
     {
-        if (rollCooldownRadial)
-            rollCooldownRadial.fillAmount = Mathf.Clamp01(1f - t);
-    }
+        if (reloadRadial == null) yield break;
 
-    // ===== ��Ʈ��Ŀ =====
-    public void FlashHitmarker(bool crit = false)
-    {
-        if (_hitRoutine != null) StopCoroutine(_hitRoutine);
-        _hitRoutine = StartCoroutine(CoFlash(crit ? critMarker : hitMarker));
-    }
+        float elapsed = 0f;
+        float cycle = 0.2f; // 0.2초마다 애니메이션 반복
 
-    private IEnumerator CoFlash(CanvasGroup cg)
-    {
-        if (cg == null) yield break;
-
-        cg.alpha = 1f;
-        yield return new WaitForSeconds(0.1f);
-
-        while (cg.alpha > 0f)
+        while (elapsed < duration)
         {
-            cg.alpha -= Time.deltaTime * 5f;
-            yield return null;
+            float t = 0f;
+            while (t < cycle)
+            {
+                t += Time.deltaTime;
+                elapsed += Time.deltaTime;
+
+                // 위→아래 채워지게 (Fill Origin = Top, Fill Method = Vertical 로 설정 필요)
+                reloadRadial.fillAmount = Mathf.Clamp01(t / cycle);
+
+                yield return null;
+                if (elapsed >= duration) break;
+            }
+
+            // 한 사이클 끝나면 0으로 리셋
+            reloadRadial.fillAmount = 0f;
         }
-    }
 
-    // ===== ������ ���Ʈ =====
-    public void FlashDamage(float intensity01 = 1f)
-    {
-        if (_vignetteRoutine != null) StopCoroutine(_vignetteRoutine);
-        _vignetteRoutine = StartCoroutine(CoDamage(intensity01));
-    }
-
-    private IEnumerator CoDamage(float intensity)
-    {
-        if (damageVignette == null) yield break;
-
-        damageVignette.alpha = Mathf.Clamp01(intensity);
-        yield return new WaitForSeconds(0.1f);
-
-        while (damageVignette.alpha > 0f)
-        {
-            damageVignette.alpha -= Time.deltaTime * 2f;
-            yield return null;
-        }
-    }
-
-    // ===== ��ȣ�ۿ� =====
-    public void ShowInteraction(string text)
-    {
-        if (interactionPrompt)
-        {
-            interactionPrompt.text = text;
-            interactionPrompt.gameObject.SetActive(true);
-        }
-    }
-
-    public void HideInteraction()
-    {
-        if (interactionPrompt)
-        {
-            interactionPrompt.text = "";
-            interactionPrompt.gameObject.SetActive(false);
-        }
+        // 재장전 끝나면 UI 리셋
+        StopReloadUI();
     }
 }
