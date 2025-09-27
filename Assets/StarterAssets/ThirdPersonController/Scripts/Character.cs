@@ -252,41 +252,17 @@ public class Character : MonoBehaviour
     {
         if (_weapon != null && !_reloading && _weapon.ammo < _weapon.clipSize && _ammo != null && _ammo.amount > 0)
         {
+            float reloadDuration = _weapon.reloadDuration;
+
+            // 🔥 UI 시작
+            if (CanvasManager.singleton != null)
+                CanvasManager.singleton.StartReloadUI(reloadDuration);
+
             _animator.SetTrigger(ReloadTrigger);
             _reloading = true;
-
-            float reloadDuration = _weapon.reloadDuration; // 무기별 재장전 시간
-            CanvasManager.singleton?.StartReloadUI(reloadDuration);
-
-            StartCoroutine(CoReloadFinish(reloadDuration));
         }
     }
 
-    private IEnumerator CoReloadFinish(float duration)
-    {
-        yield return new WaitForSeconds(duration);
-        ReloadFinished();
-    }
-
-    // ===== Animator 진행률 기반 대기 =====
-    private IEnumerator CoReloadFinish()
-    {
-        yield return null; // 한 프레임 대기 (상태 진입 보장)
-
-        while (true)
-        {
-            AnimatorStateInfo info = _animator.GetCurrentAnimatorStateInfo(0);
-            if (info.IsName("Reload") && info.normalizedTime >= 1f)
-            {
-                break;
-            }
-            yield return null;
-        }
-
-        ReloadFinished();
-    }
-
-    // ===== 재장전 종료 =====
     public void ReloadFinished()
     {
         if (_weapon != null && _weapon.ammo < _weapon.clipSize && _ammo != null && _ammo.amount > 0)
@@ -295,13 +271,12 @@ public class Character : MonoBehaviour
             _ammo.amount -= amount;
             _weapon.ammo += amount;
         }
-
         _reloading = false;
 
         if (CanvasManager.singleton != null)
         {
             CanvasManager.singleton.UpdateAmmo(_weapon.ammo, _ammo?.amount ?? 0);
-            CanvasManager.singleton.StopReloadUI();
+            CanvasManager.singleton.StopReloadUI(); // 🔥 재장전 UI 종료
         }
     }
 

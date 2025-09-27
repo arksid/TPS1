@@ -40,7 +40,7 @@ public class Weapon : Item
     [SerializeField] private WeaponRecoilPreset recoilPreset;
 
     [Header("Reload Settings")]
-    [SerializeField] private float _reloadDuration = 2.0f;   // 무기별 재장전 시간
+    [SerializeField] private float _reloadDuration = 2.0f;
     public float reloadDuration => _reloadDuration;
 
     // 런타임 반동 값
@@ -57,26 +57,27 @@ public class Weapon : Item
     private float _fireTimer = 0;
     private bool _isFiring = false;
 
+    // ===== 프로퍼티 =====
     public Handle type => _type;
     public FireMode fireMode => _fireMode;
     public WeaponCategory category => _category;
     public string ammoID => _ammoID;
     public int clipSize => _clipSize;
+    public int ammo { get => _ammo; set => _ammo = value; }
     public float handKick => _handKick;
     public float bodyKick => _bodyKick;
+    public Transform muzzle => _muzzle;
+
+    // Hand IK 프로퍼티 (🔥 오류 해결을 위해 복원)
     public Vector3 leftHandPosition => _leftHandPosition;
     public Vector3 leftHandRotation => _leftHandRotation;
     public Vector3 rightHandPosition => _rightHandPosition;
     public Vector3 rightHandRotation => _rightHandRotation;
-    public int ammo { get => _ammo; set => _ammo = value; }
-
-    public Transform muzzle => _muzzle;
 
     private void Awake()
     {
         _fireTimer = Time.realtimeSinceStartup;
 
-        // 🔥 프리셋 불러오기
         if (recoilPreset != null)
         {
             verticalRecoil = recoilPreset.verticalRecoil;
@@ -137,6 +138,10 @@ public class Weapon : Item
             // 🔥 반동 누적
             recoilY += verticalRecoil;
             recoilX += UnityEngine.Random.Range(-horizontalRecoil, horizontalRecoil);
+
+            // 🔥 UI 즉시 갱신
+            if (CanvasManager.singleton != null)
+                CanvasManager.singleton.UpdateAmmo(_ammo, character.ammo?.amount ?? 0);
 
             return true;
         }

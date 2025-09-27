@@ -17,11 +17,12 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Image reloadRadial;
 
     [Header("Crosshair UI")]
-    [SerializeField] private GameObject crosshair;   // 🔥 추가
+    [SerializeField] private GameObject crosshair;
 
     public static CanvasManager singleton;
 
     private Coroutine reloadRoutine;
+    private Coroutine ammoAnimRoutine;
 
     private void Awake()
     {
@@ -29,7 +30,8 @@ public class CanvasManager : MonoBehaviour
         if (reloadRadial) reloadRadial.fillAmount = 0f;
     }
 
-    private void UpdateHealthUI(int current, int max)
+    // ===== 체력 =====
+    public void UpdateHealth(int current, int max)
     {
         if (healthSlider != null)
         {
@@ -37,13 +39,8 @@ public class CanvasManager : MonoBehaviour
             healthSlider.value = current;
         }
         if (healthText != null)
-        {
             healthText.text = $"HP: {current} / {max}";
-        }
     }
-
-    // ===== 체력 =====
-    public void UpdateHealth(int current, int max) => UpdateHealthUI(current, max);
 
     // ===== 무기 & 탄약 =====
     public void UpdateWeapon(string weaponName)
@@ -55,7 +52,55 @@ public class CanvasManager : MonoBehaviour
     public void UpdateAmmo(int current, int total)
     {
         if (ammoText != null)
+        {
             ammoText.text = $"{current} / {total}";
+
+            // 🔥 텍스트 애니메이션 실행
+            if (ammoAnimRoutine != null) StopCoroutine(ammoAnimRoutine);
+            ammoAnimRoutine = StartCoroutine(AmmoTextPop(ammoText));
+        }
+    }
+
+    private IEnumerator AmmoTextPop(TMP_Text text)
+    {
+        Vector3 originalScale = text.rectTransform.localScale;
+        Vector3 targetScale = originalScale * 1.3f;
+        float duration = 0.1f;
+
+        Color originalColor = text.color;
+        Color flashColor = Color.red;
+
+        text.rectTransform.localScale = originalScale;
+        text.color = originalColor;
+
+        // 커지면서 빨갛게
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float lerp = t / duration;
+
+            text.rectTransform.localScale = Vector3.Lerp(originalScale, targetScale, lerp);
+            text.color = Color.Lerp(originalColor, flashColor, lerp);
+
+            yield return null;
+        }
+
+        // 줄어들면서 색 복구
+        t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float lerp = t / duration;
+
+            text.rectTransform.localScale = Vector3.Lerp(targetScale, originalScale, lerp);
+            text.color = Color.Lerp(flashColor, originalColor, lerp);
+
+            yield return null;
+        }
+
+        text.rectTransform.localScale = originalScale;
+        text.color = originalColor;
     }
 
     // ===== 재장전 =====
@@ -64,7 +109,6 @@ public class CanvasManager : MonoBehaviour
         if (reloadRoutine != null) StopCoroutine(reloadRoutine);
         reloadRoutine = StartCoroutine(ReloadAnimation(duration));
 
-        // 🔥 재장전 시작 → 크로스헤어 숨기기
         if (crosshair) crosshair.SetActive(false);
     }
 
@@ -74,8 +118,6 @@ public class CanvasManager : MonoBehaviour
         reloadRoutine = null;
 
         if (reloadRadial) reloadRadial.fillAmount = 0f;
-
-        // 🔥 재장전 끝 → 크로스헤어 다시 보이기
         if (crosshair) crosshair.SetActive(true);
     }
 
@@ -84,7 +126,7 @@ public class CanvasManager : MonoBehaviour
         if (reloadRadial == null) yield break;
 
         float elapsed = 0f;
-        float cycle = 0.2f; // 0.2초마다 애니메이션 반복
+        float cycle = 0.2f;
 
         while (elapsed < duration)
         {
@@ -94,18 +136,14 @@ public class CanvasManager : MonoBehaviour
                 t += Time.deltaTime;
                 elapsed += Time.deltaTime;
 
-                // 위→아래 채워지게 (Fill Origin = Top, Fill Method = Vertical 로 설정 필요)
                 reloadRadial.fillAmount = Mathf.Clamp01(t / cycle);
 
                 yield return null;
                 if (elapsed >= duration) break;
             }
-
-            // 한 사이클 끝나면 0으로 리셋
             reloadRadial.fillAmount = 0f;
         }
 
-        // 재장전 끝나면 UI 리셋
         StopReloadUI();
     }
 }
