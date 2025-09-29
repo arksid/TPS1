@@ -48,6 +48,8 @@ public class Weapon : Item
     [SerializeField] private Transform casingEjectPoint;
     [SerializeField] private GameObject magazinePrefab;      // 무기별 탄창 프리팹
     [SerializeField] private Transform magazineDropPoint;
+    [Header("Magazine Mesh")]
+    [SerializeField] private GameObject magazineMesh;   // 무기 프리팹 안에 붙은 탄창 Mesh
 
     // 런타임 반동 값
     private float verticalRecoil;
@@ -215,5 +217,17 @@ public class Weapon : Item
             }
             Destroy(mag, 10f);
         }
+    }
+
+    public void HideMagazineMesh()
+    {
+        if (magazineMesh != null)
+            magazineMesh.SetActive(false);
+    }
+
+    public void ShowMagazineMesh()
+    {
+        if (magazineMesh != null)
+            magazineMesh.SetActive(true);
     }
 }

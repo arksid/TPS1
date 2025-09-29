@@ -254,6 +254,9 @@ public class Character : MonoBehaviour
         {
             float reloadDuration = _weapon.reloadDuration;
 
+            // 🔥 무기 기본 탄창 숨기기
+            _weapon.HideMagazineMesh();
+
             // 🔥 탄창 드롭
             _weapon.DropMagazine();
 
@@ -266,7 +269,7 @@ public class Character : MonoBehaviour
         }
     }
 
-
+    // ===== 재장전 완료 =====
     public void ReloadFinished()
     {
         if (_weapon != null && _weapon.ammo < _weapon.clipSize && _ammo != null && _ammo.amount > 0)
@@ -275,12 +278,16 @@ public class Character : MonoBehaviour
             _ammo.amount -= amount;
             _weapon.ammo += amount;
         }
+
+        // 🔥 무기 기본 탄창 다시 켜기
+        _weapon?.ShowMagazineMesh();
+
         _reloading = false;
 
         if (CanvasManager.singleton != null)
         {
             CanvasManager.singleton.UpdateAmmo(_weapon.ammo, _ammo?.amount ?? 0);
-            CanvasManager.singleton.StopReloadUI(); // 🔥 재장전 UI 종료
+            CanvasManager.singleton.StopReloadUI(); // 재장전 UI 종료
         }
     }
 

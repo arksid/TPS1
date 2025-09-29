@@ -109,6 +109,7 @@ MonoBehaviour:
   magazinePrefab: {fileID: 4742050612890156633, guid: b4edc035ac37f9e4aade67bc8034ee86,
     type: 3}
   magazineDropPoint: {fileID: 5946336859904355246}
+  magazineMesh: {fileID: 3598062856706141218}
 --- !u!1 &4419178047888278772
 GameObject:
   m_ObjectHideFlags: 0
@@ -293,6 +294,12 @@ PrefabInstance:
 --- !u!4 &979529838442839330 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 258113722840160405, guid: 8095ef38caf3d1f459ef19d91b36d73e,
+    type: 3}
+  m_PrefabInstance: {fileID: 1009646493651264951}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3598062856706141218 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4606090845072017813, guid: 8095ef38caf3d1f459ef19d91b36d73e,
     type: 3}
   m_PrefabInstance: {fileID: 1009646493651264951}
   m_PrefabAsset: {fileID: 0}
