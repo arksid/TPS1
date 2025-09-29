@@ -1796,6 +1796,8 @@ MonoBehaviour:
   - {fileID: 2617117948279536046, guid: 809ec271ecaba284a9b4dc268fd1c56c, type: 3}
   allies:
   - {fileID: 1569135809324026711}
+  fovIndicator: {fileID: 0}
+  fovAngle: 60
 --- !u!1 &778962643
 GameObject:
   m_ObjectHideFlags: 0
@@ -4379,6 +4381,57 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 572212513}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2121135949
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2121135951}
+  - component: {fileID: 2121135950}
+  m_Layer: 0
+  m_Name: 'RaiderManager '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2121135950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2121135949}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b08191d33cf91b241845ea0415f97d9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 1569135809324026711}
+  radarUI: {fileID: 8015679607521844451}
+  blipPrefab: {fileID: 6583834520757396554, guid: 30771f7e35c2b5c42b2451c0a3a1c698,
+    type: 3}
+  radarRange: 50
+  fovIndicator: {fileID: 0}
+  fovAngle: 60
+--- !u!4 &2121135951
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2121135949}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 151.11192, y: 180.80995, z: -0.87816685}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2150402852076068
 GameObject:
@@ -8969,6 +9022,7 @@ SceneRoots:
   - {fileID: 2942939790304314703}
   - {fileID: 123055795980976926}
   - {fileID: 475035211}
+  - {fileID: 2121135951}
   - {fileID: 7701564508102974706}
   - {fileID: 7127358571264301911}
   - {fileID: 572212513}
