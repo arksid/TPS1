@@ -55,21 +55,23 @@ public class CanvasManager : MonoBehaviour
         {
             ammoText.text = $"{current} / {total}";
 
-            // 🔥 텍스트 애니메이션 실행
-            if (ammoAnimRoutine != null) StopCoroutine(ammoAnimRoutine);
+            if (ammoAnimRoutine != null)
+                StopCoroutine(ammoAnimRoutine);
+
             ammoAnimRoutine = StartCoroutine(AmmoTextPop(ammoText));
         }
     }
 
     private IEnumerator AmmoTextPop(TMP_Text text)
     {
-        Vector3 originalScale = text.rectTransform.localScale;
+        Vector3 originalScale = Vector3.one;
         Vector3 targetScale = originalScale * 1.3f;
         float duration = 0.1f;
 
-        Color originalColor = text.color;
+        Color originalColor = Color.white;
         Color flashColor = Color.red;
 
+        // 항상 원래 상태에서 시작
         text.rectTransform.localScale = originalScale;
         text.color = originalColor;
 
@@ -86,6 +88,9 @@ public class CanvasManager : MonoBehaviour
             yield return null;
         }
 
+        // 살짝 유지
+        yield return new WaitForSeconds(0.05f);
+
         // 줄어들면서 색 복구
         t = 0f;
         while (t < duration)
@@ -99,6 +104,7 @@ public class CanvasManager : MonoBehaviour
             yield return null;
         }
 
+        // 안전하게 원래 상태로
         text.rectTransform.localScale = originalScale;
         text.color = originalColor;
     }
