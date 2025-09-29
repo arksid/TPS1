@@ -1,88 +1,94 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyWaveSpawner : MonoBehaviour
 {
-    public GameObject[] enemyPrefabs; //  ´Ù¾çÇÑ Àû ÇÁ¸®ÆÕ
-    public Transform[] spawnPoints;
-    public Transform playerTransform;
+    [Header("Spawner Settings")]
+    public GameObject[] enemyPrefabs;       // ì¼ë°˜ ì  í”„ë¦¬íŒ¹ ë°°ì—´
+    public GameObject semiBossPrefab;       // ë³´ìŠ¤ í”„ë¦¬íŒ¹
+    public Transform[] spawnPoints;         // ìŠ¤í° ìœ„ì¹˜ ë°°ì—´
+    public float spawnDelay = 0.5f;         // ìŠ¤í° ê°„ê²©
 
     [Header("Wave Settings")]
     public int enemiesPerWave = 5;
-    public float spawnDelay = 0.5f;
-    public float waveDelay = 5f;
-    public int maxWaves = 5;
+    public int totalWaves = 3;
+    public float timeBetweenWaves = 5f;
 
-    [Header("Boss Settings")]
-    public GameObject semiBossPrefab;
-    public int semiBossWaveInterval = 5;
-
-    private int currentWave = 1;
+    private int currentWave = 0;
+    private bool spawning = false;
     private List<GameObject> aliveEnemies = new List<GameObject>();
-    private bool isSpawning = false;
-    private bool gameCleared = false;
+    private Transform playerTransform;
 
-    void Update()
+    private void Start()
     {
-        if (gameCleared)
-            return;
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+            playerTransform = player.transform;
 
-        aliveEnemies.RemoveAll(e => e == null);
-
-        if (currentWave > maxWaves && aliveEnemies.Count == 0)
-        {
-            Debug.Log("°ÔÀÓ Å¬¸®¾î!");
-            gameCleared = true;
-            return;
-        }
-
-        if (!isSpawning && aliveEnemies.Count == 0)
-        {
-            StartCoroutine(SpawnWave());
-        }
+        StartCoroutine(SpawnWaves());
     }
 
-    IEnumerator SpawnWave()
+    private IEnumerator SpawnWaves()
     {
-        isSpawning = true;
-        Debug.Log($"Wave {currentWave} ½ÃÀÛ!");
-
-        // ¼¼¹Ìº¸½º ¿şÀÌºê Ã¼Å©
-        if (currentWave % semiBossWaveInterval == 0 && semiBossPrefab != null)
+        while (currentWave < totalWaves)
         {
-            Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
-            GameObject boss = Instantiate(semiBossPrefab, spawnPoint.position, spawnPoint.rotation);
+            spawning = true;
+            currentWave++;
 
-            //  ÇÃ·¹ÀÌ¾î ¼³Á¤
-            SemiBossController controller = boss.GetComponent<SemiBossController>();
-            if (controller != null)
-                controller.SetPlayer(playerTransform); // ¿©±â Áß¿ä!
-
-            aliveEnemies.Add(boss);
-        }
-        else
-        {
             for (int i = 0; i < enemiesPerWave; i++)
             {
-                Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
-
-                GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
-                GameObject newEnemy = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
-
-                EnemyController controller = newEnemy.GetComponent<EnemyController>();
-                if (controller != null)
-                    controller.SetPlayer(playerTransform);
-
-                aliveEnemies.Add(newEnemy);
+                SpawnEnemy();
                 yield return new WaitForSeconds(spawnDelay);
             }
+
+            spawning = false;
+
+            // ë‹¤ìŒ ì›¨ì´ë¸Œê¹Œì§€ ëŒ€ê¸°
+            yield return new WaitForSeconds(timeBetweenWaves);
         }
 
-        currentWave++;
-        enemiesPerWave += 2;
-        yield return new WaitForSeconds(waveDelay);
-        isSpawning = false;
+        // ë³´ìŠ¤ ì›¨ì´ë¸Œ
+        SpawnBoss();
+    }
+
+    private void SpawnEnemy()
+    {
+        if (enemyPrefabs.Length == 0 || spawnPoints.Length == 0) return;
+
+        GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+        Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+
+        GameObject newEnemy = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
+
+        // í”Œë ˆì´ì–´ ì„¤ì •
+        EnemyController controller = newEnemy.GetComponent<EnemyController>();
+        if (controller != null)
+            controller.SetPlayer(playerTransform);
+
+        // ğŸ”¥ Radar ë“±ë¡
+        if (RadarManager.Instance != null)
+            RadarManager.Instance.RegisterEnemy(newEnemy.transform);
+
+        aliveEnemies.Add(newEnemy);
+    }
+
+    private void SpawnBoss()
+    {
+        if (semiBossPrefab == null || spawnPoints.Length == 0) return;
+
+        Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+        GameObject boss = Instantiate(semiBossPrefab, spawnPoint.position, spawnPoint.rotation);
+
+        // í”Œë ˆì´ì–´ ì„¤ì •
+        SemiBossController controller = boss.GetComponent<SemiBossController>();
+        if (controller != null)
+            controller.SetPlayer(playerTransform);
+
+        // ğŸ”¥ Radar ë“±ë¡ (ë³´ìŠ¤ë„ ì ìœ¼ë¡œ ì·¨ê¸‰)
+        if (RadarManager.Instance != null)
+            RadarManager.Instance.RegisterEnemy(boss.transform);
+
+        aliveEnemies.Add(boss);
     }
 }
-

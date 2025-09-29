@@ -96,10 +96,10 @@ public class SemiBossController : MonoBehaviour
 
     public void SetPlayer(Transform t) => player = t;
 
-    public void TakeDamage(float dmg)
+    public void TakeDamage(float damage)
     {
-        currentHealth -= dmg;
-        if (currentHealth <= 0f)
+        currentHealth -= Mathf.RoundToInt(damage);
+        if (currentHealth <= 0)
         {
             Die();
         }

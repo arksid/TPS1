@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class SimpleEnemy : MonoBehaviour
 {
@@ -8,6 +8,7 @@ public class SimpleEnemy : MonoBehaviour
     private void Awake()
     {
         currentHealth = maxHealth;
+        // ❌ 여기서 RegisterEnemy 호출하지 않음
     }
 
     public void ApplyDamage(float damage)
@@ -27,5 +28,12 @@ public class SimpleEnemy : MonoBehaviour
             ApplyDamage(projectile.damage);
             Destroy(other.gameObject);
         }
+    }
+
+    private void OnDestroy()
+    {
+        // ✅ 죽을 때만 레이더에서 제거
+        if (RadarManager.Instance != null)
+            RadarManager.Instance.UnregisterEnemy(transform);
     }
 }

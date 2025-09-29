@@ -5,61 +5,84 @@ using System.Collections.Generic;
 public class Radar : MonoBehaviour
 {
     [Header("Radar Settings")]
-    public Transform player;             // 플레이어
-    public float radarRange = 50f;       // 탐지 범위
-    public RectTransform radarUI;        // 레이더 원형 UI (Image)
-    public GameObject blipPrefab;        // 작은 점 Prefab
+    public Transform player;
+    public float radarRange = 50f;
+    public RectTransform radarUI;
+    public GameObject blipPrefab;
 
-    [Header("Targets")]
-    public Transform[] enemies;          // 적 대상들
-    public Transform[] allies;           // 아군 대상들
+    [Header("Dynamic Targets")]
+    public List<Transform> enemies = new List<Transform>();
+    public List<Transform> allies = new List<Transform>();
 
-    private List<GameObject> blips = new List<GameObject>();
+    [Header("Player FOV")]
+    public RectTransform fovIndicator;
+    public float fovAngle = 60f;
+
+    private Dictionary<Transform, GameObject> blipMap = new Dictionary<Transform, GameObject>();
+
+    void Start()
+    {
+        // 모든 적/아군에 대한 Blip 미리 생성
+        foreach (var e in enemies)
+            CreateBlipForTarget(e, Color.red);
+
+        foreach (var a in allies)
+            CreateBlipForTarget(a, Color.blue);
+    }
 
     void Update()
     {
-        // 기존 점들 제거
-        foreach (var b in blips) Destroy(b);
-        blips.Clear();
-
-        // 적 표시
-        foreach (var e in enemies)
+        // 각 Blip 위치 갱신
+        foreach (var kvp in blipMap)
         {
-            CreateBlip(e, Color.red);
+            Transform target = kvp.Key;
+            GameObject blip = kvp.Value;
+
+            if (target == null)
+            {
+                blip.SetActive(false);
+                continue;
+            }
+
+            Vector3 offset = target.position - player.position;
+
+            if (offset.magnitude <= radarRange)
+            {
+                float angle = Mathf.Atan2(offset.x, offset.z) * Mathf.Rad2Deg - player.eulerAngles.y;
+                float distance = offset.magnitude / radarRange * (radarUI.rect.width / 2f);
+
+                Vector2 pos = new Vector2(
+                    distance * Mathf.Sin(angle * Mathf.Deg2Rad),
+                    distance * Mathf.Cos(angle * Mathf.Deg2Rad)
+                );
+
+                blip.SetActive(true);
+                blip.GetComponent<RectTransform>().anchoredPosition = pos;
+            }
+            else
+            {
+                blip.SetActive(false); // 범위 밖이면 숨기기
+            }
         }
 
-        // 아군 표시
-        foreach (var a in allies)
-        {
-            CreateBlip(a, Color.blue);
-        }
+        UpdateFOV();
     }
 
-    private void CreateBlip(Transform target, Color color)
+    private void CreateBlipForTarget(Transform target, Color color)
     {
-        Vector3 offset = target.position - player.position;
+        if (target == null || blipMap.ContainsKey(target)) return;
 
-        // 탐지 범위 안에만 표시
-        if (offset.magnitude <= radarRange)
-        {
-            float angle = Mathf.Atan2(offset.x, offset.z) * Mathf.Rad2Deg - player.eulerAngles.y;
-            float distance = offset.magnitude / radarRange * (radarUI.rect.width / 2f);
+        GameObject blip = Instantiate(blipPrefab, radarUI);
+        blip.GetComponent<Image>().color = color;
+        blipMap[target] = blip;
+    }
 
-            Vector2 pos = new Vector2(
-                distance * Mathf.Sin(angle * Mathf.Deg2Rad),
-                distance * Mathf.Cos(angle * Mathf.Deg2Rad)
-            );
+    private void UpdateFOV()
+    {
+        if (fovIndicator == null) return;
 
-            // 블립 생성
-            GameObject blip = Instantiate(blipPrefab, radarUI);
-            blip.GetComponent<RectTransform>().anchoredPosition = pos;
-
-            // 색상 적용
-            Image img = blip.GetComponent<Image>();
-            if (img != null)
-                img.color = color;
-
-            blips.Add(blip);
-        }
+        float playerYaw = player.eulerAngles.y;
+        fovIndicator.localRotation = Quaternion.Euler(0, 0, -playerYaw);
+        fovIndicator.sizeDelta = new Vector2(fovAngle, radarUI.rect.width);
     }
 }
