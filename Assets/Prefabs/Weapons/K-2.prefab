@@ -65,6 +65,8 @@ Transform:
   - {fileID: 979529838442839330}
   - {fileID: 7602479053626630154}
   - {fileID: 3963689550257056427}
+  - {fileID: 5690209954613352916}
+  - {fileID: 5946336859904355246}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2542806893130543058
@@ -100,6 +102,44 @@ MonoBehaviour:
   _projectile: {fileID: 3376531310972393195, guid: bb1eae606ce4c8d4cb589dc255477dd5,
     type: 3}
   recoilPreset: {fileID: 11400000, guid: 22b714a9825b54c4f99f513e542e302c, type: 2}
+  _reloadDuration: 2
+  casingPrefab: {fileID: 5896815481570757752, guid: 301e0240b1acd614aa7dcf9ec5542736,
+    type: 3}
+  casingEjectPoint: {fileID: 5690209954613352916}
+  magazinePrefab: {fileID: 4742050612890156633, guid: b4edc035ac37f9e4aade67bc8034ee86,
+    type: 3}
+  magazineDropPoint: {fileID: 5946336859904355246}
+--- !u!1 &4419178047888278772
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5690209954613352916}
+  m_Layer: 0
+  m_Name: casingEjectPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5690209954613352916
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4419178047888278772}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.045, z: 0.069}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2339889519133805349}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5852047493590396901
 GameObject:
   m_ObjectHideFlags: 0
@@ -126,6 +166,37 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0, y: 0.0404, z: 0.4533}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2339889519133805349}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7503044087889122025
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5946336859904355246}
+  m_Layer: 0
+  m_Name: magazineDropPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5946336859904355246
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7503044087889122025}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.083}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

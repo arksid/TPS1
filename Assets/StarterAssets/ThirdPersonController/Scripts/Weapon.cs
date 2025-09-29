@@ -43,6 +43,12 @@ public class Weapon : Item
     [SerializeField] private float _reloadDuration = 2.0f;
     public float reloadDuration => _reloadDuration;
 
+    [Header("Eject Prefabs")]
+    [SerializeField] private GameObject casingPrefab;        // 무기별 탄피 프리팹
+    [SerializeField] private Transform casingEjectPoint;
+    [SerializeField] private GameObject magazinePrefab;      // 무기별 탄창 프리팹
+    [SerializeField] private Transform magazineDropPoint;
+
     // 런타임 반동 값
     private float verticalRecoil;
     private float horizontalRecoil;
@@ -68,7 +74,7 @@ public class Weapon : Item
     public float bodyKick => _bodyKick;
     public Transform muzzle => _muzzle;
 
-    // Hand IK 프로퍼티 (🔥 오류 해결을 위해 복원)
+    // Hand IK 프로퍼티
     public Vector3 leftHandPosition => _leftHandPosition;
     public Vector3 leftHandRotation => _leftHandRotation;
     public Vector3 rightHandPosition => _rightHandPosition;
@@ -139,6 +145,9 @@ public class Weapon : Item
             recoilY += verticalRecoil;
             recoilX += UnityEngine.Random.Range(-horizontalRecoil, horizontalRecoil);
 
+            // 🔥 탄피 배출
+            EjectCasing();
+
             // 🔥 UI 즉시 갱신
             if (CanvasManager.singleton != null)
                 CanvasManager.singleton.UpdateAmmo(_ammo, character.ammo?.amount ?? 0);
@@ -174,5 +183,37 @@ public class Weapon : Item
         if (getTarget != null) return getTarget();
         return _muzzle != null ? _muzzle.position + _muzzle.forward * 1000f
                                : transform.position + transform.forward * 1000f;
+    }
+
+    // ===== 탄피 배출 =====
+    private void EjectCasing()
+    {
+        if (casingPrefab != null && casingEjectPoint != null)
+        {
+            var casing = Instantiate(casingPrefab, casingEjectPoint.position, casingEjectPoint.rotation);
+            var rb = casing.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.AddForce(casingEjectPoint.right * 1.5f + casingEjectPoint.up * 0.5f, ForceMode.Impulse);
+                rb.AddTorque(UnityEngine.Random.insideUnitSphere * 2f, ForceMode.Impulse);
+            }
+            Destroy(casing, 5f);
+        }
+    }
+
+    // ===== 탄창 드롭 =====
+    public void DropMagazine()
+    {
+        if (magazinePrefab != null && magazineDropPoint != null)
+        {
+            var mag = Instantiate(magazinePrefab, magazineDropPoint.position, magazineDropPoint.rotation);
+            var rb = mag.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.AddForce(Vector3.down * 2f, ForceMode.Impulse);
+                rb.AddTorque(UnityEngine.Random.insideUnitSphere * 2f, ForceMode.Impulse);
+            }
+            Destroy(mag, 10f);
+        }
     }
 }

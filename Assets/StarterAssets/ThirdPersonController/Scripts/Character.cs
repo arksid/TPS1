@@ -254,6 +254,9 @@ public class Character : MonoBehaviour
         {
             float reloadDuration = _weapon.reloadDuration;
 
+            // 🔥 탄창 드롭
+            _weapon.DropMagazine();
+
             // 🔥 UI 시작
             if (CanvasManager.singleton != null)
                 CanvasManager.singleton.StartReloadUI(reloadDuration);
@@ -262,6 +265,7 @@ public class Character : MonoBehaviour
             _reloading = true;
         }
     }
+
 
     public void ReloadFinished()
     {
