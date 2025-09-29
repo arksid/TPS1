@@ -1682,6 +1682,7 @@ GameObject:
   - component: {fileID: 735667945}
   - component: {fileID: 735667944}
   - component: {fileID: 735667943}
+  - component: {fileID: 735667946}
   m_Layer: 0
   m_Name: Raider
   m_TagString: Untagged
@@ -1772,6 +1773,29 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &735667946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 735667941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bc8a5e4aaf67fe489f9dc6354e2d7ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 1569135809324026711}
+  radarRange: 50
+  radarUI: {fileID: 8015679607521844451}
+  blipPrefab: {fileID: 6583834520757396554, guid: 30771f7e35c2b5c42b2451c0a3a1c698,
+    type: 3}
+  enemies:
+  - {fileID: 3110350032501660255, guid: 3fb254ad33a6f5f4d95c3059c2c9f3ee, type: 3}
+  - {fileID: 1876281521800804447, guid: a58466501f0a3b34eb42e9138b5296f3, type: 3}
+  - {fileID: 2617117948279536046, guid: 809ec271ecaba284a9b4dc268fd1c56c, type: 3}
+  allies:
+  - {fileID: 1569135809324026711}
 --- !u!1 &778962643
 GameObject:
   m_ObjectHideFlags: 0
