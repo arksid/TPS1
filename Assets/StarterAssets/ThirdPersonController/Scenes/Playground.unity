@@ -7044,7 +7044,7 @@ MonoBehaviour:
   m_Direction: 2
   m_Center: {x: 0, y: 0.08, z: 0.01}
   m_Bound: 0
-  m_Radius: 0.08
+  m_Radius: 0.075
   m_Height: 0
   m_Radius2: 0
 --- !u!1 &2110455863
@@ -7470,6 +7470,21 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5326789727870453837, guid: 81fbce4d1225bb24187a8a98e5c78d81,
         type: 3}
+      propertyPath: spawnDelay
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5326789727870453837, guid: 81fbce4d1225bb24187a8a98e5c78d81,
+        type: 3}
+      propertyPath: totalWaves
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5326789727870453837, guid: 81fbce4d1225bb24187a8a98e5c78d81,
+        type: 3}
+      propertyPath: enemiesPerWave
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5326789727870453837, guid: 81fbce4d1225bb24187a8a98e5c78d81,
+        type: 3}
       propertyPath: playerTransform
       value: 
       objectReference: {fileID: 1569135809324026711}
@@ -7541,7 +7556,7 @@ PrefabInstance:
     - target: {fileID: 7557639386161898058, guid: 81fbce4d1225bb24187a8a98e5c78d81,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9059,7 +9074,7 @@ PrefabInstance:
     - target: {fileID: 3241880604189725250, guid: da592e4107fbb2145ade0d7b534aefe7,
         type: 3}
       propertyPath: RollSpeed
-      value: 7
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 5797133863652098141, guid: da592e4107fbb2145ade0d7b534aefe7,
         type: 3}
