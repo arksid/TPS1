@@ -7632,7 +7632,7 @@ PrefabInstance:
     - target: {fileID: 7557639386161898058, guid: 81fbce4d1225bb24187a8a98e5c78d81,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9206,6 +9206,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7143662960675365890, guid: da592e4107fbb2145ade0d7b534aefe7,
+        type: 3}
+      propertyPath: pushLayers.m_Bits
+      value: 64
       objectReference: {fileID: 0}
     - target: {fileID: 8900757794806520401, guid: da592e4107fbb2145ade0d7b534aefe7,
         type: 3}

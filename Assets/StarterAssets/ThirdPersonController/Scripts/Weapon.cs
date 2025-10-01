@@ -218,6 +218,14 @@ public class Weapon : Item
             Destroy(mag, 10f);
         }
     }
+    public void DropToGround()
+    {
+        transform.SetParent(null);
+        gameObject.SetActive(true);
+        Rigidbody rb = gameObject.AddComponent<Rigidbody>();
+        rb.mass = 2f;
+        rb.AddForce(Vector3.down * 2f, ForceMode.Impulse);
+    }
 
     public void HideMagazineMesh()
     {

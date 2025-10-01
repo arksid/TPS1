@@ -23,7 +23,7 @@ namespace StarterAssets
         public bool switchToPrimary;
         public bool switchToSecondary;
         public bool switchToThird;
-
+        public bool interact;
         // 조준 허용 여부(구르기 중 false)
         public bool canAim = true;
 
@@ -108,6 +108,11 @@ namespace StarterAssets
             }
 
             sprint = pressed;
+        }
+      
+        public void OnInteract(InputValue value)
+        {
+            interact = value.isPressed;
         }
 #endif
 

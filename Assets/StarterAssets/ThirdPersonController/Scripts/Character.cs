@@ -18,10 +18,15 @@ public class Character : MonoBehaviour
     private Weapon _weaponToEquip = null;
 
     public List<Item> weaponItems => _items;
-
+    public Weapon[] weaponSlots = new Weapon[3]; // 1,2,3번 슬롯
+    public Transform weaponParent;
+    private int currentSlot = 0;
     private bool _reloading = false; public bool reloading => _reloading;
     private bool _switchingWeapon = false; public bool switchingWeapon => _switchingWeapon;
     public bool isInvincible = false;
+
+    // ✅ 트리거 방식 상호작용: 콜라이더 안 '가까운 무기' 참조
+    private InteractableWeapon _nearbyWeapon;
 
     // Animator hash 캐싱
     private static readonly int EquipTrigger = Animator.StringToHash("Equip");
@@ -138,22 +143,65 @@ public class Character : MonoBehaviour
     }
 
     // ===== 무기 장착 =====
-    public void EquipWeapon(Weapon newWeapon)
+    public void EquipWeapon(int slotIndex)
     {
-        if (_switchingWeapon || newWeapon == null || _weapon == newWeapon)
-            return;
+        if (slotIndex < 0 || slotIndex >= weaponSlots.Length) return;
+        currentSlot = slotIndex;
 
-        _weaponToEquip = newWeapon;
+        for (int i = 0; i < weaponSlots.Length; i++)
+        {
+            if (weaponSlots[i] != null)
+                weaponSlots[i].gameObject.SetActive(i == currentSlot);
+        }
 
-        if (_weapon != null)
+        // ✅ 실제 현재 무기 참조 업데이트 (사격/조준/UI가 _weapon을 참조하므로 필수)
+        _weapon = weaponSlots[currentSlot];
+
+        // ✅ UI 갱신(있을 경우)
+        if (CanvasManager.singleton != null && _weapon != null)
         {
-            HolsterWeapon();
+            CanvasManager.singleton.UpdateWeapon(_weapon.id);
+
+            // 보유 탄약(_ammo) 갱신: 같은 ammoID 찾아 연결
+            _ammo = null;
+            foreach (var item in _items)
+            {
+                if (item is Ammo a && _weapon.ammoID == a.id)
+                {
+                    _ammo = a;
+                    break;
+                }
+            }
+            CanvasManager.singleton.UpdateAmmo(_weapon.ammo, _ammo?.amount ?? 0);
         }
-        else
+
+        // ✅ 왼손 IK 갱신(있을 경우)
+        if (_weapon != null && _weapon.leftHandPosition != null && _weapon.leftHandRotation != null)
         {
-            _switchingWeapon = true;
-            _animator.SetTrigger(EquipTrigger);
+            _rigManager?.SetLeftHandGrioData(_weapon.leftHandPosition, _weapon.leftHandRotation);
         }
+    }
+
+    public int GetCurrentSlotIndex()
+    {
+        return currentSlot;
+    }
+
+    public void SwapWeapon(Weapon newWeaponPrefab)
+    {
+        int slot = GetCurrentSlotIndex();
+
+        // 기존 무기 드랍
+        if (weaponSlots[slot] != null)
+        {
+            weaponSlots[slot].DropToGround();
+            Destroy(weaponSlots[slot].gameObject);
+        }
+
+        // 새 무기 생성 & 장착
+        var newWeapon = Instantiate(newWeaponPrefab, weaponParent);
+        weaponSlots[slot] = newWeapon;
+        EquipWeapon(slot);
     }
 
     public void EquipImmediately()
@@ -227,6 +275,40 @@ public class Character : MonoBehaviour
         }
     }
 
+    public void ReplaceWeaponInSlot(int slotIndex, Weapon newWeapon)
+    {
+        if (slotIndex < 0 || slotIndex >= weaponSlots.Length) return;
+
+        // 기존 무기 드랍
+        if (weaponSlots[slotIndex] != null)
+        {
+            weaponSlots[slotIndex].transform.SetParent(null);
+            weaponSlots[slotIndex].gameObject.SetActive(true);
+            weaponSlots[slotIndex].DropToGround();
+            Destroy(weaponSlots[slotIndex].gameObject, 2f); // 원하면 일정 시간 뒤 제거
+        }
+
+        // 새 무기 장착
+        if (newWeapon != null)
+        {
+            newWeapon.transform.SetParent(weaponParent);
+            newWeapon.transform.localPosition = newWeapon.rightHandPosition;
+            newWeapon.transform.localEulerAngles = newWeapon.rightHandRotation;
+
+            // 장착 중 물리/충돌 무력화(흔들림 방지)
+            var rb = newWeapon.GetComponent<Rigidbody>();
+            if (rb != null) rb.isKinematic = true;
+
+            foreach (var col in newWeapon.GetComponentsInChildren<Collider>())
+            {
+                col.enabled = false;
+            }
+
+            weaponSlots[slotIndex] = newWeapon;
+            EquipWeapon(slotIndex); // 슬롯 번호 기반으로 장착 (→ _weapon 갱신/IK/UI 모두 처리)
+        }
+    }
+
     // ===== 데미지 처리 =====
     public void ApplyDamage(Character shooter, Transform hit, float damage)
     {
@@ -254,13 +336,11 @@ public class Character : MonoBehaviour
         {
             float reloadDuration = _weapon.reloadDuration;
 
-            // 🔥 무기 기본 탄창 숨기기
+            // 무기 기본 탄창 숨기기 + 탄창 드롭
             _weapon.HideMagazineMesh();
-
-            // 🔥 탄창 드롭
             _weapon.DropMagazine();
 
-            // 🔥 UI 시작
+            // UI 시작
             if (CanvasManager.singleton != null)
                 CanvasManager.singleton.StartReloadUI(reloadDuration);
 
@@ -279,7 +359,7 @@ public class Character : MonoBehaviour
             _weapon.ammo += amount;
         }
 
-        // 🔥 무기 기본 탄창 다시 켜기
+        // 무기 기본 탄창 다시 켜기
         _weapon?.ShowMagazineMesh();
 
         _reloading = false;
@@ -293,4 +373,18 @@ public class Character : MonoBehaviour
 
     public void HolsterFinished() => _switchingWeapon = false;
     public void EquipFinished() => _switchingWeapon = false;
+
+    // ====== (Trigger 방식) 가까운 무기 등록/해제 & E키 액션 ======
+    public void SetNearbyWeapon(InteractableWeapon weapon) => _nearbyWeapon = weapon;
+
+    public void ClearNearbyWeapon(InteractableWeapon weapon)
+    {
+        if (_nearbyWeapon == weapon) _nearbyWeapon = null;
+    }
+
+    public void TryInteract()
+    {
+        // 가까운 무기가 있으면 상호작용 수행
+        _nearbyWeapon?.Interact(this);
+    }
 }

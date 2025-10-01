@@ -83,6 +83,11 @@ namespace StarterAssets
         private int _animIDFreeFall;
         private int _animIDMotionSpeed;
 
+        // (Raycast용 변수는 남겨두어도 무방하지만, 트리거 방식에서는 사용하지 않음)
+        [Header("Interaction Settings")]
+        [SerializeField] private float interactRange = 3f;
+        [SerializeField] private LayerMask interactLayer;
+
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
 #endif
@@ -168,7 +173,6 @@ namespace StarterAssets
             HandleWalkToggle();
             UpdateTargetSpeedAndAnimationMultiplier();
 
-
             Move();
             Rotate();
 
@@ -176,14 +180,13 @@ namespace StarterAssets
             HandleWeaponSlotInputs();
 
             HandleShooting();
-
-    
+            HandleInteraction();
         }
 
         private void LateUpdate()
         {
             CameraRotation();
-            ApplyRecoil(); // 🔥 반동 적용
+            ApplyRecoil(); // 반동 적용
         }
 
         private void ApplyRecoil()
@@ -363,8 +366,6 @@ namespace StarterAssets
                 }
             }
         }
-
-
 
         private void Move()
         {
@@ -585,11 +586,21 @@ namespace StarterAssets
             Weapon weapon = _character.GetWeaponBySlotIndex(slotIndex);
             if (weapon != null)
             {
-                _character.EquipWeapon(weapon);
+                _character.EquipWeapon(slotIndex);  // 슬롯 인덱스 기반 장착
             }
             else
             {
                 Debug.LogWarning($"슬롯 {slotIndex + 1}에 장비 가능한 무기가 없습니다.");
+            }
+        }
+
+        // ✅ 트리거 방식: E키 → 캐릭터의 TryInteract() 호출
+        private void HandleInteraction()
+        {
+            if (_input.interact)
+            {
+                _input.interact = false;
+                _character.TryInteract(); // 가까운 무기가 등록돼 있으면 교체 수행
             }
         }
 
