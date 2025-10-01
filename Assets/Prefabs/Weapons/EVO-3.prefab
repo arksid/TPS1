@@ -104,7 +104,7 @@ GameObject:
   - component: {fileID: 5974224524419189307}
   - component: {fileID: 7422775686034641622}
   - component: {fileID: -2537744610220692115}
-  - component: {fileID: -9084387777717309651}
+  - component: {fileID: 2492019662729415336}
   - component: {fileID: -3017185936911594712}
   m_Layer: 6
   m_Name: EVO-3
@@ -186,7 +186,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da440e16d59eeef41be6ee6339c50d89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!65 &-9084387777717309651
+--- !u!65 &2492019662729415336
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -216,20 +216,20 @@ Rigidbody:
   m_GameObject: {fileID: 6839955945330786663}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 0
+  m_Drag: 0.5
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 0
+  m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0

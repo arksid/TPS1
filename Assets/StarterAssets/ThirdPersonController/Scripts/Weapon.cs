@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections;
-using UnityEngine;
 
+using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 public class Weapon : Item
 {
     public enum FireMode { SemiAuto, Burst, FullAuto }
@@ -220,13 +223,56 @@ public class Weapon : Item
     }
     public void DropToGround()
     {
+        // 🔹 Prefab Asset을 직접 참조하는 상황 방지
+        if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
+        {
+            Debug.LogError("Prefab Asset 자체를 드랍하려고 했습니다. 반드시 인스턴스를 사용하세요.");
+            return;
+        }
+
+        // 부모 해제 → 씬에 독립적으로 존재
         transform.SetParent(null);
-        gameObject.SetActive(true);
-        Rigidbody rb = gameObject.AddComponent<Rigidbody>();
-        rb.mass = 2f;
-        rb.AddForce(Vector3.down * 2f, ForceMode.Impulse);
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
+
+        Collider col = GetComponent<Collider>();
+        if (col == null) col = gameObject.AddComponent<BoxCollider>();
+
+        rb.isKinematic = false;
+        rb.useGravity = true;
+
+        // 물리 재질 (튕기는 효과)
+        if (col.sharedMaterial == null)
+        {
+            PhysicMaterial bounceMat = new PhysicMaterial
+            {
+                bounciness = 0.4f,
+                frictionCombine = PhysicMaterialCombine.Multiply,
+                bounceCombine = PhysicMaterialCombine.Maximum
+            };
+            col.sharedMaterial = bounceMat;
+        }
+
+        // 살짝 위로 튀기는 힘
+        Vector3 dropDirection = (transform.forward + Vector3.up * 0.5f).normalized;
+        rb.AddForce(dropDirection * 3f, ForceMode.Impulse);
+        rb.AddTorque(UnityEngine.Random.insideUnitSphere * 3f, ForceMode.Impulse);
     }
 
+
+
+    public void EquipWeapon(Weapon weapon, Transform weaponHolder, RigManager rigManager)
+    {
+        // 무기를 WeaponHolder 밑으로 이동
+        weapon.transform.SetParent(weaponHolder);
+        weapon.transform.localPosition = Vector3.zero;
+        weapon.transform.localRotation = Quaternion.identity;
+
+        // RigManager에 손 포즈 적용
+        rigManager.SetLeftHandGrioData(weapon.leftHandPosition, weapon.leftHandRotation);
+        // 오른손은 WeaponHolder에 고정되므로 추가 조정 필요 없음
+    }
     public void HideMagazineMesh()
     {
         if (magazineMesh != null)

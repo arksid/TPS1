@@ -37,10 +37,9 @@ public class InteractableWeapon : MonoBehaviour, IInteractable
     {
         if (character == null || weapon == null) return;
 
-        // 현재 들고 있는 슬롯에 교체
-        int slot = character.GetCurrentSlotIndex();        // Character에 이미 있음
-        character.ReplaceWeaponInSlot(slot, weapon);       // Character에 이미 있음
-        // ReplaceWeaponInSlot 안에서 부모/포즈/콜라이더 정리를 하기 때문에
-        // 여기서 Destroy(gameObject) 할 필요 없음.
+        int slot = character.GetCurrentSlotIndex();
+        character.ReplaceWeaponInSlot(slot, weapon);
+
+        // ✅ 여기서는 Destroy 필요 없음 (씬 무기를 플레이어 손으로 옮김)
     }
 }

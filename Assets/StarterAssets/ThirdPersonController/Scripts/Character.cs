@@ -8,6 +8,8 @@ public class Character : MonoBehaviour
     [SerializeField] private Transform _weaponHolder = null;
     [SerializeField] private int _health;
     [SerializeField] public int MaxHealth = 100;
+    [SerializeField] private Transform weaponHolder;
+    [SerializeField] private RigManager rigManager;
 
     private Weapon _weapon = null; public Weapon weapon => _weapon;
     private Ammo _ammo = null; public Ammo ammo => _ammo;
@@ -41,7 +43,7 @@ public class Character : MonoBehaviour
         // 테스트용 초기 아이템
         Initialized(new Dictionary<string, int>
         {
-            { "HK416", 1 }, { "K-2", 1 }, { "KG-9", 1 }, { "9mm", 1000 }
+             { "9mm", 1000 }
         });
     }
 
@@ -274,38 +276,46 @@ public class Character : MonoBehaviour
             EquipImmediately();
         }
     }
+    public void EquipWeapon(Weapon weapon)
+    {
+        // Weapon.cs 쪽 메서드를 직접 쓰는 대신 여기서 래핑
+        weapon.transform.SetParent(weaponHolder);
+        weapon.transform.localPosition = Vector3.zero;
+        weapon.transform.localRotation = Quaternion.identity;
 
-    public void ReplaceWeaponInSlot(int slotIndex, Weapon newWeapon)
+        if (rigManager != null)
+            rigManager.SetLeftHandGrioData(weapon.leftHandPosition, weapon.leftHandRotation);
+    }
+
+    public void ReplaceWeaponInSlot(int slotIndex, Weapon pickedWeapon)
     {
         if (slotIndex < 0 || slotIndex >= weaponSlots.Length) return;
 
         // 기존 무기 드랍
         if (weaponSlots[slotIndex] != null)
         {
-            weaponSlots[slotIndex].transform.SetParent(null);
-            weaponSlots[slotIndex].gameObject.SetActive(true);
             weaponSlots[slotIndex].DropToGround();
-            Destroy(weaponSlots[slotIndex].gameObject, 2f); // 원하면 일정 시간 뒤 제거
+            weaponSlots[slotIndex] = null;
         }
 
-        // 새 무기 장착
-        if (newWeapon != null)
+        if (pickedWeapon != null)
         {
-            newWeapon.transform.SetParent(weaponParent);
+            // ✅ 반드시 인스턴스화 보장
+            Weapon newWeapon = Instantiate(pickedWeapon, weaponParent);
+
+            // 무기 Transform 세팅
             newWeapon.transform.localPosition = newWeapon.rightHandPosition;
             newWeapon.transform.localEulerAngles = newWeapon.rightHandRotation;
 
-            // 장착 중 물리/충돌 무력화(흔들림 방지)
+            // Rigidbody/Collider 비활성화 (손에 들고 있을 때)
             var rb = newWeapon.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
-
             foreach (var col in newWeapon.GetComponentsInChildren<Collider>())
-            {
                 col.enabled = false;
-            }
 
+            // 슬롯에 등록
             weaponSlots[slotIndex] = newWeapon;
-            EquipWeapon(slotIndex); // 슬롯 번호 기반으로 장착 (→ _weapon 갱신/IK/UI 모두 처리)
+            EquipWeapon(slotIndex);
         }
     }
 
