@@ -223,42 +223,64 @@ public class Weapon : Item
     }
     public void DropToGround()
     {
-        // 🔹 Prefab Asset을 직접 참조하는 상황 방지
-        if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
+#if UNITY_EDITOR
+        if (UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject))
         {
             Debug.LogError("Prefab Asset 자체를 드랍하려고 했습니다. 반드시 인스턴스를 사용하세요.");
             return;
         }
+#endif
 
-        // 부모 해제 → 씬에 독립적으로 존재
         transform.SetParent(null);
 
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
 
-        Collider col = GetComponent<Collider>();
-        if (col == null) col = gameObject.AddComponent<BoxCollider>();
+        Collider[] colliders = GetComponentsInChildren<Collider>();
+        if (colliders.Length == 0)
+        {
+            colliders = new Collider[] { gameObject.AddComponent<BoxCollider>() };
+        }
+
+        // ✅ 첫 번째 콜라이더는 트리거용 → 무기 줍기용 유지
+        if (colliders.Length > 0)
+        {
+            colliders[0].enabled = true;
+            colliders[0].isTrigger = true;
+        }
+
+        // ✅ 나머지 콜라이더들은 물리 충돌용
+        for (int i = 1; i < colliders.Length; i++)
+        {
+            colliders[i].enabled = true;
+            colliders[i].isTrigger = false;
+        }
 
         rb.isKinematic = false;
         rb.useGravity = true;
 
-        // 물리 재질 (튕기는 효과)
-        if (col.sharedMaterial == null)
+        // 물리 재질 적용 (튕김 효과)
+        for (int i = 1; i < colliders.Length; i++)
         {
-            PhysicMaterial bounceMat = new PhysicMaterial
+            if (colliders[i].sharedMaterial == null)
             {
-                bounciness = 0.4f,
-                frictionCombine = PhysicMaterialCombine.Multiply,
-                bounceCombine = PhysicMaterialCombine.Maximum
-            };
-            col.sharedMaterial = bounceMat;
+                PhysicMaterial bounceMat = new PhysicMaterial
+                {
+                    bounciness = 0.4f,
+                    frictionCombine = PhysicMaterialCombine.Multiply,
+                    bounceCombine = PhysicMaterialCombine.Maximum
+                };
+                colliders[i].sharedMaterial = bounceMat;
+            }
         }
 
-        // 살짝 위로 튀기는 힘
+        // 튀기듯 던지기
         Vector3 dropDirection = (transform.forward + Vector3.up * 0.5f).normalized;
         rb.AddForce(dropDirection * 3f, ForceMode.Impulse);
         rb.AddTorque(UnityEngine.Random.insideUnitSphere * 3f, ForceMode.Impulse);
     }
+
+
 
 
 
