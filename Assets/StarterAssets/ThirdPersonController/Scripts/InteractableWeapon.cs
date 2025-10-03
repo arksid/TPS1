@@ -2,14 +2,13 @@
 
 public class InteractableWeapon : MonoBehaviour, IInteractable
 {
-    private Weapon weapon; // 이 오브젝트에 붙은 Weapon 컴포넌트
+    [SerializeField] private Weapon weaponPrefab; // 장착할 무기 프리팹 (Inspector에 설정)
 
     private void Awake()
     {
-        weapon = GetComponent<Weapon>();
-        if (weapon == null)
+        if (weaponPrefab == null)
         {
-            Debug.LogError("[InteractableWeapon] 같은 오브젝트에 Weapon이 필요합니다.");
+            weaponPrefab = GetComponent<Weapon>();
         }
     }
 
@@ -35,11 +34,14 @@ public class InteractableWeapon : MonoBehaviour, IInteractable
     // ✅ 실제 상호작용(교체) 로직
     public void Interact(Character character)
     {
-        if (character == null || weapon == null) return;
+        if (character == null || weaponPrefab == null) return;
 
         int slot = character.GetCurrentSlotIndex();
-        character.ReplaceWeaponInSlot(slot, weapon);
 
-        // ✅ 여기서는 Destroy 필요 없음 (씬 무기를 플레이어 손으로 옮김)
+        // 현재 무기 교체 시도
+        character.ReplaceWeaponInSlot(slot, weaponPrefab);
+
+        // 바닥 무기는 제거 (씬에서 없어짐)
+        Destroy(gameObject);
     }
 }

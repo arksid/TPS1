@@ -287,7 +287,7 @@ public class Character : MonoBehaviour
             rigManager.SetLeftHandGrioData(weapon.leftHandPosition, weapon.leftHandRotation);
     }
 
-    public void ReplaceWeaponInSlot(int slotIndex, Weapon pickedWeapon)
+    public void ReplaceWeaponInSlot(int slotIndex, Weapon pickedWeaponPrefab)
     {
         if (slotIndex < 0 || slotIndex >= weaponSlots.Length) return;
 
@@ -298,26 +298,27 @@ public class Character : MonoBehaviour
             weaponSlots[slotIndex] = null;
         }
 
-        if (pickedWeapon != null)
+        if (pickedWeaponPrefab != null)
         {
-            // ✅ 반드시 인스턴스화 보장
-            Weapon newWeapon = Instantiate(pickedWeapon, weaponParent);
+            // ✅ 새로 인스턴스화
+            Weapon newWeapon = Instantiate(pickedWeaponPrefab, weaponParent);
 
-            // 무기 Transform 세팅
+            // 손 위치/회전에 맞게 붙이기
             newWeapon.transform.localPosition = newWeapon.rightHandPosition;
             newWeapon.transform.localEulerAngles = newWeapon.rightHandRotation;
 
-            // Rigidbody/Collider 비활성화 (손에 들고 있을 때)
+            // 들고 있을 때는 물리 끔
             var rb = newWeapon.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
             foreach (var col in newWeapon.GetComponentsInChildren<Collider>())
                 col.enabled = false;
 
-            // 슬롯에 등록
+            // 슬롯 갱신
             weaponSlots[slotIndex] = newWeapon;
             EquipWeapon(slotIndex);
         }
     }
+
 
     // ===== 데미지 처리 =====
     public void ApplyDamage(Character shooter, Transform hit, float damage)
