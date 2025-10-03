@@ -30,6 +30,11 @@ public class Character : MonoBehaviour
     // ✅ 트리거 방식 상호작용: 콜라이더 안 '가까운 무기' 참조
     private InteractableWeapon _nearbyWeapon;
 
+    [SerializeField] private Weapon slot1WeaponPrefab;   // 1번 무기 (HK416)
+    [SerializeField] private Weapon slot2WeaponPrefab;   // 2번 무기 (EVO-3)
+    [SerializeField] private Weapon slot3WeaponPrefab;   // 3번 무기 (K-9)
+
+
     // Animator hash 캐싱
     private static readonly int EquipTrigger = Animator.StringToHash("Equip");
     private static readonly int HolsterTrigger = Animator.StringToHash("Holster");
@@ -40,11 +45,24 @@ public class Character : MonoBehaviour
         _rigManager = GetComponent<RigManager>();
         _animator = GetComponent<Animator>();
 
-        // 테스트용 초기 아이템
+        // 테스트용 초기 탄약
         Initialized(new Dictionary<string, int>
-        {
-             { "9mm", 1000 }
-        });
+    {
+        { "9mm", 1000 }
+    });
+
+        // 무기 프리팹을 슬롯에 직접 할당
+        if (slot1WeaponPrefab != null)
+            weaponSlots[0] = Instantiate(slot1WeaponPrefab, weaponHolder).GetComponent<Weapon>();
+
+        if (slot2WeaponPrefab != null)
+            weaponSlots[1] = Instantiate(slot2WeaponPrefab, weaponHolder).GetComponent<Weapon>();
+
+        if (slot3WeaponPrefab != null)
+            weaponSlots[2] = Instantiate(slot3WeaponPrefab, weaponHolder).GetComponent<Weapon>();
+
+        // 시작 시 1번 무기 장착
+        EquipWeapon(0);
     }
 
     public int Health
