@@ -1,94 +1,65 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
 
 public class EnemyWaveSpawner : MonoBehaviour
 {
-    [Header("Spawner Settings")]
-    public GameObject[] enemyPrefabs;       // 일반 적 프리팹 배열
-    public GameObject semiBossPrefab;       // 보스 프리팹
-    public Transform[] spawnPoints;         // 스폰 위치 배열
-    public float spawnDelay = 0.5f;         // 스폰 간격
-
-    [Header("Wave Settings")]
+    [Header("스폰 설정")]
+    public GameObject enemyPrefab;
+    public Transform[] spawnPoints;
     public int enemiesPerWave = 5;
-    public int totalWaves = 3;
-    public float timeBetweenWaves = 5f;
+    public float spawnDelay = 0.5f;
+    public float waveDelay = 5f;
+
+    [Header("플레이어 설정")]
+    public Transform playerTransform;
 
     private int currentWave = 0;
     private bool spawning = false;
-    private List<GameObject> aliveEnemies = new List<GameObject>();
-    private Transform playerTransform;
 
     private void Start()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-            playerTransform = player.transform;
-
-        StartCoroutine(SpawnWaves());
-    }
-
-    private IEnumerator SpawnWaves()
-    {
-        while (currentWave < totalWaves)
+        if (playerTransform == null)
         {
-            spawning = true;
-            currentWave++;
-
-            for (int i = 0; i < enemiesPerWave; i++)
-            {
-                SpawnEnemy();
-                yield return new WaitForSeconds(spawnDelay);
-            }
-
-            spawning = false;
-
-            // 다음 웨이브까지 대기
-            yield return new WaitForSeconds(timeBetweenWaves);
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+                playerTransform = player.transform;
         }
 
-        // 보스 웨이브
-        SpawnBoss();
+        StartCoroutine(StartWaves());
+    }
+
+    private IEnumerator StartWaves()
+    {
+        while (true)
+        {
+            currentWave++;
+            Debug.Log($"웨이브 {currentWave} 시작!");
+            yield return StartCoroutine(SpawnWave());
+            yield return new WaitForSeconds(waveDelay);
+        }
+    }
+
+    private IEnumerator SpawnWave()
+    {
+        for (int i = 0; i < enemiesPerWave; i++)
+        {
+            SpawnEnemy();
+            yield return new WaitForSeconds(spawnDelay);
+        }
     }
 
     private void SpawnEnemy()
     {
-        if (enemyPrefabs.Length == 0 || spawnPoints.Length == 0) return;
+        if (enemyPrefab == null || spawnPoints.Length == 0) return;
 
-        GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
-        Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+        Transform point = spawnPoints[Random.Range(0, spawnPoints.Length)];
+        GameObject enemy = Instantiate(enemyPrefab, point.position, point.rotation);
 
-        GameObject newEnemy = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
-
-        // 플레이어 설정
-        EnemyController controller = newEnemy.GetComponent<EnemyController>();
-        if (controller != null)
+        // ✅ 웨이브 스폰 시 플레이어 지정
+        EnemyController controller = enemy.GetComponent<EnemyController>();
+        if (controller != null && playerTransform != null)
+        {
             controller.SetPlayer(playerTransform);
-
-        // 🔥 Radar 등록
-        if (RadarManager.Instance != null)
-            RadarManager.Instance.RegisterEnemy(newEnemy.transform);
-
-        aliveEnemies.Add(newEnemy);
-    }
-
-    private void SpawnBoss()
-    {
-        if (semiBossPrefab == null || spawnPoints.Length == 0) return;
-
-        Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
-        GameObject boss = Instantiate(semiBossPrefab, spawnPoint.position, spawnPoint.rotation);
-
-        // 플레이어 설정
-        SemiBossController controller = boss.GetComponent<SemiBossController>();
-        if (controller != null)
-            controller.SetPlayer(playerTransform);
-
-        // 🔥 Radar 등록 (보스도 적으로 취급)
-        if (RadarManager.Instance != null)
-            RadarManager.Instance.RegisterEnemy(boss.transform);
-
-        aliveEnemies.Add(boss);
+        }
     }
 }
