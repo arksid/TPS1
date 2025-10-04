@@ -433,6 +433,7 @@ public class Character : MonoBehaviour
 
     // ====== 가까운 무기 상호작용 (빈 슬롯 또는 교체 포함) ======
     // ====== 가까운 무기 상호작용 (빈 슬롯 또는 교체 포함) ======
+    // ====== 가까운 무기 상호작용 (빈 슬롯 또는 교체 포함) ======
     public void TryInteract()
     {
         if (_nearbyWeapon == null) return;
@@ -486,25 +487,37 @@ public class Character : MonoBehaviour
     {
         if (weapon == null) return;
 
-        // 부모에서 분리
+        // 부모 해제 (손에서 분리)
         weapon.transform.SetParent(null);
 
-        // 물리 활성화
+        // Rigidbody가 없으면 추가
         var rb = weapon.GetComponent<Rigidbody>();
         if (rb == null) rb = weapon.gameObject.AddComponent<Rigidbody>();
         rb.isKinematic = false;
         rb.mass = 1f;
-        rb.drag = 2f;
-        rb.angularDrag = 1f;
+        rb.drag = 0.2f;
+        rb.angularDrag = 0.05f;
 
         // 콜라이더 다시 켜기
         foreach (var col in weapon.GetComponentsInChildren<Collider>())
             col.enabled = true;
 
-        // 살짝 앞으로 튕겨나가게
-        rb.AddForce(transform.forward * 2f + Vector3.up * 1.5f, ForceMode.Impulse);
+        // 💥 '몸에서 뱉는' 느낌: 앞으로 + 위로 강한 반동 적용
+        Vector3 dropDirection = (transform.forward + Vector3.up * 0.5f).normalized;
+        float dropForce = 6f;      // 튀어나가는 세기
+        float torqueForce = 8f;    // 회전 세기
 
-        Debug.Log($"🟠 {slotIndex + 1}번 무기 {weapon.name}을(를) 바닥에 드랍했습니다.");
+        rb.AddForce(dropDirection * dropForce, ForceMode.Impulse);
+        rb.AddTorque(Random.insideUnitSphere * torqueForce, ForceMode.Impulse);
+
+        // ❌ 자동 삭제 제거 (이 줄을 없애면 무기는 사라지지 않음)
+        // Destroy(weapon.gameObject, 5f);
+
+        // 슬롯 비우기
+        weaponSlots[slotIndex] = null;
+
+        Debug.Log($"🟠 {slotIndex + 1}번 무기 {weapon.name}을(를) 몸에서 뱉듯이 버렸습니다. (지속 존재)");
     }
+
 
 }

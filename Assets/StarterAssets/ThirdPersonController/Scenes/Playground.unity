@@ -9220,6 +9220,24 @@ PrefabInstance:
       objectReference: {fileID: 2031245300}
     - target: {fileID: 5797133863652098141, guid: da592e4107fbb2145ade0d7b534aefe7,
         type: 3}
+      propertyPath: slot1WeaponPrefab
+      value: 
+      objectReference: {fileID: 2542806893130543058, guid: 3d1dd88ebac811a468910b8784cedc4f,
+        type: 3}
+    - target: {fileID: 5797133863652098141, guid: da592e4107fbb2145ade0d7b534aefe7,
+        type: 3}
+      propertyPath: slot2WeaponPrefab
+      value: 
+      objectReference: {fileID: 7422775686034641622, guid: 3269098b999698a4cb493845c22a5096,
+        type: 3}
+    - target: {fileID: 5797133863652098141, guid: da592e4107fbb2145ade0d7b534aefe7,
+        type: 3}
+      propertyPath: slot3WeaponPrefab
+      value: 
+      objectReference: {fileID: 2542806893130543058, guid: 12b638637e82b3e46b7b698191ed557c,
+        type: 3}
+    - target: {fileID: 5797133863652098141, guid: da592e4107fbb2145ade0d7b534aefe7,
+        type: 3}
       propertyPath: weaponSlots.Array.size
       value: 3
       objectReference: {fileID: 0}
@@ -10721,7 +10739,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -690, y: -456}
+  m_AnchoredPosition: {x: -679, y: -456}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6591770215946444904
