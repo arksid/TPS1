@@ -586,12 +586,24 @@ namespace StarterAssets
             Weapon weapon = _character.GetWeaponBySlotIndex(slotIndex);
             if (weapon != null)
             {
-                _character.EquipWeapon(slotIndex);  // 슬롯 인덱스 기반 장착
+                // 이미 같은 슬롯이면 중복 방지
+                if (_character.GetCurrentSlotIndex() == slotIndex)
+                    return;
+
+                // 애니메이션 기반 전환
+                _character.HolsterWeapon();
+                StartCoroutine(DelayedEquip(slotIndex, 0.5f)); // 0.5초 후 장착
             }
             else
             {
                 Debug.LogWarning($"슬롯 {slotIndex + 1}에 장비 가능한 무기가 없습니다.");
             }
+        }
+
+        private IEnumerator DelayedEquip(int slotIndex, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            _character.EquipWeapon(slotIndex);
         }
 
         // ✅ 트리거 방식: E키 → 캐릭터의 TryInteract() 호출

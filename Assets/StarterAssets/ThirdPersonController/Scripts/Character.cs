@@ -125,8 +125,18 @@ public class Character : MonoBehaviour
     }
 
     // ===== 무기 슬롯 검색 =====
+    // ===== 무기 슬롯 검색 =====
     public Weapon GetWeaponBySlotIndex(int slotIndex)
     {
+        // 슬롯 배열 중심으로 무기 검색
+        if (slotIndex < 0 || slotIndex >= weaponSlots.Length)
+            return null;
+
+        // 슬롯에 무기가 있으면 바로 반환
+        if (weaponSlots[slotIndex] != null)
+            return weaponSlots[slotIndex];
+
+        // 예전 구조(아이템 리스트 기반) 유지하고 싶을 때만 백업 검색
         Weapon.WeaponCategory categoryToSearch;
         int categoryIndex;
 
@@ -159,6 +169,7 @@ public class Character : MonoBehaviour
                 found++;
             }
         }
+
         return null;
     }
 
@@ -309,34 +320,43 @@ public class Character : MonoBehaviour
     {
         if (slotIndex < 0 || slotIndex >= weaponSlots.Length) return;
 
-        // 기존 무기 드랍
+        // 기존 무기 정리
         if (weaponSlots[slotIndex] != null)
         {
-            weaponSlots[slotIndex].DropToGround();
-            weaponSlots[slotIndex] = null;
+            Weapon oldWeapon = weaponSlots[slotIndex];
+
+            if (oldWeapon != null)
+            {
+                oldWeapon.gameObject.SetActive(false);
+                weaponSlots[slotIndex] = null;
+
+                // ✅ 에디터 오류 방지를 위한 딜레이 삭제
+                Destroy(oldWeapon.gameObject, 0.05f);
+            }
         }
 
         if (pickedWeaponPrefab != null)
         {
-            // ✅ 새로 인스턴스화
+            // ✅ 새 무기 생성
             Weapon newWeapon = Instantiate(pickedWeaponPrefab, weaponParent);
-
-            // 손 위치/회전에 맞게 붙이기
             newWeapon.transform.localPosition = newWeapon.rightHandPosition;
             newWeapon.transform.localEulerAngles = newWeapon.rightHandRotation;
 
-            // 들고 있을 때는 물리 끔
+            // ✅ 물리 비활성화
             var rb = newWeapon.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
+
             foreach (var col in newWeapon.GetComponentsInChildren<Collider>())
                 col.enabled = false;
 
-            // 슬롯 갱신
+            // ✅ 슬롯 갱신 및 장착
             weaponSlots[slotIndex] = newWeapon;
             EquipWeapon(slotIndex);
+
+            _switchingWeapon = false;
+            Debug.Log($"✅ 슬롯 {slotIndex + 1}번 무기 교체 완료: {newWeapon.name}");
         }
     }
-
 
     // ===== 데미지 처리 =====
     public void ApplyDamage(Character shooter, Transform hit, float damage)
@@ -411,9 +431,80 @@ public class Character : MonoBehaviour
         if (_nearbyWeapon == weapon) _nearbyWeapon = null;
     }
 
+    // ====== 가까운 무기 상호작용 (빈 슬롯 또는 교체 포함) ======
+    // ====== 가까운 무기 상호작용 (빈 슬롯 또는 교체 포함) ======
     public void TryInteract()
     {
-        // 가까운 무기가 있으면 상호작용 수행
-        _nearbyWeapon?.Interact(this);
+        if (_nearbyWeapon == null) return;
+
+        Weapon pickedWeaponPrefab = _nearbyWeapon.GetComponent<Weapon>();
+        if (pickedWeaponPrefab == null) return;
+
+        int emptySlot = FindEmptySlot();
+
+        // ✅ 1️⃣ 빈 슬롯이 있으면 바로 장착
+        if (emptySlot != -1)
+        {
+            ReplaceWeaponInSlot(emptySlot, pickedWeaponPrefab);
+            EquipWeapon(emptySlot);
+            Debug.Log($"✅ {emptySlot + 1}번 슬롯에 {pickedWeaponPrefab.name} 장착 완료!");
+        }
+        // ✅ 2️⃣ 슬롯이 전부 찼다면 — 현재 들고 있는 무기를 드랍 후 교체
+        else
+        {
+            int currentSlot = GetCurrentSlotIndex();
+            Weapon oldWeapon = weaponSlots[currentSlot];
+
+            if (oldWeapon != null)
+            {
+                DropWeaponToGround(oldWeapon, currentSlot);
+            }
+
+            ReplaceWeaponInSlot(currentSlot, pickedWeaponPrefab);
+            EquipWeapon(currentSlot);
+            Debug.Log($"♻ {currentSlot + 1}번 무기를 {pickedWeaponPrefab.name}으로 교체했습니다!");
+        }
+
+        // ✅ 줍은 무기 제거 (딜레이로 안전하게)
+        Destroy(_nearbyWeapon.gameObject, 0.05f);
+        _nearbyWeapon = null;
     }
+
+
+
+    // ====== 비어있는 슬롯 찾기 ======
+    private int FindEmptySlot()
+    {
+        for (int i = 0; i < weaponSlots.Length; i++)
+        {
+            if (weaponSlots[i] == null)
+                return i;
+        }
+        return -1; // 모든 슬롯이 차 있음
+    }
+    private void DropWeaponToGround(Weapon weapon, int slotIndex)
+    {
+        if (weapon == null) return;
+
+        // 부모에서 분리
+        weapon.transform.SetParent(null);
+
+        // 물리 활성화
+        var rb = weapon.GetComponent<Rigidbody>();
+        if (rb == null) rb = weapon.gameObject.AddComponent<Rigidbody>();
+        rb.isKinematic = false;
+        rb.mass = 1f;
+        rb.drag = 2f;
+        rb.angularDrag = 1f;
+
+        // 콜라이더 다시 켜기
+        foreach (var col in weapon.GetComponentsInChildren<Collider>())
+            col.enabled = true;
+
+        // 살짝 앞으로 튕겨나가게
+        rb.AddForce(transform.forward * 2f + Vector3.up * 1.5f, ForceMode.Impulse);
+
+        Debug.Log($"🟠 {slotIndex + 1}번 무기 {weapon.name}을(를) 바닥에 드랍했습니다.");
+    }
+
 }
