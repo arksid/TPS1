@@ -3728,79 +3728,6 @@ MonoBehaviour:
   m_ReferenceObject: {fileID: 0}
   m_DistanceToObject: 20
   m_Multithread: 1
---- !u!1001 &1037254341
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1166634551160940, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_Name
-      value: SK_AssaultMech
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -23.63
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.0005040169
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 1.4252529
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
-      propertyPath: m_ConstrainProportionsScale
-      value: 1
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
 --- !u!4 &1048511667 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8718778828885884488, guid: e5f4daf24146ee040b5a2d7a73b30aa0,
@@ -7555,12 +7482,17 @@ PrefabInstance:
         type: 3}
       propertyPath: enemyPrefab
       value: 
-      objectReference: {fileID: 1014634973264464, guid: 8f8894cbdac81c542afeeceff33a3ea9,
+      objectReference: {fileID: 2158740643350348365, guid: 03797a657e242304089c107a426e602d,
         type: 3}
     - target: {fileID: 5326789727870453837, guid: 81fbce4d1225bb24187a8a98e5c78d81,
         type: 3}
+      propertyPath: spawnRadius
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5326789727870453837, guid: 81fbce4d1225bb24187a8a98e5c78d81,
+        type: 3}
       propertyPath: enemiesPerWave
-      value: 1
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 5326789727870453837, guid: 81fbce4d1225bb24187a8a98e5c78d81,
         type: 3}
@@ -12270,4 +12202,3 @@ SceneRoots:
   - {fileID: 1060887815}
   - {fileID: 958915811}
   - {fileID: 87827845}
-  - {fileID: 1037254341}
