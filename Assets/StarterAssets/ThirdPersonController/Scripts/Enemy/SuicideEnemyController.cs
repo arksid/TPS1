@@ -6,29 +6,30 @@ using System.Collections;
 [RequireComponent(typeof(Rigidbody))]
 public class SuicideEnemyController : MonoBehaviour
 {
-    [Header("체력 설정")]
+    [Header("기본 설정")]
     public int maxHealth = 100;
     private int currentHealth;
 
-    [Header("행동 설정")]
-    public float detectionRange = 10f;   // 감지 범위
-    public float rushRange = 5f;         // 돌진 시작 거리
-    public float rushSpeed = 15f;        // 돌진 속도
-    public float prepDelay = 0.8f;       // 자폭 준비 시간 (삐빅)
-    public float followSpeed = 3.5f;     // 평상시 추적 속도
+    [Header("AI 설정")]
+    public float detectionRange = 12f;
+    public float rushRange = 6f;       // 돌진 개시 거리
+    public float followSpeed = 3.5f;   // 평상시 추적 속도
+    public float prepDelay = 1.0f;     // 삐빅 대기시간
+    public float rushSpeed = 20f;      // 돌진 속도
+    public float explosionDelay = 2.5f;// 돌진 후 폭발 타이머
 
     [Header("폭발 설정")]
-    public float explosionRange = 3f;    // 폭발 반경
-    public float explosionDamage = 60f;  // 폭발 데미지
-    public GameObject explosionEffect;   // 폭발 이펙트 프리팹
+    public float explosionRange = 3f;
+    public float explosionDamage = 60f;
+    public GameObject explosionEffect;
 
-    [Header("사운드 설정")]
+    [Header("사운드")]
     public AudioClip beepSound;
     public AudioClip explosionSound;
 
     private NavMeshAgent agent;
-    private Transform player;
     private Rigidbody rb;
+    private Transform player;
     private AudioSource audioSource;
 
     private bool isPreparing = false;
@@ -38,7 +39,6 @@ public class SuicideEnemyController : MonoBehaviour
     void Start()
     {
         currentHealth = maxHealth;
-
         agent = GetComponent<NavMeshAgent>();
         rb = GetComponent<Rigidbody>();
         audioSource = GetComponent<AudioSource>();
@@ -50,12 +50,9 @@ public class SuicideEnemyController : MonoBehaviour
         if (p != null)
             player = p.transform;
 
-        // NavMesh 설정
         agent.speed = followSpeed;
         agent.acceleration = 8f;
         agent.angularSpeed = 400f;
-        agent.stoppingDistance = 0f;
-        agent.autoBraking = true;
     }
 
     void Update()
@@ -64,97 +61,87 @@ public class SuicideEnemyController : MonoBehaviour
 
         float dist = Vector3.Distance(transform.position, player.position);
 
-        // 일반 추적
+        // 평소 추적
         if (!isPreparing && !isRushing)
         {
             agent.isStopped = false;
             agent.SetDestination(player.position);
-
-            // 부드럽게 회전
-            Vector3 dir = (player.position - transform.position);
-            dir.y = 0f;
-            if (dir.sqrMagnitude > 0.001f)
-            {
-                Quaternion lookRot = Quaternion.LookRotation(dir.normalized);
-                transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, Time.deltaTime * 8f);
-            }
         }
 
-        // 일정 거리 안에 들어오면 자폭 준비
+        // 자폭 준비 개시
         if (dist <= rushRange && !isPreparing && !isRushing)
         {
-            StartCoroutine(PrepareAndRush());
+            StartCoroutine(PrepareExplosion());
         }
     }
 
-    private IEnumerator PrepareAndRush()
+    IEnumerator PrepareExplosion()
     {
         isPreparing = true;
         agent.isStopped = true;
 
+        // 삐빅 소리 경고
         float elapsed = 0f;
         while (elapsed < prepDelay)
         {
-            elapsed += 0.25f;
+            elapsed += 0.3f;
             if (audioSource && beepSound)
                 audioSource.PlayOneShot(beepSound);
-            yield return new WaitForSeconds(0.25f);
+            yield return new WaitForSeconds(0.3f);
         }
 
-        RushAtPlayer();
+        StartCoroutine(RushAndExplode());
     }
 
-    private void RushAtPlayer()
+    IEnumerator RushAndExplode()
     {
-        if (player == null || hasExploded) return;
-
         isPreparing = false;
         isRushing = true;
 
-        // NavMeshAgent 비활성 → 물리 이동 전환
+        // NavMeshAgent 끄고 물리 이동으로 전환
         agent.enabled = false;
         rb.isKinematic = false;
 
+        // 돌진 방향 계산 (그 순간 플레이어 위치 기준)
         Vector3 dir = (player.position - transform.position).normalized;
-        dir.y = 0f;
-
+        dir.y = 0;
         transform.rotation = Quaternion.LookRotation(dir);
-        rb.velocity = dir * rushSpeed;
+
+        // 물리 힘으로 돌진
+        rb.AddForce(dir * rushSpeed, ForceMode.VelocityChange);
+
+        // 💣 타이머가 끝나면 무조건 폭발
+        yield return new WaitForSeconds(explosionDelay);
+        if (!hasExploded)
+            Explode();
     }
 
     private void OnCollisionEnter(Collision collision)
     {
         if (hasExploded) return;
 
-        if (collision.gameObject.CompareTag("Player"))
+        // 총알 피격
+        Projectile proj = collision.gameObject.GetComponent<Projectile>();
+        if (proj != null)
+        {
+            TakeDamage(proj.damage);
+            Destroy(collision.gameObject);
+            return;
+        }
+
+        // 플레이어 충돌 시 바로 폭발
+        if (collision.gameObject.CompareTag("Player") || collision.gameObject.name == "Player")
         {
             Explode();
         }
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (hasExploded) return;
-
-        // ✅ 총알 태그로 맞았을 때 데미지 받음
-        if (other.CompareTag("Projectile"))
-        {
-            Projectile proj = other.GetComponent<Projectile>();
-            if (proj != null)
-            {
-                TakeDamage(proj.damage);
-            }
-
-            Destroy(other.gameObject);
-        }
-    }
-
-    private void Explode()
+    void Explode()
     {
         if (hasExploded) return;
         hasExploded = true;
 
-        // 폭발 이펙트
+        // 이펙트
         if (explosionEffect)
             Instantiate(explosionEffect, transform.position, Quaternion.identity);
 
@@ -162,27 +149,23 @@ public class SuicideEnemyController : MonoBehaviour
         if (audioSource && explosionSound)
             audioSource.PlayOneShot(explosionSound);
 
-        // 폭발 데미지 적용
+        // 폭발 데미지
         Collider[] hits = Physics.OverlapSphere(transform.position, explosionRange);
         foreach (Collider c in hits)
         {
             if (c.CompareTag("Player"))
             {
                 Character ch = c.GetComponent<Character>();
-                if (ch == null)
-                    ch = c.GetComponentInParent<Character>();
-
+                if (ch == null) ch = c.GetComponentInParent<Character>();
                 if (ch != null)
                     ch.ApplyDamage(null, transform, explosionDamage);
             }
         }
 
-        // 정지 후 삭제
+        // 물리/충돌 제거
         rb.velocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
-        Collider col = GetComponent<Collider>();
-        if (col != null) col.enabled = false;
+        GetComponent<Collider>().enabled = false;
 
         Destroy(gameObject, 0.1f);
     }
@@ -193,9 +176,7 @@ public class SuicideEnemyController : MonoBehaviour
 
         currentHealth -= Mathf.RoundToInt(dmg);
         if (currentHealth <= 0)
-        {
             Explode();
-        }
     }
 
     private void OnDrawGizmosSelected()

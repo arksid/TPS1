@@ -95,14 +95,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 50
   detectionRange: 12
+  rushRange: 7
+  followSpeed: 3.5
+  prepDelay: 1
+  rushSpeed: 25
+  explosionDelay: 2.5
   explosionRange: 3
   explosionDamage: 60
-  explosionForce: 700
-  prepDelay: 1.5
-  jumpForce: 8
-  rushForce: 30
-  rushDuration: 0.6
-  explosionEffect: {fileID: 0}
+  explosionEffect: {fileID: 413139124443202584, guid: 0a7bdc322ab13fe4fba110d265cbaaae,
+    type: 3}
   beepSound: {fileID: 0}
   explosionSound: {fileID: 0}
 --- !u!54 &747332268715285304
