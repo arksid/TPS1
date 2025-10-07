@@ -22,12 +22,7 @@ public class Radar : MonoBehaviour
 
     void Start()
     {
-        // 모든 적/아군에 대한 Blip 미리 생성
-        foreach (var e in enemies)
-            CreateBlipForTarget(e, Color.red);
-
-        foreach (var a in allies)
-            CreateBlipForTarget(a, Color.blue);
+        
     }
 
     void Update()

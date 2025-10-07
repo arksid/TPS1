@@ -2589,9 +2589,9 @@ MonoBehaviour:
   blipPrefab: {fileID: 6583834520757396554, guid: 30771f7e35c2b5c42b2451c0a3a1c698,
     type: 3}
   enemies:
-  - {fileID: 3110350032501660255, guid: 3fb254ad33a6f5f4d95c3059c2c9f3ee, type: 3}
-  - {fileID: 1876281521800804447, guid: a58466501f0a3b34eb42e9138b5296f3, type: 3}
-  - {fileID: 2617117948279536046, guid: 809ec271ecaba284a9b4dc268fd1c56c, type: 3}
+  - {fileID: 286201221099469341, guid: 03797a657e242304089c107a426e602d, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
   allies:
   - {fileID: 1569135809324026711}
   fovIndicator: {fileID: 0}
@@ -3741,8 +3741,20 @@ PrefabInstance:
       value: SK_AssaultMech
       objectReference: {fileID: 0}
     - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.1166458
+      value: -23.63
       objectReference: {fileID: 0}
     - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3779,6 +3791,10 @@ PrefabInstance:
     - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4263422207979158, guid: cd2436b8111b0c447979ef5d1d10f3cb, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -7539,12 +7555,12 @@ PrefabInstance:
         type: 3}
       propertyPath: enemyPrefab
       value: 
-      objectReference: {fileID: 2158740643350348365, guid: 03797a657e242304089c107a426e602d,
+      objectReference: {fileID: 1014634973264464, guid: 8f8894cbdac81c542afeeceff33a3ea9,
         type: 3}
     - target: {fileID: 5326789727870453837, guid: 81fbce4d1225bb24187a8a98e5c78d81,
         type: 3}
       propertyPath: enemiesPerWave
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5326789727870453837, guid: 81fbce4d1225bb24187a8a98e5c78d81,
         type: 3}
@@ -9135,6 +9151,11 @@ PrefabInstance:
         type: 3}
       propertyPath: RollSpeed
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3241880604189725250, guid: da592e4107fbb2145ade0d7b534aefe7,
+        type: 3}
+      propertyPath: InvincibleDuration
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5797133863652098141, guid: da592e4107fbb2145ade0d7b534aefe7,
         type: 3}

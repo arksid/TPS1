@@ -91,7 +91,7 @@ MonoBehaviour:
   _fireMode: 2
   _category: 0
   _ammoID: 9mm
-  _damage: 50
+  _damage: 30
   _fireRate: 0.05
   _clipSize: 30
   _burstCount: 3

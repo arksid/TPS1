@@ -82,25 +82,27 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
-        // ✅ 플레이어 방향으로 조준
-        Vector3 shootDir = (playerTarget.position - shootingPoint.position).normalized;
-        Quaternion rot = Quaternion.LookRotation(shootDir, Vector3.up);
+        // ✅ 플레이어의 중심보다 위쪽(가슴 높이)으로 조준 보정
+        Vector3 targetPoint = playerTarget.position + Vector3.up * 1.2f; // ← 오프셋 추가
+        Vector3 shootDir = (targetPoint - shootingPoint.position).normalized;
 
+        Quaternion rot = Quaternion.LookRotation(shootDir, Vector3.up);
         GameObject bullet = Instantiate(projectilePrefab, shootingPoint.position, rot);
 
-        // ✅ 자기 자신과 충돌 무시 추가
+        // 자기 자신과의 충돌 무시
         Collider myCol = GetComponent<Collider>();
         Collider bulletCol = bullet.GetComponent<Collider>();
         if (myCol != null && bulletCol != null)
             Physics.IgnoreCollision(bulletCol, myCol);
 
-        // 발사력
+        // 총알 발사
         Rigidbody rb = bullet.GetComponent<Rigidbody>();
         if (rb != null)
             rb.AddForce(shootDir * 25f, ForceMode.Impulse);
 
         Debug.Log($"{name} → 총알 발사!");
     }
+
 
 
     public void TakeDamage(float damage)
