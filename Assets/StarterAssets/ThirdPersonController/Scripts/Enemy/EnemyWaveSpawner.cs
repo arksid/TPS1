@@ -4,12 +4,12 @@ using System.Collections;
 public class EnemyWaveSpawner : MonoBehaviour
 {
     [Header("스폰 설정")]
-    public GameObject[] enemyPrefabs;      // 여러 적 종류
-    public Transform[] spawnPoints;        // 스폰 포인트
-    public float spawnRadius = 10f;        // 스폰 반경
-    public int enemiesPerWave = 5;         // 한 웨이브당 적 수
-    public float spawnDelay = 0.5f;        // 적 개별 스폰 간격
-    public float waveDelay = 5f;           // 웨이브 간 대기시간
+    public string[] enemyKeys = { "NormalEnemy", "SuicideEnemy", "FlyingEnemy" }; // PoolManager 키들
+    public Transform[] spawnPoints;
+    public float spawnRadius = 10f;
+    public int enemiesPerWave = 5;
+    public float spawnDelay = 0.5f;
+    public float waveDelay = 5f;
 
     [Header("플레이어 설정")]
     public Transform playerTransform;
@@ -18,15 +18,13 @@ public class EnemyWaveSpawner : MonoBehaviour
 
     private void Start()
     {
-        // 플레이어 자동 탐색
         if (playerTransform == null)
         {
-            GameObject player = GameObject.Find("Player");
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
                 playerTransform = player.transform;
         }
 
-        // 웨이브 시작
         StartCoroutine(StartWaves());
     }
 
@@ -52,54 +50,53 @@ public class EnemyWaveSpawner : MonoBehaviour
 
     private void SpawnRandomEnemy()
     {
-        if (enemyPrefabs.Length == 0) return;
+        if (enemyKeys.Length == 0) return;
 
-        // ✅ 1. 랜덤한 적 선택
-        GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+        // ✅ 1. 랜덤 키 선택
+        string key = enemyKeys[Random.Range(0, enemyKeys.Length)];
 
-        // ✅ 2. 랜덤 스폰 위치 계산
+        // ✅ 2. 랜덤 위치
         Vector3 spawnPos = GetRandomSpawnPosition();
 
-        // ✅ 3. 적 생성
-        GameObject enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
+        // ✅ 3. PoolManager에서 가져오기
+        GameObject enemy = PoolManager.Instance.Get(key, spawnPos, Quaternion.identity);
+        if (enemy == null) return;
 
-        // ✅ 4. 플레이어 지정 (공통)
+        // ✅ 4. 초기화
         var enemyController = enemy.GetComponent<EnemyController>();
         var suicideEnemy = enemy.GetComponent<SuicideEnemyController>();
+        var flyingEnemy = enemy.GetComponent<SmartFlyingEnemyController>();
+
 
         if (playerTransform != null)
         {
             if (enemyController != null)
                 enemyController.SetPlayer(playerTransform);
             if (suicideEnemy != null)
-            {
-                // 자폭형은 직접 target을 넣는 구조일 수도 있으므로
                 suicideEnemy.SendMessage("SetTarget", playerTransform, SendMessageOptions.DontRequireReceiver);
-            }
+            if (flyingEnemy != null)
+                flyingEnemy.SendMessage("SetTarget", playerTransform, SendMessageOptions.DontRequireReceiver);
         }
+
+        // ✅ 풀에서 꺼냈으므로 체력, NavMeshAgent 등 초기화 필요
+        if (enemyController != null) enemyController.ResetEnemy();
+        if (suicideEnemy != null) suicideEnemy.ResetEnemy();
+        if (flyingEnemy != null) flyingEnemy.ResetEnemy();
     }
 
     private Vector3 GetRandomSpawnPosition()
     {
         Vector3 basePos;
-
-        // 특정 스폰포인트 중 하나 선택
         if (spawnPoints != null && spawnPoints.Length > 0)
-        {
-            Transform point = spawnPoints[Random.Range(0, spawnPoints.Length)];
-            basePos = point.position;
-        }
+            basePos = spawnPoints[Random.Range(0, spawnPoints.Length)].position;
         else
-        {
             basePos = transform.position;
-        }
 
-        // 지정 반경 내 무작위 위치 생성
         Vector2 randomOffset = Random.insideUnitCircle * spawnRadius;
-        Vector3 finalPos = basePos + new Vector3(randomOffset.x, 0f, randomOffset.y);
-
-        return finalPos;
+        return basePos + new Vector3(randomOffset.x, 0f, randomOffset.y);
     }
+
+
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
@@ -118,5 +115,7 @@ public class EnemyWaveSpawner : MonoBehaviour
             Gizmos.DrawWireSphere(transform.position, spawnRadius);
         }
     }
+
 #endif
+
 }

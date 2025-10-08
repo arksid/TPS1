@@ -73,6 +73,28 @@ public class EnemyController : MonoBehaviour
             }
         }
     }
+    public void ResetEnemy()
+    {
+        currentHealth = maxHealth;
+
+        if (agent != null)
+        {
+            agent.enabled = true;
+            agent.isStopped = false;
+        }
+
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+            col.enabled = true;
+
+        if (animator != null)
+        {
+            animator.ResetTrigger("Die");
+            animator.Play("Idle", -1, 0f);
+        }
+
+        gameObject.SetActive(true);
+    }
 
     private void Shoot()
     {
@@ -128,7 +150,18 @@ public class EnemyController : MonoBehaviour
         if (col != null)
             col.enabled = false;
 
-        Destroy(gameObject, 3f);
+        // 기존: Destroy(gameObject, 3f);
+        Invoke(nameof(ReturnToPool), 3f);
+    }
+
+    private void ReturnToPool()
+    {
+        agent.enabled = true;
+        Collider col = GetComponent<Collider>();
+        if (col != null) col.enabled = true;
+
+        currentHealth = maxHealth;
+        PoolManager.Instance.Return(gameObject);
     }
 
     // ✅ 웨이브 스포너용 플레이어 설정

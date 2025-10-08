@@ -1,45 +1,68 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class EnemyProjectile : MonoBehaviour
 {
     public float speed = 20f;
     public float damage = 10f;
+    public float lifeTime = 5f;
+    public GameObject shooter;
 
-    private void Start()
+    private Rigidbody rb;
+    private float spawnTime;
+    private Collider bulletCol;
+
+    void Awake()
     {
-        Collider[] myColliders = GetComponents<Collider>();
-        Collider[] enemyColliders = FindObjectsOfType<EnemyController>().SelectMany(e => e.GetComponentsInChildren<Collider>()).ToArray();
+        rb = GetComponent<Rigidbody>();
+        if (rb == null)
+            rb = gameObject.AddComponent<Rigidbody>();
+        rb.useGravity = false;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
-        foreach (var myCol in myColliders)
-        {
-            foreach (var enemyCol in enemyColliders)
-            {
-                Physics.IgnoreCollision(myCol, enemyCol);
-            }
-        }
+        bulletCol = GetComponent<Collider>();
+        if (bulletCol == null)
+            bulletCol = gameObject.AddComponent<SphereCollider>();
 
-        GetComponent<Rigidbody>().velocity = transform.forward * speed;
-        Destroy(gameObject, 5f);
+        bulletCol.isTrigger = true; // ✅ 트리거 모드로 강제 설정
     }
 
-    private void OnCollisionEnter(Collision collision)
+    public void Init(GameObject shooter, Vector3 direction, float speed, float damage)
     {
-        Character player = collision.transform.GetComponentInParent<Character>();
-        if (player != null)
+        this.shooter = shooter;
+        this.speed = speed;
+        this.damage = damage;
+        spawnTime = Time.time;
+
+        rb.velocity = direction.normalized * speed;
+
+        // 🔹 발사자와 충돌 무시 (한 번만 처리)
+        if (shooter != null && bulletCol != null)
         {
-            player.ApplyDamage(null, collision.transform, damage);
+            Collider[] cols = shooter.GetComponentsInChildren<Collider>();
+            foreach (var c in cols)
+                Physics.IgnoreCollision(bulletCol, c, true);
+        }
+    }
+
+    void Update()
+    {
+        if (Time.time - spawnTime > lifeTime)
+            PoolManager.Instance.Return(gameObject);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject == shooter) return;
+
+        Character ch = other.GetComponentInParent<Character>();
+        if (ch != null)
+        {
+            ch.ApplyDamage(null, other.transform, damage);
+            PoolManager.Instance.Return(gameObject);
+            return;
         }
 
-        SemiBossController boss = collision.transform.GetComponentInParent<SemiBossController>();
-        if (boss != null)
-        {
-            boss.TakeDamage(damage);
-        }
-
-        Destroy(gameObject);
+        if (other.CompareTag("Player"))
+            PoolManager.Instance.Return(gameObject);
     }
 }
-

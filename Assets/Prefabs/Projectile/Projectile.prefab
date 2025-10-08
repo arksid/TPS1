@@ -100,7 +100,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _speed: 100
-  _defaultImpact: {fileID: 1685078803973909772, guid: d518a9d173dd6c04987f1542e33201d1,
+  _defaultImpact: {fileID: 0}
+  hitParticlePrefab: {fileID: 4939264631899453584, guid: 3a32062c8b2a8724eb66be00a4cb0ecf,
     type: 3}
   shooter: {fileID: 0}
 --- !u!65 &5755938034613559080

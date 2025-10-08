@@ -1,9 +1,8 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 using UnityEngine.AI;
-using System.Collections;
 
 [RequireComponent(typeof(NavMeshAgent))]
-[RequireComponent(typeof(Rigidbody))]
 public class SuicideEnemyController : MonoBehaviour
 {
     [Header("기본 설정")]
@@ -11,179 +10,161 @@ public class SuicideEnemyController : MonoBehaviour
     private int currentHealth;
 
     [Header("AI 설정")]
-    public float detectionRange = 12f;
-    public float rushRange = 6f;       // 돌진 개시 거리
-    public float followSpeed = 3.5f;   // 평상시 추적 속도
-    public float prepDelay = 1.0f;     // 삐빅 대기시간
-    public float rushSpeed = 20f;      // 돌진 속도
-    public float explosionDelay = 2.5f;// 돌진 후 폭발 타이머
-
-    [Header("폭발 설정")]
-    public float explosionRange = 3f;
-    public float explosionDamage = 60f;
+    public float detectionRange = 20f;     // 플레이어 인식 범위
+    public float normalSpeed = 3.5f;       // 평상시 이동 속도
+    public float chaseSpeed = 10f;         // 인식 시 속도
+    public float chaseDuration = 2f;       // 🔥 빠르게 달리는 지속 시간
+    public float explosionRange = 2.5f;    // 폭발 범위
+    public float explosionDamage = 70f;
     public GameObject explosionEffect;
 
-    [Header("사운드")]
-    public AudioClip beepSound;
-    public AudioClip explosionSound;
 
     private NavMeshAgent agent;
-    private Rigidbody rb;
     private Transform player;
-    private AudioSource audioSource;
-
-    private bool isPreparing = false;
-    private bool isRushing = false;
-    private bool hasExploded = false;
+    private bool isExploding = false;
+    private bool isBoosting = false; // 🔥 현재 속도 증가 중인지 체크
 
     void Start()
     {
         currentHealth = maxHealth;
         agent = GetComponent<NavMeshAgent>();
-        rb = GetComponent<Rigidbody>();
-        audioSource = GetComponent<AudioSource>();
-
-        rb.isKinematic = true;
-        rb.freezeRotation = true;
-
-        GameObject p = GameObject.FindGameObjectWithTag("Player");
-        if (p != null)
-            player = p.transform;
-
-        agent.speed = followSpeed;
-        agent.acceleration = 8f;
-        agent.angularSpeed = 400f;
+        agent.speed = normalSpeed;
+        FindPlayer();
     }
 
     void Update()
     {
-        if (player == null || hasExploded) return;
-
-        float dist = Vector3.Distance(transform.position, player.position);
-
-        // 평소 추적
-        if (!isPreparing && !isRushing)
+        if (player == null)
         {
-            agent.isStopped = false;
-            agent.SetDestination(player.position);
-        }
-
-        // 자폭 준비 개시
-        if (dist <= rushRange && !isPreparing && !isRushing)
-        {
-            StartCoroutine(PrepareExplosion());
-        }
-    }
-
-    IEnumerator PrepareExplosion()
-    {
-        isPreparing = true;
-        agent.isStopped = true;
-
-        // 삐빅 소리 경고
-        float elapsed = 0f;
-        while (elapsed < prepDelay)
-        {
-            elapsed += 0.3f;
-            if (audioSource && beepSound)
-                audioSource.PlayOneShot(beepSound);
-            yield return new WaitForSeconds(0.3f);
-        }
-
-        StartCoroutine(RushAndExplode());
-    }
-
-    IEnumerator RushAndExplode()
-    {
-        isPreparing = false;
-        isRushing = true;
-
-        // NavMeshAgent 끄고 물리 이동으로 전환
-        agent.enabled = false;
-        rb.isKinematic = false;
-
-        // 돌진 방향 계산 (그 순간 플레이어 위치 기준)
-        Vector3 dir = (player.position - transform.position).normalized;
-        dir.y = 0;
-        transform.rotation = Quaternion.LookRotation(dir);
-
-        // 물리 힘으로 돌진
-        rb.AddForce(dir * rushSpeed, ForceMode.VelocityChange);
-
-        // 💣 타이머가 끝나면 무조건 폭발
-        yield return new WaitForSeconds(explosionDelay);
-        if (!hasExploded)
-            Explode();
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (hasExploded) return;
-
-        // 총알 피격
-        Projectile proj = collision.gameObject.GetComponent<Projectile>();
-        if (proj != null)
-        {
-            TakeDamage(proj.damage);
-            Destroy(collision.gameObject);
+            FindPlayer();
             return;
         }
 
-        // 플레이어 충돌 시 바로 폭발
-        if (collision.gameObject.CompareTag("Player") || collision.gameObject.name == "Player")
-        {
+        if (isExploding) return;
+
+        float dist = Vector3.Distance(transform.position, player.position);
+
+        // 추적
+        agent.SetDestination(player.position);
+
+        // 🔹 인식 범위 안에 들어오면 일정 시간 동안만 속도 증가
+        if (dist <= detectionRange && !isBoosting)
+            StartCoroutine(SpeedBoostRoutine());
+
+        // 폭발 거리 안이면 폭발
+        if (dist <= explosionRange)
             Explode();
-        }
     }
 
-    void Explode()
+    // 🔥 2초 동안만 빠르게 달리는 코루틴
+    IEnumerator SpeedBoostRoutine()
     {
-        if (hasExploded) return;
-        hasExploded = true;
+        isBoosting = true;
+        agent.speed = chaseSpeed;
 
-        // 이펙트
-        if (explosionEffect)
-            Instantiate(explosionEffect, transform.position, Quaternion.identity);
+        yield return new WaitForSeconds(chaseDuration);
 
-        // 폭발음
-        if (audioSource && explosionSound)
-            audioSource.PlayOneShot(explosionSound);
+        agent.speed = normalSpeed;
+        isBoosting = false;
+    }
 
-        // 폭발 데미지
-        Collider[] hits = Physics.OverlapSphere(transform.position, explosionRange);
-        foreach (Collider c in hits)
+    public void ResetEnemy()
+    {
+        isExploding = false;
+        currentHealth = maxHealth;
+
+        if (agent != null)
         {
-            if (c.CompareTag("Player"))
-            {
-                Character ch = c.GetComponent<Character>();
-                if (ch == null) ch = c.GetComponentInParent<Character>();
-                if (ch != null)
-                    ch.ApplyDamage(null, transform, explosionDamage);
-            }
+            agent.enabled = true;
+            agent.isStopped = false;
         }
 
-        // 물리/충돌 제거
-        rb.velocity = Vector3.zero;
-        rb.isKinematic = true;
-        GetComponent<Collider>().enabled = false;
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+            col.enabled = true;
 
-        Destroy(gameObject, 0.1f);
+        gameObject.SetActive(true);
+    }
+
+    void FindPlayer()
+    {
+        GameObject p = GameObject.FindGameObjectWithTag("Player");
+        if (p != null)
+            player = p.transform;
     }
 
     public void TakeDamage(float dmg)
     {
-        if (hasExploded) return;
-
+        if (isExploding) return;
         currentHealth -= Mathf.RoundToInt(dmg);
         if (currentHealth <= 0)
             Explode();
     }
 
+    void Explode()
+    {
+        if (isExploding) return;
+        isExploding = true;
+
+        if (explosionEffect)
+        {
+            GameObject fx = PoolManager.Instance.Get("ExplosionFX", transform.position, Quaternion.identity);
+            StartCoroutine(ReturnFX(fx, 2f));
+        }
+
+        IEnumerator ReturnFX(GameObject fx, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            PoolManager.Instance.Return(fx);
+        }
+
+
+        Collider[] hits = Physics.OverlapSphere(transform.position, explosionRange);
+        foreach (Collider c in hits)
+        {
+            if (c.CompareTag("Player"))
+            {
+                Character ch = c.GetComponent<Character>() ?? c.GetComponentInParent<Character>();
+                if (ch != null)
+                    ch.ApplyDamage(null, transform, explosionDamage);
+            }
+        }
+
+        // 기존: Destroy(gameObject, 0.1f);
+        Invoke(nameof(ReturnToPool), 0.1f);
+    }
+
+    private void ReturnToPool()
+    {
+        isExploding = false;
+        currentHealth = maxHealth;
+        PoolManager.Instance.Return(gameObject);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (isExploding) return;
+
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            Explode();
+        }
+
+        Projectile p = collision.gameObject.GetComponent<Projectile>();
+        if (p != null)
+        {
+            TakeDamage(p.damage);
+            Destroy(p.gameObject);
+        }
+    }
+
+#if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, rushRange);
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, explosionRange);
     }
+#endif
 }

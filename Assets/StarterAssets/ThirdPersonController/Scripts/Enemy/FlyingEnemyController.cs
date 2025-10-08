@@ -1,116 +1,131 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class FlyingEnemyController : MonoBehaviour
+public class SmartFlyingEnemyController : MonoBehaviour
 {
     [Header("기본 설정")]
-    public float moveSpeed = 6f;            // 기본 이동 속도
-    public float turnSpeed = 4f;            // 회전 속도
-    public float followHeight = 5f;         // 유지할 비행 높이
-    public float detectionRange = 20f;      // 플레이어 탐지 거리
-    public float attackRange = 7f;          // 돌진 거리
-    public float rushSpeed = 15f;           // 돌진 속도
+    public float moveSpeed = 6f;             // 비행 속도
+    public float turnSpeed = 5f;             // 회전 속도
+    public float hoverHeight = 5f;           // 플레이어 기준 비행 높이
+    public float minDistance = 3f;           // 플레이어로부터 최소 거리
+    public float maxDistance = 4f;           // 플레이어로부터 최대 거리
+    public float moveInterval = 3f;          // 새로운 목표 갱신 주기 (초)
+    public float randomOffset = 2f;          // 움직임의 랜덤성 정도
 
-    [Header("체력 설정")]
-    public int maxHealth = 80;
+    [Header("공격 설정")]
+    public float attackRange = 15f;          // 사격 거리
+    public float attackCooldown = 2f;        // 사격 쿨타임
+    public float projectileSpeed = 25f;
+    public float projectileDamage = 15f;
+    public Transform firePoint;
+
+    [Header("체력 / 이펙트")]
+    public int maxHealth = 100;
     private int currentHealth;
-
-    [Header("이펙트 / 폭발")]
     public GameObject explosionEffect;
 
     private Transform player;
     private Rigidbody rb;
-    private bool isAttacking = false;
     private bool isDead = false;
+    private bool canShoot = true;
+    private bool moving = true;
+
+    private Vector3 targetPos;               // 현재 목표 위치
+    private float lastMoveTime;
 
     void Start()
     {
         currentHealth = maxHealth;
         rb = GetComponent<Rigidbody>();
-
-        // 중력 제거 (떠다니게)
         rb.useGravity = false;
         rb.drag = 2f;
 
-        GameObject p = GameObject.Find("Player");
+        GameObject p = GameObject.FindGameObjectWithTag("Player");
         if (p != null)
             player = p.transform;
+
+        SetNewTargetPosition();
     }
 
     void FixedUpdate()
     {
         if (isDead || player == null) return;
 
-        float dist = Vector3.Distance(transform.position, player.position);
+        float distToPlayer = Vector3.Distance(transform.position, player.position);
 
-        // 평소엔 플레이어를 따라다님
-        if (!isAttacking)
-        {
-            FollowPlayer();
+        // 1️⃣ 플레이어 주위를 맴돌도록 이동
+        if (Time.time - lastMoveTime > moveInterval)
+            SetNewTargetPosition();
 
-            // 일정 거리 안으로 들어오면 돌진
-            if (dist <= attackRange)
-                StartCoroutine(DiveAttack());
-        }
+        MoveTowardTarget();
+
+        // 2️⃣ 사격
+        if (distToPlayer <= attackRange && canShoot)
+            StartCoroutine(ShootRoutine());
     }
 
-    void FollowPlayer()
+    // 🎯 목표 위치 갱신
+    void SetNewTargetPosition()
     {
-        // 목표 위치: 플레이어 위/주변 높이로 따라가기
-        Vector3 targetPos = player.position + Vector3.up * followHeight;
+        lastMoveTime = Time.time;
 
+        // 플레이어 기준 방향 랜덤 생성 (정수리 위 피하기)
+        Vector3 randomDir = Random.insideUnitSphere;
+        randomDir.y = Mathf.Clamp(randomDir.y, -0.2f, 0.6f); // 너무 위나 아래로 가지 않도록 제한
+        randomDir.Normalize();
+
+        float randomDist = Random.Range(minDistance, maxDistance);
+        Vector3 offset = randomDir * randomDist;
+
+        targetPos = player.position + offset + Vector3.up * hoverHeight;
+    }
+
+    // ✈ 이동 처리
+    void MoveTowardTarget()
+    {
         Vector3 dir = (targetPos - transform.position).normalized;
 
-        // 회전 부드럽게
+        // 플레이어 정수리 바로 위 방향 금지
+        Vector3 topDir = (player.position + Vector3.up * (hoverHeight + 1f) - transform.position).normalized;
+        if (Vector3.Dot(dir, topDir) > 0.8f)
+        {
+            // 너무 위로 가려 하면 살짝 옆으로 회피
+            dir = Quaternion.Euler(0, Random.Range(60f, 120f), 0) * dir;
+        }
+
+        // 부드럽게 회전
         Quaternion targetRot = Quaternion.LookRotation(dir);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * turnSpeed);
 
-        // 앞으로 이동
+        // 이동
         rb.velocity = transform.forward * moveSpeed;
     }
 
-    IEnumerator DiveAttack()
+    // 🔫 총알 발사
+    IEnumerator ShootRoutine()
     {
-        isAttacking = true;
+        canShoot = false;
 
-        // 돌진 방향 계산
-        Vector3 dir = (player.position - transform.position).normalized;
-        dir.y = 0f; // 수평 돌진
-
-        rb.velocity = dir * rushSpeed;
-
-        yield return new WaitForSeconds(1.5f); // 돌진 후 다시 복귀
-        isAttacking = false;
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (isDead) return;
-
-        // ✅ 총알 충돌 처리 (EnemyController 방식 통합)
-        Projectile proj = collision.gameObject.GetComponent<Projectile>();
-        if (proj != null)
+        if (firePoint != null && player != null)
         {
-            TakeDamage(proj.damage);
-            Destroy(collision.gameObject);
-            return;
+            Vector3 shootDir = (player.position + Vector3.up * 1.2f - firePoint.position).normalized;
+            Quaternion rot = Quaternion.LookRotation(shootDir);
+
+            GameObject bullet = PoolManager.Instance.Get("EnemyProjectile", firePoint.position, rot);
+            EnemyProjectile proj = bullet.GetComponent<EnemyProjectile>();
+            proj.Init(gameObject, shootDir, projectileSpeed, projectileDamage);
         }
 
-        // ✅ 플레이어와 충돌 시 폭발
-        if (collision.gameObject.name == "Player")
-        {
-            Explode();
-        }
+        yield return new WaitForSeconds(attackCooldown);
+        canShoot = true;
     }
 
-
+    // 💥 피격 및 폭발 처리
     public void TakeDamage(float dmg)
     {
         currentHealth -= Mathf.RoundToInt(dmg);
         if (currentHealth <= 0 && !isDead)
-        {
             Explode();
-        }
     }
 
     void Explode()
@@ -119,18 +134,45 @@ public class FlyingEnemyController : MonoBehaviour
         isDead = true;
 
         if (explosionEffect)
-            Instantiate(explosionEffect, transform.position, Quaternion.identity);
+        {
+            GameObject fx = PoolManager.Instance.Get("ExplosionFX", transform.position, Quaternion.identity);
+            StartCoroutine(ReturnFX(fx, 2f));
+        }
 
-        Destroy(gameObject);
+        IEnumerator ReturnFX(GameObject fx, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            PoolManager.Instance.Return(fx);
+        }
+
+        Invoke(nameof(ReturnToPool), 0.2f);
+    }
+
+    private void ReturnToPool()
+    {
+        isDead = false;
+        currentHealth = maxHealth;
+        PoolManager.Instance.Return(gameObject);
+    }
+
+    public void ResetEnemy()
+    {
+        isDead = false;
+        currentHealth = maxHealth;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        Collider col = GetComponent<Collider>();
+        if (col != null) col.enabled = true;
+        gameObject.SetActive(true);
     }
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
-        Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, maxDistance);
     }
 #endif
 }
