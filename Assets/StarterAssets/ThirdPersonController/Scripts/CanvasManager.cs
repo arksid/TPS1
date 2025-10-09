@@ -24,6 +24,11 @@ public class CanvasManager : MonoBehaviour
     private Coroutine reloadRoutine;
     private Coroutine ammoAnimRoutine;
 
+    [Header("Damage UI")]
+    [SerializeField] private TMPro.TMP_Text damageText;
+    private Coroutine damageAnimRoutine;
+
+
     private void Awake()
     {
         singleton = this;
@@ -152,4 +157,58 @@ public class CanvasManager : MonoBehaviour
 
         StopReloadUI();
     }
+
+    public void ShowDamage(float damage)
+    {
+        if (damageText == null) return;
+
+        damageText.gameObject.SetActive(true);
+        damageText.text = $"-{Mathf.RoundToInt(damage)}";
+
+        if (damageAnimRoutine != null)
+            StopCoroutine(damageAnimRoutine);
+
+        damageAnimRoutine = StartCoroutine(DamageTextPop(damageText));
+    }
+
+    private IEnumerator DamageTextPop(TMPro.TMP_Text text)
+    {
+        Vector3 originalScale = Vector3.one;
+        Vector3 targetScale = originalScale * 1.6f;
+        float duration = 0.15f;
+        float fadeTime = 0.5f;
+
+        Color originalColor = Color.white;
+        Color flashColor = Color.red;
+
+        text.rectTransform.localScale = originalScale;
+        text.color = flashColor;
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float lerp = t / duration;
+            text.rectTransform.localScale = Vector3.Lerp(originalScale, targetScale, lerp);
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.1f);
+
+        float fade = 0f;
+        while (fade < fadeTime)
+        {
+            fade += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, fade / fadeTime);
+            Color c = text.color;
+            c.a = alpha;
+            text.color = c;
+            yield return null;
+        }
+
+        text.gameObject.SetActive(false);
+        text.rectTransform.localScale = originalScale;
+        text.color = originalColor;
+    }
+
 }

@@ -739,7 +739,12 @@ MonoBehaviour:
     type: 3}
   shootRange: 15
   shootCooldown: 1
+  projectileSpeed: 25
+  projectileDamage: 10
   rotationSpeed: 5
+  deathExplosionPrefab: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
+    type: 3}
+  explosionDestroyTime: 3
 --- !u!195 &2514174145860605757
 NavMeshAgent:
   m_ObjectHideFlags: 0

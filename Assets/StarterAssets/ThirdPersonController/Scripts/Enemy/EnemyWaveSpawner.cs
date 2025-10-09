@@ -4,7 +4,7 @@ using System.Collections;
 public class EnemyWaveSpawner : MonoBehaviour
 {
     [Header("스폰 설정")]
-    public string[] enemyKeys = { "NormalEnemy", "SuicideEnemy", "FlyingEnemy" }; // PoolManager 키들
+    public GameObject[] enemyPrefabs;
     public Transform[] spawnPoints;
     public float spawnRadius = 10f;
     public int enemiesPerWave = 5;
@@ -50,38 +50,15 @@ public class EnemyWaveSpawner : MonoBehaviour
 
     private void SpawnRandomEnemy()
     {
-        if (enemyKeys.Length == 0) return;
+        if (enemyPrefabs.Length == 0) return;
 
-        // ✅ 1. 랜덤 키 선택
-        string key = enemyKeys[Random.Range(0, enemyKeys.Length)];
-
-        // ✅ 2. 랜덤 위치
+        GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
         Vector3 spawnPos = GetRandomSpawnPosition();
+        GameObject enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
 
-        // ✅ 3. PoolManager에서 가져오기
-        GameObject enemy = PoolManager.Instance.Get(key, spawnPos, Quaternion.identity);
-        if (enemy == null) return;
-
-        // ✅ 4. 초기화
         var enemyController = enemy.GetComponent<EnemyController>();
-        var suicideEnemy = enemy.GetComponent<SuicideEnemyController>();
-        var flyingEnemy = enemy.GetComponent<SmartFlyingEnemyController>();
-
-
-        if (playerTransform != null)
-        {
-            if (enemyController != null)
-                enemyController.SetPlayer(playerTransform);
-            if (suicideEnemy != null)
-                suicideEnemy.SendMessage("SetTarget", playerTransform, SendMessageOptions.DontRequireReceiver);
-            if (flyingEnemy != null)
-                flyingEnemy.SendMessage("SetTarget", playerTransform, SendMessageOptions.DontRequireReceiver);
-        }
-
-        // ✅ 풀에서 꺼냈으므로 체력, NavMeshAgent 등 초기화 필요
-        if (enemyController != null) enemyController.ResetEnemy();
-        if (suicideEnemy != null) suicideEnemy.ResetEnemy();
-        if (flyingEnemy != null) flyingEnemy.ResetEnemy();
+        if (enemyController != null && playerTransform != null)
+            enemyController.SetPlayer(playerTransform);
     }
 
     private Vector3 GetRandomSpawnPosition()
@@ -95,27 +72,4 @@ public class EnemyWaveSpawner : MonoBehaviour
         Vector2 randomOffset = Random.insideUnitCircle * spawnRadius;
         return basePos + new Vector3(randomOffset.x, 0f, randomOffset.y);
     }
-
-
-
-#if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.green;
-        if (spawnPoints != null && spawnPoints.Length > 0)
-        {
-            foreach (var point in spawnPoints)
-            {
-                if (point != null)
-                    Gizmos.DrawWireSphere(point.position, spawnRadius);
-            }
-        }
-        else
-        {
-            Gizmos.DrawWireSphere(transform.position, spawnRadius);
-        }
-    }
-
-#endif
-
 }

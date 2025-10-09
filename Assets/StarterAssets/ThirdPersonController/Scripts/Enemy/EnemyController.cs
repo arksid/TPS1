@@ -10,53 +10,50 @@ public class EnemyController : MonoBehaviour
     [Header("공격 관련 설정")]
     public Transform shootingPoint;
     public GameObject projectilePrefab;
-    public float shootRange = 15f;       // 사거리
-    public float shootCooldown = 1.5f;   // 쿨타임
+    public float shootRange = 15f;
+    public float shootCooldown = 1.5f;
+    public float projectileSpeed = 25f;
+    public float projectileDamage = 10f;
     private float lastShootTime;
 
     [Header("AI 관련")]
-    public float rotationSpeed = 5f;     // 회전 속도
+    public float rotationSpeed = 8f;
     private NavMeshAgent agent;
     private Transform playerTarget;
     private Animator animator;
 
-    void Start()
+    [Header("폭발 이펙트")]
+    public GameObject deathExplosionPrefab;
+    public float explosionDestroyTime = 3f;
+
+    private void Start()
     {
         currentHealth = maxHealth;
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
 
-        // ✅ 플레이어 자동 탐색
-        if (playerTarget == null)
-        {
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
-            if (player != null)
-                playerTarget = player.transform;
-        }
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null) playerTarget = player.transform;
+
+        lastShootTime = Time.time - shootCooldown;
     }
 
-    void Update()
+    private void Update()
     {
-        if (playerTarget == null || currentHealth <= 0)
-            return;
+        if (playerTarget == null || currentHealth <= 0) return;
 
         float distance = Vector3.Distance(transform.position, playerTarget.position);
 
-        // 🔹 플레이어가 사거리 밖이면 추적
         if (distance > shootRange)
         {
             agent.isStopped = false;
             agent.SetDestination(playerTarget.position);
-
             if (animator != null)
                 animator.SetBool("isMoving", agent.velocity.magnitude > 0.1f);
         }
-        // 🔹 사거리 안이면 정지 + 공격
         else
         {
             agent.isStopped = true;
-
-            // 플레이어를 바라보게 회전
             Vector3 dir = (playerTarget.position - transform.position);
             dir.y = 0;
             Quaternion rot = Quaternion.LookRotation(dir);
@@ -65,7 +62,6 @@ public class EnemyController : MonoBehaviour
             if (animator != null)
                 animator.SetBool("isMoving", false);
 
-            // 공격 쿨타임 체크
             if (Time.time - lastShootTime >= shootCooldown)
             {
                 Shoot();
@@ -73,100 +69,80 @@ public class EnemyController : MonoBehaviour
             }
         }
     }
-    public void ResetEnemy()
-    {
-        currentHealth = maxHealth;
-
-        if (agent != null)
-        {
-            agent.enabled = true;
-            agent.isStopped = false;
-        }
-
-        Collider col = GetComponent<Collider>();
-        if (col != null)
-            col.enabled = true;
-
-        if (animator != null)
-        {
-            animator.ResetTrigger("Die");
-            animator.Play("Idle", -1, 0f);
-        }
-
-        gameObject.SetActive(true);
-    }
 
     private void Shoot()
     {
-        if (shootingPoint == null || projectilePrefab == null)
+        if (shootingPoint == null || projectilePrefab == null) return;
+
+        Vector3 targetPoint = playerTarget.position + Vector3.up * 1.2f;
+        Vector3 shootDir = (targetPoint - shootingPoint.position).normalized;
+        shootingPoint.rotation = Quaternion.LookRotation(shootDir);
+
+        GameObject bullet = Instantiate(projectilePrefab, shootingPoint.position, shootingPoint.rotation);
+
+        var proj = bullet.GetComponent<EnemyProjectile>();
+        if (proj != null)
         {
-            Debug.LogWarning($"{name}: ShootingPoint 또는 ProjectilePrefab이 비어있습니다!");
-            return;
+            proj.Init(gameObject, shootDir, projectileSpeed, projectileDamage);
         }
 
-        // ✅ 플레이어의 중심보다 위쪽(가슴 높이)으로 조준 보정
-        Vector3 targetPoint = playerTarget.position + Vector3.up * 1.2f; // ← 오프셋 추가
-        Vector3 shootDir = (targetPoint - shootingPoint.position).normalized;
-
-        Quaternion rot = Quaternion.LookRotation(shootDir, Vector3.up);
-        GameObject bullet = Instantiate(projectilePrefab, shootingPoint.position, rot);
-
-        // 자기 자신과의 충돌 무시
-        Collider myCol = GetComponent<Collider>();
         Collider bulletCol = bullet.GetComponent<Collider>();
-        if (myCol != null && bulletCol != null)
-            Physics.IgnoreCollision(bulletCol, myCol);
+        if (bulletCol != null)
+        {
+            Collider[] enemyCols = GetComponentsInChildren<Collider>();
+            foreach (var c in enemyCols)
+            {
+                if (c != null) Physics.IgnoreCollision(bulletCol, c, true);
+            }
+        }
 
-        // 총알 발사
-        Rigidbody rb = bullet.GetComponent<Rigidbody>();
-        if (rb != null)
-            rb.AddForce(shootDir * 25f, ForceMode.Impulse);
-
-        Debug.Log($"{name} → 총알 발사!");
+        Destroy(bullet, 5f);
     }
-
-
 
     public void TakeDamage(float damage)
     {
         currentHealth -= Mathf.RoundToInt(damage);
+        if (currentHealth < 0) currentHealth = 0;
 
-        if (animator != null)
-            animator.SetTrigger("Hit");
+        if (animator != null) animator.SetTrigger("Hit");
 
-        if (currentHealth <= 0)
-            Die();
+        // ✅ 디버그 로그로 데미지 및 HP 표시
+        Debug.Log($"[EnemyController] 데미지: {damage} / HP: {currentHealth} / {maxHealth}");
+
+        // ✅ HUD에도 표시 (CanvasManager 연결 시)
+        if (CanvasManager.singleton != null)
+            CanvasManager.singleton.ShowDamage(damage);
+
+        if (currentHealth <= 0) Die();
     }
 
     private void Die()
     {
-        if (animator != null)
-            animator.SetTrigger("Die");
+        // ✅ 폭발 이펙트 생성
+        if (deathExplosionPrefab != null)
+        {
+            GameObject explosion = Instantiate(deathExplosionPrefab, transform.position, Quaternion.identity);
+            Destroy(explosion, explosionDestroyTime); // 이펙트만 일정 시간 유지
+        }
 
-        if (agent != null)
-            agent.enabled = false;
-
-        Collider col = GetComponent<Collider>();
-        if (col != null)
-            col.enabled = false;
-
-        // 기존: Destroy(gameObject, 3f);
-        Invoke(nameof(ReturnToPool), 3f);
+        // ✅ 즉시 본체 제거
+        Destroy(gameObject);
     }
 
-    private void ReturnToPool()
+
+
+#if UNITY_EDITOR
+    private void OnDrawGizmos()
     {
-        agent.enabled = true;
-        Collider col = GetComponent<Collider>();
-        if (col != null) col.enabled = true;
-
-        currentHealth = maxHealth;
-        PoolManager.Instance.Return(gameObject);
+        if (shootingPoint != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(shootingPoint.position, 0.1f);
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawRay(shootingPoint.position, shootingPoint.forward * 2f);
+        }
     }
+#endif
 
-    // ✅ 웨이브 스포너용 플레이어 설정
-    public void SetPlayer(Transform player)
-    {
-        playerTarget = player;
-    }
+    public void SetPlayer(Transform player) => playerTarget = player;
 }
