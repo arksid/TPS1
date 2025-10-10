@@ -904,14 +904,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 6
   turnSpeed: 4
-  followHeight: 5
-  detectionRange: 20
+  hoverHeight: 5
+  minDistance: 3
+  maxDistance: 4
+  moveInterval: 3
+  randomOffset: 2
   attackRange: 7
   attackCooldown: 2
-  maxHealth: 25
-  firePoint: {fileID: 9027279508422343673}
   projectileSpeed: 25
   projectileDamage: 15
+  projectilePrefab: {fileID: 0}
+  firePoint: {fileID: 9027279508422343673}
+  maxHealth: 25
   explosionEffect: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
     type: 3}
 --- !u!54 &-4190503972383899938
@@ -961,7 +965,7 @@ SphereCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.65, z: 0}
 --- !u!1 &1838743157181200
 GameObject:
   m_ObjectHideFlags: 0

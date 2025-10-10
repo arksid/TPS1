@@ -74,18 +74,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 50
   detectionRange: 12
-  rushRange: 8
-  rushSpeed: 25
-  prepTime: 1.5
-  explosionRange: 3
+  normalSpeed: 3.5
+  chaseSpeed: 10
+  chaseDuration: 2
+  explosionRange: 2
   explosionDamage: 60
   explosionEffect: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
     type: 3}
-  idleColor: {r: 0, g: 0, b: 0, a: 1}
-  warnColor: {r: 1, g: 0, b: 0, a: 1}
-  blinkSpeed: 8
-  beepSound: {fileID: 0}
-  explosionSound: {fileID: 0}
 --- !u!54 &747332268715285304
 Rigidbody:
   m_ObjectHideFlags: 0

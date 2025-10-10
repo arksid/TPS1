@@ -519,7 +519,7 @@ GameObject:
   - component: {fileID: -8395013761601562834}
   - component: {fileID: 9204063577496055980}
   m_Layer: 0
-  m_Name: Droid-01_Winter
+  m_Name: SamiBoss
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -581,7 +581,17 @@ MonoBehaviour:
     type: 3}
   shootRange: 10
   shootCooldown: 0.1
+  projectileSpeed: 25
+  projectileDamage: 10
   rotationSpeed: 4
+  deathExplosionPrefab: {fileID: 0}
+  explosionDestroyTime: 3
+  flankSearchRadius: 8
+  flankSearchSteps: 12
+  lineOfSightCheckHeight: 1.2
+  sightMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!195 &9204063577496055980
 NavMeshAgent:
   m_ObjectHideFlags: 0

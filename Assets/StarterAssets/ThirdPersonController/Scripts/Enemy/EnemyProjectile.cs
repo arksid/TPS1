@@ -14,27 +14,24 @@ public class EnemyProjectile : MonoBehaviour
 
     void Awake()
     {
-        // Rigidbody 설정
         rb = GetComponent<Rigidbody>();
         if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
         rb.useGravity = false;
         rb.isKinematic = false;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
-        // Collider 설정
         bulletCol = GetComponent<Collider>();
         if (bulletCol == null)
         {
             SphereCollider sphere = gameObject.AddComponent<SphereCollider>();
-            sphere.radius = 0.1f; // 너무 큰 충돌 방지
+            sphere.radius = 0.1f;
             bulletCol = sphere;
         }
-        bulletCol.isTrigger = true;
+
+        // ✅ 트리거 OFF
+        bulletCol.isTrigger = false;
     }
 
-    /// <summary>
-    /// 총알 초기화
-    /// </summary>
     public void Init(GameObject shooter, Vector3 direction, float speed, float damage)
     {
         this.shooter = shooter;
@@ -44,7 +41,7 @@ public class EnemyProjectile : MonoBehaviour
 
         rb.velocity = direction.normalized * speed;
 
-        // ✅ 발사자와 모든 충돌 무시
+        // 발사자 충돌 무시
         if (shooter != null && bulletCol != null)
         {
             Collider[] cols = shooter.GetComponentsInChildren<Collider>();
@@ -57,33 +54,40 @@ public class EnemyProjectile : MonoBehaviour
 
     void Update()
     {
-        // 수명 만료 시 제거
         if (Time.time - spawnTime > lifeTime)
         {
             Destroy(gameObject);
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collision)
     {
-        // ✅ 자기 자신(발사자) 무시
-        if (other.gameObject == shooter) return;
+        // 자기 자신 무시
+        if (collision.gameObject == shooter) return;
+        if (shooter != null && collision.transform.IsChildOf(shooter.transform)) return;
 
-        // ✅ 적이 발사했는데 적 본체랑 부딪히는 경우 방지
-        if (shooter != null && other.transform.IsChildOf(shooter.transform)) return;
-
-        // 플레이어나 캐릭터에 데미지 적용
-        Character ch = other.GetComponentInParent<Character>();
+        // 플레이어 맞음
+        Character ch = collision.collider.GetComponentInParent<Character>();
         if (ch != null)
         {
-            ch.ApplyDamage(null, other.transform, damage);
+            ch.ApplyDamage(null, collision.transform, damage);
             Destroy(gameObject);
             return;
         }
 
-        // 벽, 지형 등에 부딪혔을 때도 삭제
-        if (!other.isTrigger)
+        // 벽이나 장애물에 부딪혔을 때
+        if (!collision.collider.isTrigger)
         {
+            // ✅ 발사자(적)에게 알림
+            if (shooter != null)
+            {
+                var controller = shooter.GetComponent<EnemyController>();
+                if (controller != null)
+                {
+                    controller.OnBulletBlocked(transform.position);
+                }
+            }
+
             Destroy(gameObject);
         }
     }

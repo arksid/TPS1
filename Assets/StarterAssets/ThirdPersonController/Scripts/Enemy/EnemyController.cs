@@ -5,7 +5,7 @@ public class EnemyController : MonoBehaviour
 {
     [Header("체력 설정")]
     public int maxHealth = 100;
-    private int currentHealth;
+    protected int currentHealth;
 
     [Header("공격 관련 설정")]
     public Transform shootingPoint;
@@ -14,135 +14,283 @@ public class EnemyController : MonoBehaviour
     public float shootCooldown = 1.5f;
     public float projectileSpeed = 25f;
     public float projectileDamage = 10f;
-    private float lastShootTime;
+    protected float lastShootTime;
 
     [Header("AI 관련")]
     public float rotationSpeed = 8f;
-    private NavMeshAgent agent;
-    private Transform playerTarget;
-    private Animator animator;
+    protected NavMeshAgent agent;
+    protected Transform playerTarget;
+    protected Animator animator;
 
     [Header("폭발 이펙트")]
     public GameObject deathExplosionPrefab;
     public float explosionDestroyTime = 3f;
 
-    private void Start()
+    [Header("우회 경로 탐색 설정")]
+    public float flankSearchRadius = 8f;
+    public int flankSearchSteps = 12;
+    public float lineOfSightCheckHeight = 1.2f;
+    [SerializeField] private LayerMask sightMask;
+
+    protected virtual void Start()
     {
         currentHealth = maxHealth;
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null) playerTarget = player.transform;
+        if (player != null)
+            playerTarget = player.transform;
 
         lastShootTime = Time.time - shootCooldown;
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         if (playerTarget == null || currentHealth <= 0) return;
 
         float distance = Vector3.Distance(transform.position, playerTarget.position);
 
+        // 📌 사거리 밖이면 플레이어에게 다가감
         if (distance > shootRange)
         {
             agent.isStopped = false;
             agent.SetDestination(playerTarget.position);
             if (animator != null)
-                animator.SetBool("isMoving", agent.velocity.magnitude > 0.1f);
+                animator.SetBool("isMoving", true);
         }
         else
         {
-            agent.isStopped = true;
-            Vector3 dir = (playerTarget.position - transform.position);
-            dir.y = 0;
-            Quaternion rot = Quaternion.LookRotation(dir);
-            transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * rotationSpeed);
-
-            if (animator != null)
-                animator.SetBool("isMoving", false);
-
-            if (Time.time - lastShootTime >= shootCooldown)
+            // 📌 사거리 안
+            if (CanSeePlayer())
             {
-                Shoot();
-                lastShootTime = Time.time;
+                // 👉 시야 확보되면 멈추고 사격
+                agent.isStopped = true;
+                FaceTarget();
+
+                if (animator != null)
+                    animator.SetBool("isMoving", false);
+
+                if (Time.time - lastShootTime >= shootCooldown)
+                {
+                    Shoot();
+                    lastShootTime = Time.time;
+                }
+            }
+            else
+            {
+                // 👉 시야 안 보이면 우회 경로 탐색 후 이동
+                agent.isStopped = false;
+                FindFlankPositionAndMove();
+                if (animator != null)
+                    animator.SetBool("isMoving", true);
             }
         }
     }
 
-    private void Shoot()
+    // 🧭 우회 경로 탐색 함수
+    private void FindFlankPositionAndMove()
     {
-        if (shootingPoint == null || projectilePrefab == null) return;
+        if (playerTarget == null) return;
+
+        Vector3 dirToPlayer = (playerTarget.position - transform.position).normalized;
+        Vector3 bestPoint = Vector3.zero;
+        float bestDist = Mathf.Infinity;
+        bool found = false;
+
+        for (int i = 0; i < flankSearchSteps; i++)
+        {
+            float angle = (360f / flankSearchSteps) * i;
+            Quaternion rot = Quaternion.Euler(0, angle, 0);
+            Vector3 flankDir = rot * dirToPlayer;
+            Vector3 candidatePos = playerTarget.position + flankDir * flankSearchRadius;
+
+            NavMeshHit navHit;
+            if (NavMesh.SamplePosition(candidatePos, out navHit, 2f, NavMesh.AllAreas))
+            {
+                if (HasLineOfSight(navHit.position))
+                {
+                    float dist = Vector3.Distance(transform.position, navHit.position);
+                    if (dist < bestDist)
+                    {
+                        bestDist = dist;
+                        bestPoint = navHit.position;
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        if (found)
+        {
+            agent.SetDestination(bestPoint);
+            Debug.Log($"[EnemyController] 우회 경로로 이동: {bestPoint}");
+        }
+        else
+        {
+            agent.SetDestination(playerTarget.position);
+            Debug.Log("[EnemyController] 우회 경로 없음 → 플레이어 직진");
+        }
+    }
+
+    // 🧭 플레이어 할당 (스포너에서 사용)
+    public void SetPlayer(Transform player)
+    {
+        playerTarget = player;
+    }
+
+    // 🧱 총알이 벽에 막혔을 때 우회 경로 탐색
+    public void OnBulletBlocked(Vector3 hitPos)
+    {
+        Debug.Log($"[EnemyController] 총알이 {hitPos} 에서 장애물에 막힘 → 우회 경로 탐색 시작");
+
+        if (playerTarget == null || agent == null) return;
+
+        if (CanSeePlayer())
+        {
+            agent.isStopped = false;
+            agent.SetDestination(playerTarget.position);
+            return;
+        }
+
+        Vector3 dirToPlayer = (playerTarget.position - hitPos).normalized;
+        Vector3 bestPoint = Vector3.zero;
+        float bestDist = Mathf.Infinity;
+        bool found = false;
+
+        for (int i = 0; i < flankSearchSteps; i++)
+        {
+            float angle = (360f / flankSearchSteps) * i;
+            Quaternion rot = Quaternion.Euler(0, angle, 0);
+            Vector3 flankDir = rot * dirToPlayer;
+            Vector3 candidatePos = hitPos + flankDir * flankSearchRadius;
+
+            NavMeshHit navHit;
+            if (NavMesh.SamplePosition(candidatePos, out navHit, 2f, NavMesh.AllAreas))
+            {
+                if (HasLineOfSight(navHit.position))
+                {
+                    float dist = Vector3.Distance(transform.position, navHit.position);
+                    if (dist < bestDist)
+                    {
+                        bestDist = dist;
+                        bestPoint = navHit.position;
+                        found = true;
+                        if (CanSeePlayer()) break;
+                    }
+                }
+            }
+        }
+
+        if (found)
+        {
+            Debug.Log($"[EnemyController] 우회 경로 발견 → {bestPoint}");
+            agent.isStopped = false;
+            agent.SetDestination(bestPoint);
+        }
+        else
+        {
+            Debug.Log("[EnemyController] 우회 경로를 찾지 못함. 플레이어 위치로 이동");
+            agent.isStopped = false;
+            agent.SetDestination(playerTarget.position);
+        }
+    }
+
+    // 👁️ 시야 체크 함수
+    private bool CanSeePlayer()
+    {
+        if (playerTarget == null || shootingPoint == null) return false;
+
+        Vector3 start = shootingPoint.position + Vector3.up * 0.2f;
+        Vector3 end = playerTarget.position + Vector3.up * 1.2f;
+        Vector3 dir = (end - start).normalized;
+        float dist = Vector3.Distance(start, end);
+
+        Debug.DrawLine(start, end, Color.red, 0.1f);
+
+        if (Physics.Raycast(start, dir, out RaycastHit hit, dist, sightMask))
+        {
+            Debug.Log($"[EnemyController] 시야 감지 대상: {hit.collider.name}");
+            return hit.collider.CompareTag("Player");
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private bool HasLineOfSight(Vector3 from)
+    {
+        if (playerTarget == null) return false;
+
+        Vector3 start = from + Vector3.up * lineOfSightCheckHeight;
+        Vector3 end = playerTarget.position + Vector3.up * lineOfSightCheckHeight;
+        Vector3 dir = (end - start).normalized;
+        float dist = Vector3.Distance(start, end);
+
+        if (Physics.Raycast(start, dir, out RaycastHit hit, dist, sightMask))
+        {
+            return hit.collider.CompareTag("Player");
+        }
+        return false;
+    }
+
+    private void FaceTarget()
+    {
+        Vector3 dir = (playerTarget.position - transform.position).normalized;
+        dir.y = 0;
+        Quaternion lookRot = Quaternion.LookRotation(dir);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, Time.deltaTime * rotationSpeed);
+    }
+
+    protected virtual void Shoot()
+    {
+        if (shootingPoint == null || projectilePrefab == null || playerTarget == null) return;
 
         Vector3 targetPoint = playerTarget.position + Vector3.up * 1.2f;
         Vector3 shootDir = (targetPoint - shootingPoint.position).normalized;
         shootingPoint.rotation = Quaternion.LookRotation(shootDir);
 
         GameObject bullet = Instantiate(projectilePrefab, shootingPoint.position, shootingPoint.rotation);
-
         var proj = bullet.GetComponent<EnemyProjectile>();
         if (proj != null)
-        {
             proj.Init(gameObject, shootDir, projectileSpeed, projectileDamage);
-        }
 
         Collider bulletCol = bullet.GetComponent<Collider>();
         if (bulletCol != null)
         {
             Collider[] enemyCols = GetComponentsInChildren<Collider>();
             foreach (var c in enemyCols)
-            {
                 if (c != null) Physics.IgnoreCollision(bulletCol, c, true);
-            }
         }
 
         Destroy(bullet, 5f);
     }
 
-    public void TakeDamage(float damage)
+    public virtual void TakeDamage(float damage)
     {
         currentHealth -= Mathf.RoundToInt(damage);
         if (currentHealth < 0) currentHealth = 0;
 
-        if (animator != null) animator.SetTrigger("Hit");
-
-        // ✅ 디버그 로그로 데미지 및 HP 표시
         Debug.Log($"[EnemyController] 데미지: {damage} / HP: {currentHealth} / {maxHealth}");
 
-        // ✅ HUD에도 표시 (CanvasManager 연결 시)
         if (CanvasManager.singleton != null)
             CanvasManager.singleton.ShowDamage(damage);
 
         if (currentHealth <= 0) Die();
     }
 
-    private void Die()
+    protected virtual void Die()
     {
-        // ✅ 폭발 이펙트 생성
+        if (agent != null) agent.enabled = false;
+        if (animator != null) animator.enabled = false;
+
         if (deathExplosionPrefab != null)
         {
             GameObject explosion = Instantiate(deathExplosionPrefab, transform.position, Quaternion.identity);
-            Destroy(explosion, explosionDestroyTime); // 이펙트만 일정 시간 유지
+            Destroy(explosion, explosionDestroyTime);
         }
 
-        // ✅ 즉시 본체 제거
         Destroy(gameObject);
     }
-
-
-
-#if UNITY_EDITOR
-    private void OnDrawGizmos()
-    {
-        if (shootingPoint != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawSphere(shootingPoint.position, 0.1f);
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawRay(shootingPoint.position, shootingPoint.forward * 2f);
-        }
-    }
-#endif
-
-    public void SetPlayer(Transform player) => playerTarget = player;
 }

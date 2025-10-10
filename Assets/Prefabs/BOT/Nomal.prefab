@@ -677,7 +677,7 @@ GameObject:
   - component: {fileID: 967561993259685086}
   - component: {fileID: 2514174145860605757}
   m_Layer: 0
-  m_Name: Droid-01_Commando
+  m_Name: Nomal
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -745,6 +745,12 @@ MonoBehaviour:
   deathExplosionPrefab: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
     type: 3}
   explosionDestroyTime: 3
+  flankSearchRadius: 8
+  flankSearchSteps: 12
+  lineOfSightCheckHeight: 1.2
+  sightMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!195 &2514174145860605757
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -755,7 +761,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 6
+  m_Speed: 3.5
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
