@@ -26,6 +26,8 @@ namespace StarterAssets
         public bool interact;
         // 조준 허용 여부(구르기 중 false)
         public bool canAim = true;
+        // 클래스 맨 위 Input Values 부분에 추가
+        public bool heal;
 
         [Header("Movement Settings")]
         public bool analogMovement;
@@ -109,7 +111,11 @@ namespace StarterAssets
 
             sprint = pressed;
         }
-      
+        public void OnHeal(InputValue value)
+        {
+            heal = value.isPressed;
+        }
+
         public void OnInteract(InputValue value)
         {
             interact = value.isPressed;

@@ -422,7 +422,28 @@ public class Character : MonoBehaviour
 
     public void HolsterFinished() => _switchingWeapon = false;
     public void EquipFinished() => _switchingWeapon = false;
+    public bool UseHealingItem()
+    {
+        for (int i = 0; i < weaponItems.Count; i++)
+        {
+            if (weaponItems[i] is HealingItem healItem)
+            {
+                // ✅ 아이템 1개 사용
+                weaponItems.RemoveAt(i);
 
+                // 체력 회복
+                Health += healItem.HealAmount;
+                if (CanvasManager.singleton != null)
+                    CanvasManager.singleton.UpdateHealth(Health, MaxHealth);
+
+                Debug.Log($"🩹 {healItem.HealAmount} 만큼 HP 회복했습니다!");
+                return true;
+            }
+        }
+
+        Debug.Log("❌ 회복 아이템이 없습니다!");
+        return false;
+    }
     // ====== (Trigger 방식) 가까운 무기 등록/해제 & E키 액션 ======
     public void SetNearbyWeapon(InteractableWeapon weapon) => _nearbyWeapon = weapon;
 

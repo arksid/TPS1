@@ -181,6 +181,20 @@ namespace StarterAssets
 
             HandleShooting();
             HandleInteraction();
+
+            // ✅ 회복 아이템 사용 (F키)
+            if (_input.heal)
+            {
+                _input.heal = false;
+                if (_character != null)
+                {
+                    bool success = _character.UseHealingItem();
+                    if (!success)
+                    {
+                        Debug.Log("❌ 회복 아이템이 없어서 회복할 수 없습니다.");
+                    }
+                }
+            }
         }
 
         private void LateUpdate()
