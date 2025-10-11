@@ -87,4 +87,5 @@ public class AutoShootingRangeGenerator : MonoBehaviour
         start.GetComponent<Renderer>().material.color = Color.green;
         start.name = "PlayerStartPoint";
     }
+
 }

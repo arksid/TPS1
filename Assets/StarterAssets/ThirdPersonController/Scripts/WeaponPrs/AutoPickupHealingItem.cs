@@ -22,8 +22,15 @@ public class AutoPickupHealingItem : MonoBehaviour
             newItem.gameObject.SetActive(false);
             character.weaponItems.Add(newItem);
 
+            // ✅ UI 업데이트
+            if (CanvasManager.singleton != null)
+            {
+                CanvasManager.singleton.UpdateHealingItemCount(character.GetHealingItemCount());
+            }
+
             Debug.Log($"✅ {itemName}을(를) 획득했습니다!");
             Destroy(gameObject);
         }
     }
+
 }

@@ -28,6 +28,11 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private TMPro.TMP_Text damageText;
     private Coroutine damageAnimRoutine;
 
+    [Header("Healing Item UI")]
+    [SerializeField] private TMPro.TMP_Text healingItemCountText;
+    [SerializeField] private UnityEngine.UI.Image healingItemIcon;     // 🩹 아이콘
+    [SerializeField] private UnityEngine.UI.Image healingItemPanelBG;  // 🪄 배경
+    private Coroutine healingItemAnimRoutine;
 
     private void Awake()
     {
@@ -210,5 +215,69 @@ public class CanvasManager : MonoBehaviour
         text.rectTransform.localScale = originalScale;
         text.color = originalColor;
     }
+    public void UpdateHealingItemCount(int count)
+    {
+        if (healingItemCountText != null)
+        {
+            healingItemCountText.text = $"HP x {count}";
+
+            // 숫자 애니메이션
+            if (healingItemAnimRoutine != null)
+                StopCoroutine(healingItemAnimRoutine);
+            healingItemAnimRoutine = StartCoroutine(HealingItemPop(healingItemCountText));
+        }
+
+        // 아이콘과 배경 상태 업데이트
+        if (healingItemIcon != null && healingItemPanelBG != null)
+        {
+            if (count > 0)
+            {
+                healingItemIcon.color = Color.white;
+                healingItemPanelBG.color = new Color(1f, 1f, 1f, 0.5f); // 반투명 흰색
+            }
+            else
+            {
+                healingItemIcon.color = new Color(0.5f, 0.5f, 0.5f, 0.5f); // 회색 처리
+                healingItemPanelBG.color = new Color(0.2f, 0.2f, 0.2f, 0.3f); // 어두운 색
+            }
+        }
+    }
+
+    private IEnumerator HealingItemPop(TMPro.TMP_Text text)
+    {
+        Vector3 originalScale = Vector3.one;                        // 원본 스케일 고정
+        Vector3 targetScale = originalScale * 1.3f;                 // 커질 크기
+        float duration = 0.15f;
+
+        // ✅ 시작할 때 무조건 원래 크기로 리셋
+        text.rectTransform.localScale = originalScale;
+
+        // 커지기
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float lerp = t / duration;
+            text.rectTransform.localScale = Vector3.Lerp(originalScale, targetScale, lerp);
+            yield return null;
+        }
+
+        // 살짝 유지
+        yield return new WaitForSeconds(0.05f);
+
+        // 다시 줄이기
+        t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float lerp = t / duration;
+            text.rectTransform.localScale = Vector3.Lerp(targetScale, originalScale, lerp);
+            yield return null;
+        }
+
+        text.rectTransform.localScale = originalScale;
+    }
+
+
 
 }

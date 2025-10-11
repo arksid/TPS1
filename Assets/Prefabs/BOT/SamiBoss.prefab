@@ -516,7 +516,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4247040911452784}
   - component: {fileID: 95633591768043250}
-  - component: {fileID: -8395013761601562834}
   - component: {fileID: 9204063577496055980}
   m_Layer: 0
   m_Name: SamiBoss
@@ -563,35 +562,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &-8395013761601562834
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1391406146494636}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ee8e7e57ba3c3df4681c735ba10e46e8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxHealth: 200
-  shootingPoint: {fileID: 2090525428459820028}
-  projectilePrefab: {fileID: 2216547676952783978, guid: 37bdb03f8f3906a48ba0d4aaac381d23,
-    type: 3}
-  shootRange: 10
-  shootCooldown: 0.1
-  projectileSpeed: 25
-  projectileDamage: 10
-  rotationSpeed: 4
-  deathExplosionPrefab: {fileID: 0}
-  explosionDestroyTime: 3
-  flankSearchRadius: 8
-  flankSearchSteps: 12
-  lineOfSightCheckHeight: 1.2
-  sightMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!195 &9204063577496055980
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -614,90 +584,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!1 &1419155753530870
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4702405415980220}
-  - component: {fileID: 33967177974102350}
-  - component: {fileID: 23930815626682932}
-  m_Layer: 0
-  m_Name: SM_Droid-01_Weapon001
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4702405415980220
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1419155753530870}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.00000016391282, y: -0.00000017881396, z: 0.000000014901193,
-    w: 1}
-  m_LocalPosition: {x: 0.10085441, y: -0.000000076293944, z: -0.15173844}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4774168624722422}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &33967177974102350
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1419155753530870}
-  m_Mesh: {fileID: 4300004, guid: 36ac9fcf34538d14583f301307731951, type: 3}
---- !u!23 &23930815626682932
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1419155753530870}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 6ccb8656d4de94c449b6156571a98cdb, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 0
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &1425037425945794
 GameObject:
   m_ObjectHideFlags: 0
@@ -949,8 +835,7 @@ Transform:
   m_LocalPosition: {x: -0.3031805, y: 0.009983053, z: -0.052752227}
   m_LocalScale: {x: 1.0000004, y: 1.0000006, z: 0.9999997}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 4702405415980220}
+  m_Children: []
   m_Father: {fileID: 4768525475951454}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1537589238931156

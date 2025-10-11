@@ -428,15 +428,14 @@ public class Character : MonoBehaviour
         {
             if (weaponItems[i] is HealingItem healItem)
             {
-                // ✅ 아이템 1개 사용
                 weaponItems.RemoveAt(i);
-
-                // 체력 회복
                 Health += healItem.HealAmount;
+                Debug.Log($"🩹 {healItem.HealAmount} 만큼 HP 회복!");
                 if (CanvasManager.singleton != null)
+                {
                     CanvasManager.singleton.UpdateHealth(Health, MaxHealth);
-
-                Debug.Log($"🩹 {healItem.HealAmount} 만큼 HP 회복했습니다!");
+                    CanvasManager.singleton.UpdateHealingItemCount(GetHealingItemCount());
+                }
                 return true;
             }
         }
@@ -444,6 +443,16 @@ public class Character : MonoBehaviour
         Debug.Log("❌ 회복 아이템이 없습니다!");
         return false;
     }
+    public int GetHealingItemCount()
+    {
+        int count = 0;
+        foreach (var item in weaponItems)
+        {
+            if (item is HealingItem) count++;
+        }
+        return count;
+    }
+
     // ====== (Trigger 방식) 가까운 무기 등록/해제 & E키 액션 ======
     public void SetNearbyWeapon(InteractableWeapon weapon) => _nearbyWeapon = weapon;
 
