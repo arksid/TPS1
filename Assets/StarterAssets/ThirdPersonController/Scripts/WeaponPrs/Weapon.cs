@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections;
-
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+
 public class Weapon : Item
 {
     public enum FireMode { SemiAuto, Burst, FullAuto }
@@ -17,7 +17,7 @@ public class Weapon : Item
     [SerializeField] private WeaponCategory _category = WeaponCategory.Primary;
     [SerializeField] private string _ammoID = "";
     [SerializeField] private float _damage = 10f;
-    [SerializeField] private float _fireRate = 0.2f;
+    [SerializeField] private float _fireRate = 0.2f; // 발사 간격(초)
     [SerializeField] private int _clipSize = 30;
     [SerializeField] private int _burstCount = 3;
     [SerializeField] private float _burstInterval = 0.1f;
@@ -47,17 +47,17 @@ public class Weapon : Item
     public float reloadDuration => _reloadDuration;
 
     [Header("Eject Prefabs")]
-    [SerializeField] private GameObject casingPrefab;        // 무기별 탄피 프리팹
+    [SerializeField] private GameObject casingPrefab;
     [SerializeField] private Transform casingEjectPoint;
-    [SerializeField] private GameObject magazinePrefab;      // 무기별 탄창 프리팹
+    [SerializeField] private GameObject magazinePrefab;
     [SerializeField] private Transform magazineDropPoint;
+
     [Header("Magazine Mesh")]
-    [SerializeField] private GameObject magazineMesh;   // 무기 프리팹 안에 붙은 탄창 Mesh
+    [SerializeField] private GameObject magazineMesh;
 
     // 런타임 반동 값
     private float verticalRecoil;
     private float horizontalRecoil;
-
     public static float recoilX = 0f;
     public static float recoilY = 0f;
     public static float recoveryX = 8f;
@@ -78,8 +78,8 @@ public class Weapon : Item
     public float handKick => _handKick;
     public float bodyKick => _bodyKick;
     public Transform muzzle => _muzzle;
+    public float fireRate { get => _fireRate; set => _fireRate = value; }
 
-    // Hand IK 프로퍼티
     public Vector3 leftHandPosition => _leftHandPosition;
     public Vector3 leftHandRotation => _leftHandRotation;
     public Vector3 rightHandPosition => _rightHandPosition;
@@ -135,25 +135,45 @@ public class Weapon : Item
 
     private bool TryShoot(Character character, Vector3 target)
     {
+        // 궁극기 중엔 발사 간격을 절반으로(=2배 속도)
+        float effectiveInterval = UltimateSkill.IsUltimateActive
+            ? _fireRate * UltimateSkill.CurrentFireRateMultiplier
+            : _fireRate;
+
         float passedTime = Time.realtimeSinceStartup - _fireTimer;
-        if (_ammo > 0 && passedTime >= _fireRate)
+
+        // 궁극기 중엔 탄약이 없어도 발사 가능(무한탄창)
+        bool canShootByAmmo = UltimateSkill.IsUltimateActive || _ammo > 0;
+
+        if (canShootByAmmo && passedTime >= effectiveInterval)
         {
-            _ammo--;
+            // 궁극기가 아닐 때만 탄약 차감
+            if (!UltimateSkill.IsUltimateActive) _ammo--;
+
             _fireTimer = Time.realtimeSinceStartup;
 
-            var spawnPos = _muzzle != null ? _muzzle.position : transform.position;
+            Vector3 spawnPos = _muzzle != null ? _muzzle.position : transform.position;
             var p = UnityEngine.Object.Instantiate(_projectile, spawnPos, Quaternion.identity);
-            p.Initialize(character, target, _damage);
+
+            // 궁극기 중엔 데미지 배율 적용
+            float shotDamage = _damage * (UltimateSkill.IsUltimateActive ? UltimateSkill.CurrentDamageMultiplier : 1f);
+
+            p.Initialize(character, target, shotDamage);
+            p.shooter = character.gameObject;
+
+            // (선택) 궁극기 중 총알 자체를 느리게 하고 싶다면 아래 라인 활성화
+            // if (UltimateSkill.IsUltimateActive) p.SetLocalTimeScale(UltimateSkill.CurrentSlowFactor);
+
             _flash?.Play();
 
-            // 🔥 반동 누적
+            // 반동 누적
             recoilY += verticalRecoil;
             recoilX += UnityEngine.Random.Range(-horizontalRecoil, horizontalRecoil);
 
-            // 🔥 탄피 배출
+            // 탄피 배출
             EjectCasing();
 
-            // 🔥 UI 즉시 갱신
+            // UI 즉시 갱신
             if (CanvasManager.singleton != null)
                 CanvasManager.singleton.UpdateAmmo(_ammo, character.ammo?.amount ?? 0);
 
@@ -166,8 +186,14 @@ public class Weapon : Item
     {
         for (int i = 0; i < _burstCount; i++)
         {
-            if (!_isFiring || !TryShoot(character, getTarget())) break;
-            yield return new WaitForSeconds(_burstInterval);
+            if (!_isFiring) break;
+            if (!TryShoot(character, getTarget())) break;
+
+            // 매 탄 사이 간격도 궁극기 배율 고려(원하면)
+            float interval = UltimateSkill.IsUltimateActive
+                ? _burstInterval * UltimateSkill.CurrentFireRateMultiplier
+                : _burstInterval;
+            yield return new WaitForSeconds(interval);
         }
         _isFiring = false;
     }
@@ -177,7 +203,11 @@ public class Weapon : Item
         while (_isFiring)
         {
             TryShoot(character, getTarget());
-            yield return new WaitForSeconds(_fireRate);
+            // 루프 대기시간도 궁극기 배율 반영
+            float wait = UltimateSkill.IsUltimateActive
+                ? _fireRate * UltimateSkill.CurrentFireRateMultiplier
+                : _fireRate;
+            yield return new WaitForSeconds(wait);
         }
     }
 
@@ -190,120 +220,95 @@ public class Weapon : Item
                                : transform.position + transform.forward * 1000f;
     }
 
-    // ===== 탄피 배출 =====
     private void EjectCasing()
     {
         if (casingPrefab != null && casingEjectPoint != null)
         {
-            var casing = Instantiate(casingPrefab, casingEjectPoint.position, casingEjectPoint.rotation);
+            var casing = UnityEngine.Object.Instantiate(casingPrefab, casingEjectPoint.position, casingEjectPoint.rotation);
             var rb = casing.GetComponent<Rigidbody>();
             if (rb != null)
             {
                 rb.AddForce(casingEjectPoint.right * 1.5f + casingEjectPoint.up * 0.5f, ForceMode.Impulse);
                 rb.AddTorque(UnityEngine.Random.insideUnitSphere * 2f, ForceMode.Impulse);
             }
-            Destroy(casing, 5f);
+            UnityEngine.Object.Destroy(casing, 5f);
         }
     }
 
-    // ===== 탄창 드롭 =====
     public void DropMagazine()
     {
         if (magazinePrefab != null && magazineDropPoint != null)
         {
-            var mag = Instantiate(magazinePrefab, magazineDropPoint.position, magazineDropPoint.rotation);
+            var mag = UnityEngine.Object.Instantiate(magazinePrefab, magazineDropPoint.position, magazineDropPoint.rotation);
             var rb = mag.GetComponent<Rigidbody>();
             if (rb != null)
             {
                 rb.AddForce(Vector3.down * 2f, ForceMode.Impulse);
                 rb.AddTorque(UnityEngine.Random.insideUnitSphere * 2f, ForceMode.Impulse);
             }
-            Destroy(mag, 10f);
+            UnityEngine.Object.Destroy(mag, 10f);
         }
     }
+
     public void DropToGround()
     {
 #if UNITY_EDITOR
-        if (UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject))
+        if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
         {
             Debug.LogError("Prefab Asset 자체를 드랍하려고 했습니다. 반드시 인스턴스를 사용하세요.");
             return;
         }
 #endif
-
         transform.SetParent(null);
 
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
 
         Collider[] colliders = GetComponentsInChildren<Collider>();
-        if (colliders.Length == 0)
-        {
-            colliders = new Collider[] { gameObject.AddComponent<BoxCollider>() };
-        }
+        if (colliders.Length == 0) colliders = new Collider[] { gameObject.AddComponent<BoxCollider>() };
 
-        // ✅ 첫 번째 콜라이더는 트리거용 → 무기 줍기용 유지
         if (colliders.Length > 0)
         {
             colliders[0].enabled = true;
-            colliders[0].isTrigger = true;
+            colliders[0].isTrigger = true; // 줍기 트리거
         }
-
-        // ✅ 나머지 콜라이더들은 물리 충돌용
         for (int i = 1; i < colliders.Length; i++)
         {
             colliders[i].enabled = true;
-            colliders[i].isTrigger = false;
+            colliders[i].isTrigger = false; // 물리 충돌
         }
 
         rb.isKinematic = false;
         rb.useGravity = true;
 
-        // 물리 재질 적용 (튕김 효과)
         for (int i = 1; i < colliders.Length; i++)
         {
             if (colliders[i].sharedMaterial == null)
             {
-                PhysicMaterial bounceMat = new PhysicMaterial
+                PhysicMaterial pm = new PhysicMaterial
                 {
                     bounciness = 0.4f,
                     frictionCombine = PhysicMaterialCombine.Multiply,
                     bounceCombine = PhysicMaterialCombine.Maximum
                 };
-                colliders[i].sharedMaterial = bounceMat;
+                colliders[i].sharedMaterial = pm;
             }
         }
 
-        // 튀기듯 던지기
-        Vector3 dropDirection = (transform.forward + Vector3.up * 0.5f).normalized;
-        rb.AddForce(dropDirection * 3f, ForceMode.Impulse);
+        Vector3 dropDir = (transform.forward + Vector3.up * 0.5f).normalized;
+        rb.AddForce(dropDir * 3f, ForceMode.Impulse);
         rb.AddTorque(UnityEngine.Random.insideUnitSphere * 3f, ForceMode.Impulse);
     }
 
-
-
-
-
     public void EquipWeapon(Weapon weapon, Transform weaponHolder, RigManager rigManager)
     {
-        // 무기를 WeaponHolder 밑으로 이동
         weapon.transform.SetParent(weaponHolder);
         weapon.transform.localPosition = Vector3.zero;
         weapon.transform.localRotation = Quaternion.identity;
 
-        // RigManager에 손 포즈 적용
         rigManager.SetLeftHandGrioData(weapon.leftHandPosition, weapon.leftHandRotation);
-        // 오른손은 WeaponHolder에 고정되므로 추가 조정 필요 없음
-    }
-    public void HideMagazineMesh()
-    {
-        if (magazineMesh != null)
-            magazineMesh.SetActive(false);
     }
 
-    public void ShowMagazineMesh()
-    {
-        if (magazineMesh != null)
-            magazineMesh.SetActive(true);
-    }
+    public void HideMagazineMesh() { if (magazineMesh != null) magazineMesh.SetActive(false); }
+    public void ShowMagazineMesh() { if (magazineMesh != null) magazineMesh.SetActive(true); }
 }

@@ -33,7 +33,9 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private UnityEngine.UI.Image healingItemIcon;     // 🩹 아이콘
     [SerializeField] private UnityEngine.UI.Image healingItemPanelBG;  // 🪄 배경
     private Coroutine healingItemAnimRoutine;
-
+    [Header("Ultimate")]
+    [SerializeField] private UnityEngine.UI.Image ultimateOverlay;
+    [SerializeField] private UnityEngine.UI.Slider ultimateGaugeSlider;
     private void Awake()
     {
         singleton = this;
@@ -278,6 +280,21 @@ public class CanvasManager : MonoBehaviour
         text.rectTransform.localScale = originalScale;
     }
 
-
+    public void SetUltimateOverlayAlpha(float alpha)
+    {
+        if (ultimateOverlay != null)
+        {
+            Color c = ultimateOverlay.color;
+            c.a = alpha;
+            ultimateOverlay.color = c;
+        }
+    }
+    public void UpdateUltimateGauge(float ratio)
+    {
+        if (ultimateGaugeSlider != null)
+        {
+            ultimateGaugeSlider.value = ratio;
+        }
+    }
 
 }

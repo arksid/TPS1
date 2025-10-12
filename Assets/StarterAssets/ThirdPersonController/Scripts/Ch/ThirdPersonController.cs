@@ -293,10 +293,10 @@ namespace StarterAssets
             }
 
             _aimedMovingAnimtionsInput = Vector2.Lerp(
-                _aimedMovingAnimtionsInput,
-                _input.move.normalized * _speedAnimationMultiplier,
-                SpeedChangeRate * Time.deltaTime
-            );
+            _aimedMovingAnimtionsInput,
+            _input.move.normalized * _speedAnimationMultiplier,
+             SpeedChangeRate * Time.unscaledDeltaTime
+             );
 
             _animator.SetFloat("Speed_X", _aimedMovingAnimtionsInput.x);
             _animator.SetFloat("Speed_Y", _aimedMovingAnimtionsInput.y);
@@ -418,8 +418,8 @@ namespace StarterAssets
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
             _controller.Move(
-                targetDirection.normalized * (_speed * Time.deltaTime) +
-                new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime
+            targetDirection.normalized * (_speed * Time.unscaledDeltaTime) +
+            new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.unscaledDeltaTime
             );
 
             if (_hasAnimator)
@@ -437,7 +437,8 @@ namespace StarterAssets
                 aimTarget.y = transform.position.y;
 
                 Vector3 aimDirection = (aimTarget - transform.position).normalized;
-                transform.forward = Vector3.Lerp(transform.forward, aimDirection, AimRotationSpeed * Time.deltaTime);
+                transform.forward = Vector3.Lerp(transform.forward, aimDirection, AimRotationSpeed * Time.unscaledDeltaTime);
+
             }
         }
 
@@ -445,7 +446,8 @@ namespace StarterAssets
         {
             if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
             {
-                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
+                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.unscaledDeltaTime;
+
 
                 _cinemachineTargetYaw += _input.look.x * CameraManager.singleton.sensitivity * deltaTimeMultiplier;
                 _cinemachineTargetPitch += _input.look.y * CameraManager.singleton.sensitivity * deltaTimeMultiplier;
@@ -523,7 +525,8 @@ namespace StarterAssets
 
             if (_verticalVelocity < _terminalVelocity)
             {
-                _verticalVelocity += Gravity * Time.deltaTime;
+                _verticalVelocity += Gravity * Time.unscaledDeltaTime;
+
             }
         }
 
