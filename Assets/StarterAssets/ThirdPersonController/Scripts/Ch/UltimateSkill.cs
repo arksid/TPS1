@@ -1,52 +1,38 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 public class UltimateSkill : MonoBehaviour
 {
     [Header("궁극기 설정")]
-    public float ultimateDuration = 20f;      // 지속 시간(초)
-    [Range(0.05f, 1f)] public float slowFactor = 0.2f;  // 느려질 비율(적/적탄)
-
-    [Header("궁극기 강화 설정")]
-    public float damageMultiplier = 2.0f;     // 데미지 2배
-    public float fireRateMultiplier = 0.5f;   // 발사 간격 절반(=발사속도 2배)
+    public float ultimateDuration = 20f;
+    [Range(0.05f, 1f)] public float slowFactor = 0.2f;
+    public float damageMultiplier = 2f;
+    public float fireRateMultiplier = 0.5f;
 
     [Header("게이지 설정")]
     [SerializeField] private float maxGauge = 100f;
     [SerializeField] private float currentGauge = 0f;
     [SerializeField] private float gaugePerHit = 5f;
 
-    [Header("참조")]
-    [Tooltip("플레이어 루트 오브젝트(비우면 태그 Player에서 자동 탐색)")]
-    public GameObject playerRoot;
+    [Header("시각 효과 설정")]
+    public Volume ultimateVolume;            // Global Volume 연결
+    public float volumeFadeSpeed = 2f;
 
-    // 런타임 상태
-    private bool isActive = false;
-    private readonly List<ISlowable> slowed = new List<ISlowable>();
-    private Transform _playerRootTr;
+    private Coroutine volumeRoutine;
+    private bool isActive;
 
-    // 외부에서 참조할 전역 상태
-    public static bool IsUltimateActive { get; private set; } = false;
+    // 전역 상태
+    public static bool IsUltimateActive { get; private set; }
     public static float CurrentSlowFactor { get; private set; } = 1f;
     public static float CurrentDamageMultiplier { get; private set; } = 1f;
     public static float CurrentFireRateMultiplier { get; private set; } = 1f;
 
     public float GaugePerHit => gaugePerHit;
 
-    private void Awake()
+    void Update()
     {
-        if (playerRoot == null)
-        {
-            var p = GameObject.FindGameObjectWithTag("Player");
-            if (p != null) playerRoot = p;
-        }
-        _playerRootTr = playerRoot != null ? playerRoot.transform : null;
-    }
-
-    private void Update()
-    {
-        // Q + 게이지 충족 시 발동
         if (Input.GetKeyDown(KeyCode.Q) && !isActive && currentGauge >= maxGauge)
         {
             ActivateUltimate();
@@ -57,33 +43,36 @@ public class UltimateSkill : MonoBehaviour
     {
         isActive = true;
         IsUltimateActive = true;
-
-        // 전역 멀티플라이어 세팅
         CurrentSlowFactor = slowFactor;
         CurrentDamageMultiplier = damageMultiplier;
         CurrentFireRateMultiplier = fireRateMultiplier;
 
-        // 게이지 소모 및 UI 반영
         currentGauge = 0f;
         if (CanvasManager.singleton != null)
             CanvasManager.singleton.UpdateUltimateGauge(0f);
 
-        // 적/적탄만 슬로우
-        slowed.Clear();
-        var all = FindObjectsOfType<MonoBehaviour>(true);
-        foreach (var mb in all)
+        // 🐢 슬로우 적용 (유지)
+        foreach (var mb in FindObjectsOfType<MonoBehaviour>(true))
         {
-            if (mb is ISlowable s)
-            {
-                if (ShouldBeSlowed(mb))
-                {
-                    s.SetLocalTimeScale(slowFactor);
-                    slowed.Add(s);
-                }
-            }
+            if (mb is ISlowable s && ShouldBeSlowed(mb))
+                s.SetLocalTimeScale(slowFactor);
         }
 
-        Debug.Log("[ULT] 발동: 적/적탄 슬로우 + 무한탄창 + 발사속도x2 + 데미지x2");
+        // ✨ Outline 켜기 (적만)
+        foreach (var outline in FindObjectsOfType<Outline>(true))
+        {
+            if (outline.gameObject.CompareTag("Enemy"))
+                outline.enabled = true;
+        }
+
+        // 🌈 볼륨 페이드 인 추가
+        if (ultimateVolume != null)
+        {
+            if (volumeRoutine != null) StopCoroutine(volumeRoutine);
+            volumeRoutine = StartCoroutine(FadeVolume(1f));
+        }
+
+
         StartCoroutine(EndUltimate());
     }
 
@@ -91,52 +80,57 @@ public class UltimateSkill : MonoBehaviour
     {
         yield return new WaitForSeconds(ultimateDuration);
 
-        // ✅ 해제 시: 씬 내 '모든' ISlowable을 전수 복구 (궁극기 중간에 새로 생긴 것까지 안전 복구)
-        var allNow = FindObjectsOfType<MonoBehaviour>(true);
-        foreach (var mb in allNow)
+        // 🐢 속도 원복 (유지)
+        foreach (var mb in FindObjectsOfType<MonoBehaviour>(true))
         {
             if (mb is ISlowable s && ShouldBeSlowed(mb))
-            {
                 s.SetLocalTimeScale(1f);
-            }
         }
-        slowed.Clear();
 
-        // 전역 멀티플라이어 원복
-        isActive = false;
+        // ✨ Outline 끄기 (모두 안전하게 끔)
+        foreach (var outline in FindObjectsOfType<Outline>(true))
+        {
+            outline.enabled = false;
+        }
+
+
+
         IsUltimateActive = false;
         CurrentSlowFactor = 1f;
         CurrentDamageMultiplier = 1f;
         CurrentFireRateMultiplier = 1f;
+        isActive = false;
 
-        Debug.Log("[ULT] 종료");
-    }
-
-    // 플레이어가 소유/소속한 오브젝트는 제외하고 슬로우
-    private bool ShouldBeSlowed(MonoBehaviour mb)
-    {
-        if (_playerRootTr == null) return true; // 플레이어 참조 없으면 전부 슬로우
-
-        // 1) 플레이어 트랜스폼 하위이면 제외
-        var t = mb.transform;
-        if (t.IsChildOf(_playerRootTr)) return false;
-
-        // 2) Projectile인 경우: shooter가 Player면 제외, 그 외(적탄 등)는 포함
-        var proj = mb as Projectile;
-        if (proj != null)
+        if (ultimateVolume != null)
         {
-            if (proj.shooter != null && proj.shooter.CompareTag("Player"))
-                return false; // 플레이어 탄은 제외
-            return true;       // 그 외(적탄)는 포함
+            if (volumeRoutine != null) StopCoroutine(volumeRoutine);
+            volumeRoutine = StartCoroutine(FadeVolume(0f));
         }
 
-        // 3) Enemy 태그면 포함
-        if (mb.gameObject.CompareTag("Enemy")) return true;
+       
+    }
 
-        // 4) EnemyProjectile 태그면 포함(있다면)
-        if (mb.gameObject.CompareTag("EnemyProjectile")) return true;
+    private IEnumerator FadeVolume(float targetWeight)
+    {
+        float startWeight = ultimateVolume.weight;
+        float t = 0f;
 
-        // 그 외는 기본적으로 제외 (필요시 레이어/태그로 추가)
+        while (t < 1f)
+        {
+            t += Time.deltaTime * volumeFadeSpeed;
+            ultimateVolume.weight = Mathf.Lerp(startWeight, targetWeight, t);
+            yield return null;
+        }
+
+        ultimateVolume.weight = targetWeight;
+    }
+
+    private bool ShouldBeSlowed(MonoBehaviour mb)
+    {
+        // 플레이어 제외
+        if (mb.CompareTag("Player")) return false;
+        // 적, 적 총알만 슬로우
+        if (mb.CompareTag("Enemy") || mb.CompareTag("EnemyProjectile")) return true;
         return false;
     }
 
@@ -148,7 +142,6 @@ public class UltimateSkill : MonoBehaviour
     }
 }
 
-// 느려질 수 있는 대상이 구현
 public interface ISlowable
 {
     void SetLocalTimeScale(float scale);

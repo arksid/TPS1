@@ -429,7 +429,7 @@ MonoBehaviour:
   weaponName: EVO-3
   uiCanvas: {fileID: 1328191122746802681}
   uiText: {fileID: 6314428658009713067}
-  outline: {fileID: 0}
+  outline: {fileID: 1420994838844799828}
 --- !u!65 &2492019662729415336
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -682,7 +682,11 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6932217813605189020, guid: 35b18a22d4bad094e92cc1c27ce39e48,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1420994838844799828}
   m_SourcePrefab: {fileID: 100100000, guid: 35b18a22d4bad094e92cc1c27ce39e48, type: 3}
 --- !u!1 &4378780406385526832 stripped
 GameObject:
@@ -696,6 +700,30 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 3031202768401368197}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5342625426611896601 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6932217813605189020, guid: 35b18a22d4bad094e92cc1c27ce39e48,
+    type: 3}
+  m_PrefabInstance: {fileID: 3031202768401368197}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1420994838844799828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5342625426611896601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1001 &6599934425589378832
 PrefabInstance:
   m_ObjectHideFlags: 0

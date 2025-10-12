@@ -131,7 +131,7 @@ MonoBehaviour:
   weaponName: K-2
   uiCanvas: {fileID: 3168272714028508672}
   uiText: {fileID: 4328805527538592164}
-  outline: {fileID: 0}
+  outline: {fileID: 7251861537462914106}
 --- !u!65 &-748838725894230707
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -682,8 +682,36 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 639178805255782959, guid: 8095ef38caf3d1f459ef19d91b36d73e,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7251861537462914106}
   m_SourcePrefab: {fileID: 100100000, guid: 8095ef38caf3d1f459ef19d91b36d73e, type: 3}
+--- !u!1 &494320217241397144 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 639178805255782959, guid: 8095ef38caf3d1f459ef19d91b36d73e,
+    type: 3}
+  m_PrefabInstance: {fileID: 1009646493651264951}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7251861537462914106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 494320217241397144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!4 &979529838442839330 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 258113722840160405, guid: 8095ef38caf3d1f459ef19d91b36d73e,

@@ -131,7 +131,7 @@ MonoBehaviour:
   weaponName: Colt-9
   uiCanvas: {fileID: 4438947818320769668}
   uiText: {fileID: 2811108012603170774}
-  outline: {fileID: 0}
+  outline: {fileID: 7057468882950051797}
 --- !u!65 &8300903309739925701
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -840,7 +840,11 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2515282338567950301, guid: 3a7b697044c9e2a459b92fec45c18fe2,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7057468882950051797}
   m_SourcePrefab: {fileID: 100100000, guid: 3a7b697044c9e2a459b92fec45c18fe2, type: 3}
 --- !u!4 &386911803285198337 stripped
 Transform:
@@ -848,6 +852,30 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 3241841201013326694}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1014794878158638267 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2515282338567950301, guid: 3a7b697044c9e2a459b92fec45c18fe2,
+    type: 3}
+  m_PrefabInstance: {fileID: 3241841201013326694}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7057468882950051797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1014794878158638267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &7488977645178510708 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5409777632098442770, guid: 3a7b697044c9e2a459b92fec45c18fe2,

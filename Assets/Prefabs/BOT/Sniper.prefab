@@ -107,9 +107,10 @@ GameObject:
   - component: {fileID: 95423128089119290}
   - component: {fileID: 6661198315644459074}
   - component: {fileID: -7796934204035461694}
+  - component: {fileID: -7493272224051025897}
   m_Layer: 0
   m_Name: Sniper
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -182,9 +183,9 @@ MonoBehaviour:
   sightMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  chargeTime: 1
-  zoomFOV: 50
-  followWhileCharging: 0.5
+  aimTime: 2
+  shotDelay: 0.5
+  laserLine: {fileID: 0}
 --- !u!195 &-7796934204035461694
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -207,6 +208,24 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &-7493272224051025897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1055426314030698}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 0
+  outlineColor: {r: 1, g: 0, b: 0, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &1087211636464568
 GameObject:
   m_ObjectHideFlags: 0
