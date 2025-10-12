@@ -653,9 +653,9 @@ MonoBehaviour:
   shootingPoint: {fileID: 1489368543878814218}
   projectilePrefab: {fileID: 2216547676952783978, guid: 37bdb03f8f3906a48ba0d4aaac381d23,
     type: 3}
-  shootRange: 15
-  shootCooldown: 1
-  projectileSpeed: 25
+  shootRange: 5
+  shootCooldown: 0.5
+  projectileSpeed: 50
   projectileDamage: 10
   rotationSpeed: 5
   deathExplosionPrefab: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,

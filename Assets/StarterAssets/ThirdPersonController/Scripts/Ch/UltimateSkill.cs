@@ -91,10 +91,14 @@ public class UltimateSkill : MonoBehaviour
     {
         yield return new WaitForSeconds(ultimateDuration);
 
-        // 슬로우 해제
-        foreach (var s in slowed)
+        // ✅ 해제 시: 씬 내 '모든' ISlowable을 전수 복구 (궁극기 중간에 새로 생긴 것까지 안전 복구)
+        var allNow = FindObjectsOfType<MonoBehaviour>(true);
+        foreach (var mb in allNow)
         {
-            if (s != null) s.SetLocalTimeScale(1f);
+            if (mb is ISlowable s && ShouldBeSlowed(mb))
+            {
+                s.SetLocalTimeScale(1f);
+            }
         }
         slowed.Clear();
 
@@ -141,9 +145,6 @@ public class UltimateSkill : MonoBehaviour
         currentGauge = Mathf.Clamp(currentGauge + amount, 0f, maxGauge);
         if (CanvasManager.singleton != null)
             CanvasManager.singleton.UpdateUltimateGauge(currentGauge / maxGauge);
-
-        // 디버그
-        // Debug.Log($"[ULT] 게이지 {currentGauge}/{maxGauge}");
     }
 }
 

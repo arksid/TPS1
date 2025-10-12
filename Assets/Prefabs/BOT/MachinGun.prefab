@@ -1579,7 +1579,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: 2216547676952783978, guid: 37bdb03f8f3906a48ba0d4aaac381d23,
     type: 3}
   shootRange: 15
-  shootCooldown: 1.5
+  shootCooldown: 0.3
   projectileSpeed: 25
   projectileDamage: 10
   rotationSpeed: 8

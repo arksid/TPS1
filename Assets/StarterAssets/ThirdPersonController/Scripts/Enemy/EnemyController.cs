@@ -6,6 +6,10 @@ public class EnemyController : MonoBehaviour
     [Header("체력 설정")]
     public int maxHealth = 100;
     protected int currentHealth;
+    // ✅ 추가된 부분 시작
+    protected float baseSpeed;              // 원래 속도 저장
+    private float localTimeScale = 1f;     // 궁극기용 시간 배율
+    // ✅ 추가된 부분 끝
 
     [Header("공격 관련 설정")]
     public Transform shootingPoint;
@@ -43,15 +47,53 @@ public class EnemyController : MonoBehaviour
             playerTarget = player.transform;
 
         lastShootTime = Time.time - shootCooldown;
+
+        baseSpeed = agent.speed;
+
+        // 🧠 궁극기가 발동 중이라면 즉시 슬로우 적용
+        if (UltimateSkill.IsUltimateActive)
+        {
+            SetLocalTimeScale(UltimateSkill.CurrentSlowFactor);
+        }
     }
+    // ✅ 궁극기에서 불리는 함수만 추가
+    public void SetLocalTimeScale(float scale)
+    {
+        localTimeScale = scale;
+
+        // NavMeshAgent 이동속도 조절
+        if (agent != null)
+        {
+            agent.speed = baseSpeed * localTimeScale;
+        }
+
+        // 🧠 Animator도 슬로우
+        if (animator != null)
+        {
+            // 1) 애니메이터 전체 재생속도 낮추기
+            animator.speed = localTimeScale;
+
+            // 2) Blend Tree에 사용하는 Speed 파라미터도 같이 낮추기
+            float moveSpeed = agent.velocity.magnitude;
+            animator.SetFloat("Speed", moveSpeed * localTimeScale);
+        }
+    }
+
+
+
 
     protected virtual void Update()
     {
         if (playerTarget == null || currentHealth <= 0) return;
 
+        // 👇 슬로우 반영
+        if (agent != null)
+        {
+            agent.speed = baseSpeed * localTimeScale;
+        }
+
         float distance = Vector3.Distance(transform.position, playerTarget.position);
 
-        // 📌 사거리 밖이면 플레이어에게 다가감
         if (distance > shootRange)
         {
             agent.isStopped = false;
@@ -61,10 +103,8 @@ public class EnemyController : MonoBehaviour
         }
         else
         {
-            // 📌 사거리 안
             if (CanSeePlayer())
             {
-                // 👉 시야 확보되면 멈추고 사격
                 agent.isStopped = true;
                 FaceTarget();
 
@@ -79,7 +119,6 @@ public class EnemyController : MonoBehaviour
             }
             else
             {
-                // 👉 시야 안 보이면 우회 경로 탐색 후 이동
                 agent.isStopped = false;
                 FindFlankPositionAndMove();
                 if (animator != null)
@@ -87,6 +126,7 @@ public class EnemyController : MonoBehaviour
             }
         }
     }
+
 
     // 🧭 우회 경로 탐색 함수
     private void FindFlankPositionAndMove()
@@ -278,6 +318,12 @@ public class EnemyController : MonoBehaviour
             CanvasManager.singleton.ShowDamage(damage);
 
         if (currentHealth <= 0) Die();
+    }
+    public void ResetLocalTimeScale()
+    {
+        localTimeScale = 1f;
+        if (agent != null)
+            agent.speed = baseSpeed;
     }
 
     protected virtual void Die()

@@ -1,25 +1,22 @@
+ï»¿using System.Collections;
 using UnityEngine;
-using System.Collections;
 
 public class MachineGunEnemy : EnemyController
 {
-    [Header("±â°üÃÑ ¼³Á¤")]
-    public int burstCount = 5;                 // ÇÑ ¹ø¿¡ ½î´Â ¹ß¼ö (0ÀÌ¸é ¿¬¼Ó)
-    public float timeBetweenBullets = 0.08f;   // ¹ß»ç °£°Ý (¿¬»ç¼Óµµ)
-    public float spreadAngle = 6f;             // Åº ÆÛÁü(µµ)
+    [Header("ê¸°ê´€ì´ ì„¤ì •")]
+    public int burstCount = 5;
+    public float timeBetweenBullets = 0.08f;
+    public float spreadAngle = 6f;
 
     private bool isShootingBurst = false;
 
     protected override void Start()
     {
         base.Start();
-        // ±â°üÃÑÀº ±âº» Äð´Ù¿î(Å¸°ÙÆÃ °£°Ý)À» Âª°Ô ¼³Á¤ÇØµµ µÊ
-        // shootCooldown´Â ¿þÀÌºê¸¶´Ù/¹ß°ß ÈÄ ´ë±â¿ëÀ¸·Î »ç¿ë
     }
 
     protected override void Shoot()
     {
-        // ±âº» ÄðÅ¸ÀÓ Ã¼Å©´Â ºÎ¸ð Update°¡ ÇÔ
         if (!isShootingBurst)
             StartCoroutine(BurstRoutine());
     }
@@ -31,17 +28,17 @@ public class MachineGunEnemy : EnemyController
         int shots = burstCount > 0 ? burstCount : Mathf.CeilToInt(1f / timeBetweenBullets);
         for (int i = 0; i < shots; i++)
         {
-            if (shootingPoint == null || projectilePrefab == null || playerTarget == null) break;
+            if (shootingPoint == null || projectilePrefab == null || playerTarget == null)
+                break;
 
-            // Åº ÆÛÁü Àû¿ë
+            // ì´ì•Œ í¼ì§ ì²˜ë¦¬
             Vector3 targetPoint = playerTarget.position + Vector3.up * 1.2f;
             Vector3 idealDir = (targetPoint - shootingPoint.position).normalized;
-
-            // ÀÛÀº ·£´ý ¿ÀÇÁ¼Â È¸Àü
             Quaternion spreadRot = Quaternion.Euler(
                 Random.Range(-spreadAngle, spreadAngle),
                 Random.Range(-spreadAngle, spreadAngle),
-                0f);
+                0f
+            );
             Vector3 shootDir = (spreadRot * idealDir).normalized;
 
             shootingPoint.rotation = Quaternion.LookRotation(shootDir);
@@ -51,11 +48,13 @@ public class MachineGunEnemy : EnemyController
             if (proj != null)
                 proj.Init(gameObject, shootDir, projectileSpeed, projectileDamage);
 
+            // ì  ë³¸ì¸ê³¼ ì´ì•Œ ì¶©ëŒ ë°©ì§€
             Collider bulletCol = bullet.GetComponent<Collider>();
             if (bulletCol != null)
             {
                 Collider[] enemyCols = GetComponentsInChildren<Collider>();
-                foreach (var c in enemyCols) if (c != null) Physics.IgnoreCollision(bulletCol, c, true);
+                foreach (var c in enemyCols)
+                    if (c != null) Physics.IgnoreCollision(bulletCol, c, true);
             }
 
             Destroy(bullet, 5f);

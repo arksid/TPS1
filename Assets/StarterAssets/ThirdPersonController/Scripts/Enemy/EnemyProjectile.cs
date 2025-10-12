@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class EnemyProjectile : MonoBehaviour
+public class EnemyProjectile : MonoBehaviour, ISlowable
 {
     [Header("기본 설정")]
     public float speed = 20f;
@@ -11,6 +11,10 @@ public class EnemyProjectile : MonoBehaviour
     private Rigidbody rb;
     private Collider bulletCol;
     private float spawnTime;
+
+    // 🐢 궁극기 슬로우용
+    private float baseSpeed;
+    private float localTimeScale = 1f;
 
     void Awake()
     {
@@ -28,8 +32,10 @@ public class EnemyProjectile : MonoBehaviour
             bulletCol = sphere;
         }
 
-        // ✅ 트리거 OFF
         bulletCol.isTrigger = false;
+
+        // ✅ 기본 속도 저장
+        baseSpeed = speed;
     }
 
     public void Init(GameObject shooter, Vector3 direction, float speed, float damage)
@@ -37,11 +43,17 @@ public class EnemyProjectile : MonoBehaviour
         this.shooter = shooter;
         this.speed = speed;
         this.damage = damage;
+        this.baseSpeed = speed;
         spawnTime = Time.time;
 
         rb.velocity = direction.normalized * speed;
 
-        // 발사자 충돌 무시
+        // ✅ 궁극기 발동 중일 때 슬로우 적용
+        if (UltimateSkill.IsUltimateActive)
+        {
+            SetLocalTimeScale(UltimateSkill.CurrentSlowFactor);
+        }
+
         if (shooter != null && bulletCol != null)
         {
             Collider[] cols = shooter.GetComponentsInChildren<Collider>();
@@ -54,15 +66,22 @@ public class EnemyProjectile : MonoBehaviour
 
     void Update()
     {
+        // 🐢 궁극기 배율 반영
+        rb.velocity = rb.velocity.normalized * (baseSpeed * localTimeScale);
+
         if (Time.time - spawnTime > lifeTime)
         {
             Destroy(gameObject);
         }
     }
 
+    public void SetLocalTimeScale(float scale)
+    {
+        localTimeScale = scale;
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
-        // 자기 자신 무시
         if (collision.gameObject == shooter) return;
         if (shooter != null && collision.transform.IsChildOf(shooter.transform)) return;
 
@@ -78,7 +97,6 @@ public class EnemyProjectile : MonoBehaviour
         // 벽이나 장애물에 부딪혔을 때
         if (!collision.collider.isTrigger)
         {
-            // ✅ 발사자(적)에게 알림
             if (shooter != null)
             {
                 var controller = shooter.GetComponent<EnemyController>();

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class SuicideEnemyController : MonoBehaviour
+public class SuicideEnemyController : MonoBehaviour, ISlowable
 {
     [Header("기본 설정")]
     public int maxHealth = 100;
@@ -23,11 +23,18 @@ public class SuicideEnemyController : MonoBehaviour
     private bool isExploding = false;
     private bool isBoosting = false;
 
+    // 궁극기용
+    private float localTimeScale = 1f;
+    private float baseNormalSpeed;
+    private float baseChaseSpeed;
+
     void Start()
     {
         currentHealth = maxHealth;
         agent = GetComponent<NavMeshAgent>();
         agent.speed = normalSpeed;
+        baseNormalSpeed = normalSpeed;
+        baseChaseSpeed = chaseSpeed;
         FindPlayer();
     }
 
@@ -54,10 +61,16 @@ public class SuicideEnemyController : MonoBehaviour
     IEnumerator SpeedBoostRoutine()
     {
         isBoosting = true;
-        agent.speed = chaseSpeed;
-        yield return new WaitForSeconds(chaseDuration);
-        agent.speed = normalSpeed;
+        agent.speed = baseChaseSpeed * localTimeScale;
+        yield return new WaitForSeconds(chaseDuration * localTimeScale);
+        agent.speed = baseNormalSpeed * localTimeScale;
         isBoosting = false;
+    }
+
+    public void SetLocalTimeScale(float scale)
+    {
+        localTimeScale = scale;
+        agent.speed = baseNormalSpeed * localTimeScale;
     }
 
     public void ResetEnemy()
@@ -132,14 +145,4 @@ public class SuicideEnemyController : MonoBehaviour
             Destroy(p.gameObject);
         }
     }
-
-#if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, explosionRange);
-    }
-#endif
 }
