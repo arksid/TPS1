@@ -2068,6 +2068,8 @@ MonoBehaviour:
   healingItemCountText: {fileID: 558503664}
   healingItemIcon: {fileID: 119651696}
   healingItemPanelBG: {fileID: 1919518570}
+  ultimateOverlay: {fileID: 0}
+  ultimateGaugeSlider: {fileID: 0}
 --- !u!4 &475035211
 Transform:
   m_ObjectHideFlags: 0
@@ -4247,6 +4249,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d019106c331902e4289d51c179ead928, type: 3}
+--- !u!1 &963797276 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8900757794806520401, guid: da592e4107fbb2145ade0d7b534aefe7,
+    type: 3}
+  m_PrefabInstance: {fileID: 3045813998266076190}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1028513131
 GameObject:
   m_ObjectHideFlags: 0
@@ -9207,7 +9215,7 @@ PrefabInstance:
     - target: {fileID: 7557639386161898058, guid: 81fbce4d1225bb24187a8a98e5c78d81,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -10033,12 +10041,33 @@ MonoBehaviour:
     type: 3}
   m_PrefabInstance: {fileID: 3045813998266076190}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 963797276}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6edb2ecaccc378f4b84752bcf1fe9ea6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1569135809324026725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963797276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 699c330fa6bc6c9409e6bd44b345e96a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ultimateDuration: 20
+  slowFactor: 0.2
+  damageMultiplier: 2
+  fireRateMultiplier: 0.5
+  maxGauge: 100
+  currentGauge: 0
+  gaugePerHit: 5
+  ultimateVolume: {fileID: 0}
+  volumeFadeSpeed: 2
 --- !u!1 &1877228049517495711
 GameObject:
   m_ObjectHideFlags: 0
@@ -10873,6 +10902,10 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8900757794806520401, guid: da592e4107fbb2145ade0d7b534aefe7,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1569135809324026725}
     - targetCorrespondingSourceObject: {fileID: 7231075758420377289, guid: da592e4107fbb2145ade0d7b534aefe7,
         type: 3}
       insertIndex: -1
