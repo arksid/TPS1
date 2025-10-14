@@ -7146,6 +7146,11 @@ MonoBehaviour:
   reloadRadial: {fileID: 831150016}
   crosshair: {fileID: 1025773502}
   damageText: {fileID: 196480540}
+  healingItemCountText: {fileID: 0}
+  healingItemIcon: {fileID: 0}
+  healingItemPanelBG: {fileID: 0}
+  ultimateOverlay: {fileID: 0}
+  ultimateGaugeSlider: {fileID: 0}
 --- !u!4 &2142033195
 Transform:
   m_ObjectHideFlags: 0
