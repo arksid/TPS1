@@ -45,17 +45,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyPrefabs:
-  - {fileID: 208615875794677177, guid: 3fb254ad33a6f5f4d95c3059c2c9f3ee, type: 3}
-  - {fileID: 8406841521348463928, guid: a58466501f0a3b34eb42e9138b5296f3, type: 3}
+  - {fileID: 1055426314030698, guid: 34ccff89037a4494e948438ce9a1a6af, type: 3}
+  - {fileID: 2158740643350348365, guid: 03797a657e242304089c107a426e602d, type: 3}
+  - {fileID: 1863117551576690, guid: 72b9d15d538eb144a841863a8ce43c89, type: 3}
+  - {fileID: 1014634973264464, guid: 8f8894cbdac81c542afeeceff33a3ea9, type: 3}
   spawnPoints:
   - {fileID: 6973635086045449244}
   - {fileID: 0}
   - {fileID: 0}
-  playerTransform: {fileID: 0}
-  enemiesPerWave: 1
+  spawnRadius: 5
+  enemiesPerWave: 5
   spawnDelay: 0.5
   waveDelay: 5
-  maxWaves: 10
-  semiBossPrefab: {fileID: 1586153474678188177, guid: 809ec271ecaba284a9b4dc268fd1c56c,
-    type: 3}
-  semiBossWaveInterval: 5
+  playerTransform: {fileID: 0}
