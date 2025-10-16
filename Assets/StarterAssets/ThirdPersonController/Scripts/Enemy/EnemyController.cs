@@ -339,4 +339,22 @@ public class EnemyController : MonoBehaviour, ISlowable
 
         Destroy(gameObject);
     }
+    private void OnEnable()
+    {
+        // 🧭 적이 활성화될 때 레이더에 등록
+        if (RadarManager.Instance != null)
+        {
+            RadarManager.Instance.RegisterEnemy(transform);
+        }
+    }
+
+    private void OnDisable()
+    {
+        // 🧭 적이 비활성화될 때 레이더에서 제거
+        if (RadarManager.Instance != null)
+        {
+            RadarManager.Instance.UnregisterEnemy(transform);
+        }
+    }
+
 }

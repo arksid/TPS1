@@ -100,7 +100,7 @@ MonoBehaviour:
   _bodyKick: 5
   _leftHandPosition: {x: 0.016, y: 0.247, z: -0.082}
   _leftHandRotation: {x: 28.21, y: -1147.487, z: 298.753}
-  _rightHandPosition: {x: 0.0224, y: 0.0923, z: -0.0446}
+  _rightHandPosition: {x: 0.0119, y: 0.0552, z: -0.0418}
   _rightHandRotation: {x: -87.638, y: -59.031, z: -2.778}
   _muzzle: {fileID: 7602479053626630154}
   _flash: {fileID: 2048064469067572148}

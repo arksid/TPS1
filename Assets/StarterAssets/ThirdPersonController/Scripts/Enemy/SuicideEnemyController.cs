@@ -189,4 +189,16 @@ public class SuicideEnemyController : MonoBehaviour, ISlowable
             Destroy(p.gameObject);
         }
     }
+    private void OnEnable()
+    {
+        if (RadarManager.Instance != null)
+            RadarManager.Instance.RegisterEnemy(transform);
+    }
+
+    private void OnDisable()
+    {
+        if (RadarManager.Instance != null)
+            RadarManager.Instance.UnregisterEnemy(transform);
+    }
+
 }
