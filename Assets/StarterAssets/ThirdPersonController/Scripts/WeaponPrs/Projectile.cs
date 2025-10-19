@@ -74,6 +74,11 @@ public class Projectile : MonoBehaviour, ISlowable
             // 🧠 적 컨트롤러 찾기 (보스, 자폭병 등 상위에서 찾음)
             var enemy = collision.transform.root.GetComponent<EnemyController>();
             var suicide = collision.transform.root.GetComponent<SuicideEnemyController>();
+            var flying = collision.transform.GetComponentInParent<FlyingEnemyController>();
+            if (flying != null)
+            {
+                flying.TakeDamage(_damage);
+            }
 
             if (enemy != null || suicide != null)
             {

@@ -59,6 +59,10 @@ public class EnemyWaveSpawner : MonoBehaviour
         var enemyController = enemy.GetComponent<EnemyController>();
         if (enemyController != null && playerTransform != null)
             enemyController.SetPlayer(playerTransform);
+        var flying = enemy.GetComponent<FlyingEnemyController>();
+        if (flying != null && playerTransform != null)
+            flying.SetPlayer(playerTransform);
+
     }
 
     private Vector3 GetRandomSpawnPosition()

@@ -908,16 +908,14 @@ MonoBehaviour:
   minDistance: 3
   maxDistance: 4
   moveInterval: 3
-  randomOffset: 2
   attackRange: 7
   attackCooldown: 2
   projectileSpeed: 25
   projectileDamage: 15
-  projectilePrefab: {fileID: 0}
+  projectilePrefab: {fileID: 2216547676952783978, guid: 37bdb03f8f3906a48ba0d4aaac381d23,
+    type: 3}
   firePoint: {fileID: 9027279508422343673}
   maxHealth: 25
-  explosionEffect: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
-    type: 3}
 --- !u!54 &-4190503972383899938
 Rigidbody:
   m_ObjectHideFlags: 0
