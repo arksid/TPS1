@@ -144,9 +144,20 @@ public class SuicideEnemyController : MonoBehaviour, ISlowable
     public void TakeDamage(float dmg)
     {
         if (isExploding) return;
+
         currentHealth -= Mathf.RoundToInt(dmg);
+
+        // 💥 데미지 UI 표시 추가
+        if (CanvasManager.singleton != null)
+        {
+            CanvasManager.singleton.ShowDamage(dmg);
+        }
+
+        Debug.Log($"[SuicideEnemy] 데미지 {dmg} 받음 / 남은 체력: {currentHealth}/{maxHealth}");
+
         if (currentHealth <= 0) Explode();
     }
+
 
     void Explode()
     {
@@ -177,18 +188,33 @@ public class SuicideEnemyController : MonoBehaviour, ISlowable
     {
         if (isExploding) return;
 
+        // 🧨 플레이어 충돌 처리
         if (collision.gameObject.CompareTag("Player"))
         {
             Explode();
+            return;
         }
 
+        // 🧨 총알 충돌 처리
         Projectile p = collision.gameObject.GetComponent<Projectile>();
         if (p != null)
         {
+            // 💥 디버그 로그 추가로 충돌 여부 확인
+            Debug.Log($"[SuicideEnemy] 총알({p.name})에 맞음 - 데미지: {p.damage}");
+
+            // 데미지 적용
             TakeDamage(p.damage);
-            Destroy(p.gameObject);
+
+            // 총알 파괴 (안전하게)
+            if (p.gameObject != null)
+            {
+                Destroy(p.gameObject);
+            }
+
+            return;
         }
     }
+
     private void OnEnable()
     {
         if (RadarManager.Instance != null)

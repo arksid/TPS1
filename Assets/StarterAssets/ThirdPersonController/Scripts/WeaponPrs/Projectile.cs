@@ -60,14 +60,7 @@ public class Projectile : MonoBehaviour, ISlowable
     {
         if (collision.gameObject == shooter) return;
 
-        // 1) 궁극기 게이지 먼저
-        if (shooter != null)
-        {
-            var ult = shooter.GetComponent<UltimateSkill>();
-            if (ult != null) ult.AddGauge(ult.GaugePerHit);
-        }
-
-        // 2) 피격 파티클
+        // ✨ 1. 피격 파티클
         if (hitParticlePrefab != null)
         {
             var contact = collision.contacts[0];
@@ -75,13 +68,35 @@ public class Projectile : MonoBehaviour, ISlowable
             Destroy(particle, 1f);
         }
 
-        // 3) 데미지 처리(적에게)
-        var enemy = collision.transform.GetComponentInParent<EnemyController>();
-        if (enemy != null && shooter != enemy.gameObject)
+        // ✨ 2. 적에 맞았는지 확인 (Enemy 태그)
+        if (collision.transform.root.CompareTag("Enemy"))
         {
-            enemy.TakeDamage(_damage);
+            // 🧠 적 컨트롤러 찾기 (보스, 자폭병 등 상위에서 찾음)
+            var enemy = collision.transform.root.GetComponent<EnemyController>();
+            var suicide = collision.transform.root.GetComponent<SuicideEnemyController>();
+
+            if (enemy != null || suicide != null)
+            {
+                // ✅ 3. 궁극기 게이지 증가
+                if (shooter != null)
+                {
+                    var ult = shooter.GetComponent<UltimateSkill>();
+                    if (ult != null)
+                        ult.AddGauge(ult.GaugePerHit);
+                }
+
+                // ✅ 4. 데미지 처리
+                if (enemy != null) enemy.TakeDamage(_damage);
+                if (suicide != null) suicide.TakeDamage(_damage);
+
+                // ✅ 5. 히트마커 표시
+                if (HitmarkerManager.instance != null)
+                    HitmarkerManager.instance.ShowHitmarker();
+            }
         }
 
+        // 총알 파괴
         Destroy(gameObject);
     }
+
 }

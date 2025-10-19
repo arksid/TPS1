@@ -14,7 +14,7 @@ public class UltimateSkill : MonoBehaviour
     [Header("게이지 설정")]
     [SerializeField] private float maxGauge = 100f;
     [SerializeField] private float currentGauge = 0f;
-    [SerializeField] private float gaugePerHit = 5f;
+    [SerializeField] public float gaugePerHit = 5f;
 
     [Header("시각 효과 설정")]
     public Volume ultimateVolume;            // Global Volume 연결

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -24,9 +24,9 @@ namespace StarterAssets
         public bool switchToSecondary;
         public bool switchToThird;
         public bool interact;
-        // Á¶ÁØ Çã¿ë ¿©ºÎ(±¸¸£±â Áß false)
+        // ì¡°ì¤€ í—ˆìš© ì—¬ë¶€(êµ¬ë¥´ê¸° ì¤‘ false)
         public bool canAim = true;
-        // Å¬·¡½º ¸Ç À§ Input Values ºÎºÐ¿¡ Ãß°¡
+        // í´ëž˜ìŠ¤ ë§¨ ìœ„ Input Values ë¶€ë¶„ì— ì¶”ê°€
         public bool heal;
 
         [Header("Movement Settings")]
@@ -39,13 +39,13 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM
         public void OnAim(InputValue value)
         {
-            if (!canAim) return; // ±¸¸£±â Áß Á¶ÁØ ÀÔ·Â ¹«½Ã
+            if (!canAim) return; // êµ¬ë¥´ê¸° ì¤‘ ì¡°ì¤€ ìž…ë ¥ ë¬´ì‹œ
             AimInput(value.isPressed);
         }
 
         public void OnShoot(InputValue value)
         {
-            // °¡µå´Â ShootInput¿¡¼­ ÀÏ°ý Ã³¸®
+            // ê°€ë“œëŠ” ShootInputì—ì„œ ì¼ê´„ ì²˜ë¦¬
             ShootInput(value.isPressed);
         }
 
@@ -106,7 +106,7 @@ namespace StarterAssets
 
             if (pressed && OnSprintKeyPressed != null)
             {
-                OnSprintKeyPressed.Invoke(); // ´­¸° ¼ø°£¸¸ °¨Áö
+                OnSprintKeyPressed.Invoke(); // ëˆŒë¦° ìˆœê°„ë§Œ ê°ì§€
             }
 
             sprint = pressed;
@@ -124,13 +124,21 @@ namespace StarterAssets
 
         public void MoveInput(Vector2 newMoveDirection) => move = newMoveDirection;
 
-        public void LookInput(Vector2 newLookDirection) => look = newLookDirection;
+        public void LookInput(Vector2 newLookDirection)
+        {
+            // ðŸ›‘ ì¦ê°• UIê°€ ì—´ë ¤ ìžˆìœ¼ë©´ ë§ˆìš°ìŠ¤ ìž…ë ¥ ì°¨ë‹¨
+            if (Weapon.IsPaused ||
+                (AugmentUIManager.Instance != null && AugmentUIManager.Instance.augmentPanel.activeSelf))
+                return;
+
+            look = newLookDirection;
+        }
 
         public void JumpInput(bool newJumpState) => jump = newJumpState;
 
         public void AimInput(bool newAimState) => aim = newAimState;
 
-        // === ÇÙ½É °¡µå: canAimÀÌ false¸é »ç°Ý ÀÔ·Â ¹«½Ã ===
+        // === í•µì‹¬ ê°€ë“œ: canAimì´ falseë©´ ì‚¬ê²© ìž…ë ¥ ë¬´ì‹œ ===
         public void ShootInput(bool newShootState) => shoot = canAim ? newShootState : false;
 
         public void SwitchWeaponInput(float newSwitchWeaponState) => switchWeapon = newSwitchWeaponState;

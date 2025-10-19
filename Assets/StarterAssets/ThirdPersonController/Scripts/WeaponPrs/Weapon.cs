@@ -67,6 +67,7 @@ public class Weapon : Item
     private int _ammo = 0;
     private float _fireTimer = 0;
     private bool _isFiring = false;
+    public static bool IsPaused = false; // UI 중 사격 잠금용
 
     // ===== 프로퍼티 =====
     public Handle type => _type;
@@ -103,13 +104,15 @@ public class Weapon : Item
         => StartFiring(character, getTarget, caller, null, null, null);
 
     public void StartFiring(
-        Character character,
-        Func<Vector3> getTarget,
-        MonoBehaviour caller,
-        Func<bool> isAimingProvider,
-        Func<float> moveMagnitudeProvider,
-        Func<bool> isSprintingProvider)
+    Character character,
+    Func<Vector3> getTarget,
+    MonoBehaviour caller,
+    Func<bool> isAimingProvider,
+    Func<float> moveMagnitudeProvider,
+    Func<bool> isSprintingProvider)
     {
+        if (IsPaused) return;  // ✅ 증강 UI 열려있을 땐 사격 차단
+
         if (_isFiring) return;
         _isFiring = true;
 
@@ -131,56 +134,58 @@ public class Weapon : Item
         }
     }
 
+
     public void StopFiring() => _isFiring = false;
 
     private bool TryShoot(Character character, Vector3 target)
     {
-        // 궁극기 중엔 발사 간격을 절반으로(=2배 속도)
+        // ✅ 캐릭터가 null이거나 이미 삭제됐다면 발사 중단
+        if (character == null || character.Equals(null))
+        {
+            StopFiring();
+            return false;
+        }
+
         float effectiveInterval = UltimateSkill.IsUltimateActive
             ? _fireRate * UltimateSkill.CurrentFireRateMultiplier
             : _fireRate;
 
         float passedTime = Time.realtimeSinceStartup - _fireTimer;
-
-        // 궁극기 중엔 탄약이 없어도 발사 가능(무한탄창)
         bool canShootByAmmo = UltimateSkill.IsUltimateActive || _ammo > 0;
 
         if (canShootByAmmo && passedTime >= effectiveInterval)
         {
-            // 궁극기가 아닐 때만 탄약 차감
             if (!UltimateSkill.IsUltimateActive) _ammo--;
 
             _fireTimer = Time.realtimeSinceStartup;
-
             Vector3 spawnPos = _muzzle != null ? _muzzle.position : transform.position;
+
             var p = UnityEngine.Object.Instantiate(_projectile, spawnPos, Quaternion.identity);
 
-            // 궁극기 중엔 데미지 배율 적용
             float shotDamage = _damage * (UltimateSkill.IsUltimateActive ? UltimateSkill.CurrentDamageMultiplier : 1f);
 
-            p.Initialize(character, target, shotDamage);
-            p.shooter = character.gameObject;
-
-            // (선택) 궁극기 중 총알 자체를 느리게 하고 싶다면 아래 라인 활성화
-            // if (UltimateSkill.IsUltimateActive) p.SetLocalTimeScale(UltimateSkill.CurrentSlowFactor);
+            // ✅ 다시 한 번 안전하게 확인
+            if (character != null && !character.Equals(null))
+            {
+                p.Initialize(character, target, shotDamage);
+                p.shooter = character.gameObject;
+            }
 
             _flash?.Play();
 
-            // 반동 누적
             recoilY += verticalRecoil;
             recoilX += UnityEngine.Random.Range(-horizontalRecoil, horizontalRecoil);
 
-            // 탄피 배출
             EjectCasing();
 
-            // UI 즉시 갱신
             if (CanvasManager.singleton != null)
-                CanvasManager.singleton.UpdateAmmo(_ammo, character.ammo?.amount ?? 0);
+                CanvasManager.singleton.UpdateAmmo(_ammo, character?.ammo?.amount ?? 0);
 
             return true;
         }
         return false;
     }
+
 
     private IEnumerator FireBurst(Character character, Func<Vector3> getTarget)
     {
@@ -198,18 +203,22 @@ public class Weapon : Item
         _isFiring = false;
     }
 
+
     private IEnumerator FireContinuously(Character character, Func<Vector3> getTarget)
     {
         while (_isFiring)
         {
+            if (IsPaused) yield break;
+            if (character == null || character.Equals(null)) yield break; // ✅ 캐릭터 사망 시 종료
+
             TryShoot(character, getTarget());
-            // 루프 대기시간도 궁극기 배율 반영
             float wait = UltimateSkill.IsUltimateActive
                 ? _fireRate * UltimateSkill.CurrentFireRateMultiplier
                 : _fireRate;
             yield return new WaitForSeconds(wait);
         }
     }
+
 
     public float VisualSpreadDeg(bool aiming, float moveMagnitude, bool sprinting) => 0f;
 
@@ -308,7 +317,18 @@ public class Weapon : Item
 
         rigManager.SetLeftHandGrioData(weapon.leftHandPosition, weapon.leftHandRotation);
     }
-
+    // ✅ 데미지 접근자
+    public float damage
+    {
+        get => _damage;
+        set => _damage = value;
+    }
+    // ✅ 반동 감소용 함수
+    public void ApplyRecoilMultiplier(float multiplier)
+    {
+        recoilX *= multiplier;
+        recoilY *= multiplier;
+    }
     public void HideMagazineMesh() { if (magazineMesh != null) magazineMesh.SetActive(false); }
     public void ShowMagazineMesh() { if (magazineMesh != null) magazineMesh.SetActive(true); }
 }

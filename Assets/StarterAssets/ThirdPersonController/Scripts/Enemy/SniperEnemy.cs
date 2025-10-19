@@ -1,77 +1,61 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class SniperEnemy : EnemyController
 {
-    [Header("Àú°İº´ ¼³Á¤")]
-    public float aimTime = 2f;         // Á¶ÁØ ½Ã°£
-    public float shotDelay = 0.5f;     // ¹ß»ç Àü Áö¿¬ ½Ã°£
-    public LineRenderer laserLine;     // Á¶ÁØ ·¹ÀÌÀú
-    private bool isAiming = false;
+    [Header("Sniper Settings")]
+    public float laserDuration = 0.2f;
+
+    [Header("Line Renderer Settings")]
+    public LineRenderer laserLine;
+    public Color laserColor = Color.red;
+    public float lineWidth = 0.03f;
 
     protected override void Start()
     {
         base.Start();
+
+        // âœ… LineRenderer ìë™ ìƒì„± (Inspectorì—ì„œ ì•ˆ ë¶™ì—¬ë„ ë¨)
+        if (laserLine == null)
+        {
+            GameObject lineObj = new GameObject("SniperLaserLine");
+            lineObj.transform.SetParent(transform);
+            lineObj.transform.localPosition = Vector3.zero;
+
+            laserLine = lineObj.AddComponent<LineRenderer>();
+            laserLine.material = new Material(Shader.Find("Sprites/Default"));
+            laserLine.startColor = laserColor;
+            laserLine.endColor = laserColor;
+            laserLine.startWidth = lineWidth;
+            laserLine.endWidth = lineWidth;
+            laserLine.positionCount = 2;
+            laserLine.sortingOrder = 10;
+            laserLine.enabled = false;
+        }
     }
 
     protected override void Shoot()
     {
-        if (!isAiming)
-            StartCoroutine(SniperRoutine());
+        StartCoroutine(SniperRoutine());
     }
 
     private IEnumerator SniperRoutine()
     {
-        isAiming = true;
-
-        // Á¶ÁØ ½ÃÀÛ
-        if (laserLine != null)
-            laserLine.enabled = true;
-
-        float timer = 0f;
-        while (timer < aimTime)
+        if (shootingPoint == null)
         {
-            timer += Time.deltaTime;
-
-            if (playerTarget == null) break;
-
-            // ÇÃ·¹ÀÌ¾î À§Ä¡ ÃßÀûÇØ¼­ ·¹ÀÌÀú Á¶ÁØ À¯Áö
-            Vector3 targetPos = playerTarget.position + Vector3.up * 1.2f;
-            laserLine.SetPosition(0, shootingPoint.position);
-            laserLine.SetPosition(1, targetPos);
-
-            yield return null;
+            Debug.LogWarning("SniperEnemy: shootingPointê°€ í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
+            yield break;
         }
 
-        // ¹ß»ç µô·¹ÀÌ
-        yield return new WaitForSeconds(shotDelay);
+        Vector3 startPos = shootingPoint.position;
+        Vector3 endPos = startPos + shootingPoint.forward * 100f;
 
-        // ¹ß»ç
-        if (shootingPoint != null && projectilePrefab != null && playerTarget != null)
-        {
-            Vector3 targetDir = (playerTarget.position + Vector3.up * 1.2f - shootingPoint.position).normalized;
-            shootingPoint.rotation = Quaternion.LookRotation(targetDir);
+        laserLine.SetPosition(0, startPos);
+        laserLine.SetPosition(1, endPos);
+        laserLine.enabled = true;
 
-            GameObject bullet = Instantiate(projectilePrefab, shootingPoint.position, shootingPoint.rotation);
-            var proj = bullet.GetComponent<EnemyProjectile>();
-            if (proj != null)
-                proj.Init(gameObject, targetDir, projectileSpeed, projectileDamage);
+        yield return new WaitForSeconds(laserDuration);
 
-            // Ãæµ¹ ¹æÁö
-            Collider bulletCol = bullet.GetComponent<Collider>();
-            if (bulletCol != null)
-            {
-                Collider[] enemyCols = GetComponentsInChildren<Collider>();
-                foreach (var c in enemyCols)
-                    if (c != null) Physics.IgnoreCollision(bulletCol, c, true);
-            }
-
-            Destroy(bullet, 5f);
-        }
-
-        if (laserLine != null)
-            laserLine.enabled = false;
-
-        isAiming = false;
+        laserLine.enabled = false;
     }
 }

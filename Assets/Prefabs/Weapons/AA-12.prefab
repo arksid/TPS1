@@ -111,10 +111,10 @@ MonoBehaviour:
   casingPrefab: {fileID: 5896815481570757752, guid: 301e0240b1acd614aa7dcf9ec5542736,
     type: 3}
   casingEjectPoint: {fileID: 5690209954613352916}
-  magazinePrefab: {fileID: 7499121884285716677}
-  magazineDropPoint: {fileID: 5946336859904355246}
-  magazineMesh: {fileID: 4355873666614801828, guid: 78e375e0cfde3c143bec165f9bedf258,
+  magazinePrefab: {fileID: 4355873666614801828, guid: 78e375e0cfde3c143bec165f9bedf258,
     type: 3}
+  magazineDropPoint: {fileID: 5946336859904355246}
+  magazineMesh: {fileID: 7499121884285716677}
 --- !u!114 &-1783808447837256900
 MonoBehaviour:
   m_ObjectHideFlags: 0

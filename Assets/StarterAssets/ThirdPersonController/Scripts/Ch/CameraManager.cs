@@ -40,11 +40,8 @@ public class CameraManager : MonoBehaviour
         if (_cameraBrain != null)
             _cameraBrain.m_DefaultBlend.m_Time = 0.1f;
 
-        // ✅ 메인 카메라 자동 할당
         if (_camera == null)
-        {
             _camera = Camera.main;
-        }
     }
 
     private void Update()
@@ -55,12 +52,16 @@ public class CameraManager : MonoBehaviour
 
     private void LateUpdate()
     {
+        // 🛑 증강 UI가 열려있거나 무기가 일시정지 상태라면 조준 갱신 안 함
+        if (Weapon.IsPaused ||
+            (AugmentUIManager.Instance != null && AugmentUIManager.Instance.augmentPanel.activeSelf))
+            return;
+
         SetAimTarget();
     }
 
     private void SetAimTarget()
     {
-        // ✅ 카메라 null 혹은 비활성화 방어
         if (_camera == null || !_camera.isActiveAndEnabled)
         {
             _camera = Camera.main;
@@ -68,18 +69,13 @@ public class CameraManager : MonoBehaviour
                 return;
         }
 
-        // ✅ 플레이어가 없거나 비활성화된 경우 방어
         GameObject playerObj = GameObject.FindWithTag("Player");
         if (playerObj == null || !playerObj.activeInHierarchy)
-        {
             return;
-        }
 
-        // ✅ 화면 크기 0일 때 방어
         if (Screen.width <= 0 || Screen.height <= 0)
             return;
 
-        // ✅ 중앙 좌표에서 Ray 쏘기
         Vector2 center = new Vector2(Screen.width / 2f, Screen.height / 2f);
         Ray ray = _camera.ScreenPointToRay(center);
 

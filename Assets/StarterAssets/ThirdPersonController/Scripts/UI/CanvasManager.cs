@@ -185,8 +185,9 @@ public class CanvasManager : MonoBehaviour
         float duration = 0.15f;
         float fadeTime = 0.5f;
 
-        Color originalColor = Color.white;
-        Color flashColor = Color.red;
+        Color originalColor = Color.red;
+        Color flashColor = Color.white;
+    
 
         text.rectTransform.localScale = originalScale;
         text.color = flashColor;

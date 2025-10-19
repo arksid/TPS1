@@ -183,9 +183,11 @@ MonoBehaviour:
   sightMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  aimTime: 2
-  shotDelay: 0.5
-  laserLine: {fileID: 0}
+  laserDuration: 0.2
+  laserLine: {fileID: 4975513229209747341, guid: 200473d5ad9944545add343098d416cc,
+    type: 3}
+  laserColor: {r: 1, g: 0, b: 0, a: 1}
+  lineWidth: 0.03
 --- !u!195 &-7796934204035461694
 NavMeshAgent:
   m_ObjectHideFlags: 0

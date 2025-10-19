@@ -34,6 +34,15 @@ public class Character : MonoBehaviour
     [SerializeField] private Weapon slot2WeaponPrefab;   // 2번 무기 (EVO-3)
     [SerializeField] private Weapon slot3WeaponPrefab;   // 3번 무기 (K-9)
 
+    [Header("Augment System")]
+    public float onKillHealAmount = 0f;     // 처치 시 회복량
+    public float moveSpeed = 5f;            // 이동속도 증강용
+    public bool autoReloadOnKill = false;   // 처치 시 자동장전 여부
+    public float extraLootRate = 0f;        // 드랍률 증가
+
+    [Header("Shield System")]
+    public float maxShield = 0f;
+    public float currentShield = 0f;
 
     // Animator hash 캐싱
     private static readonly int EquipTrigger = Animator.StringToHash("Equip");
@@ -549,5 +558,26 @@ public class Character : MonoBehaviour
         Debug.Log($"🟠 {slotIndex + 1}번 무기 {weapon.name}을(를) 몸에서 뱉듯이 버렸습니다. (지속 존재)");
     }
 
+    // ✅ 실드 증가 함수
+    public void AddShield(float amount)
+    {
+        maxShield += amount;
+        currentShield = maxShield;
+        // HUD 업데이트가 있다면 여기서 호출 가능
+    }
+    // ✅ 슬로우 오라 기능
+    public bool slowAuraActive = false;
+    public float slowAuraValue = 0f;
 
+    public void EnableSlowAura(float value)
+    {
+        slowAuraActive = true;
+        slowAuraValue = value;
+        // 이 부분에 OverlapSphere 등으로 적 로컬 타임스케일을 줄이는 로직 추가 가능
+    }
+    public void LevelUp()
+    {
+        // 레벨업 처리 로직 (경험치 초기화 등)
+        AugmentUIManager.Instance.ShowAugmentOptions();
+    }
 }

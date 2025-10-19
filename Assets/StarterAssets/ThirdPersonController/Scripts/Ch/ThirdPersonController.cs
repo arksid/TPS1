@@ -444,10 +444,14 @@ namespace StarterAssets
 
         private void CameraRotation()
         {
+            // 🛑 증강 UI가 열려 있으면 카메라 회전 차단
+            if (Weapon.IsPaused ||
+                (AugmentUIManager.Instance != null && AugmentUIManager.Instance.augmentPanel.activeSelf))
+                return;
+
             if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
             {
                 float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.unscaledDeltaTime;
-
 
                 _cinemachineTargetYaw += _input.look.x * CameraManager.singleton.sensitivity * deltaTimeMultiplier;
                 _cinemachineTargetPitch += _input.look.y * CameraManager.singleton.sensitivity * deltaTimeMultiplier;

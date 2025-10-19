@@ -336,7 +336,8 @@ public class EnemyController : MonoBehaviour, ISlowable
             GameObject explosion = Instantiate(deathExplosionPrefab, transform.position, Quaternion.identity);
             Destroy(explosion, explosionDestroyTime);
         }
-
+        PlayerLevelSystem.Instance.AddExp(20); // 💥 적 처치 경험치
+     
         Destroy(gameObject);
     }
     private void OnEnable()
