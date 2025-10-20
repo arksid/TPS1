@@ -1518,6 +1518,7 @@ GameObject:
   - component: {fileID: -1029015830617013045}
   - component: {fileID: -7580109909009906780}
   - component: {fileID: -2750259080524584217}
+  - component: {fileID: 229315356162015616}
   m_Layer: 0
   m_Name: MachinGun
   m_TagString: Enemy
@@ -1636,6 +1637,19 @@ MonoBehaviour:
   precomputeOutline: 0
   bakeKeys: []
   bakeValues: []
+--- !u!114 &229315356162015616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1863117551576690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6784377fb6815b44a65f019e0a87e53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDrop: 1
 --- !u!1 &1870730081972750
 GameObject:
   m_ObjectHideFlags: 0

@@ -50,20 +50,33 @@ public class EnemyWaveSpawner : MonoBehaviour
 
     private void SpawnRandomEnemy()
     {
-        if (enemyPrefabs.Length == 0) return;
+        if (enemyPrefabs.Length == 0)
+        {
+            Debug.LogError("❌ enemyPrefabs 비어있음!");
+            return;
+        }
+
+        if (playerTransform == null)
+        {
+            Debug.LogError("❌ playerTransform이 null입니다!");
+            return;
+        }
 
         GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
-        Vector3 spawnPos = GetRandomSpawnPosition();
-        GameObject enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
+        GameObject enemy = Instantiate(prefab, GetRandomSpawnPosition(), Quaternion.identity);
 
-        var enemyController = enemy.GetComponent<EnemyController>();
-        if (enemyController != null && playerTransform != null)
-            enemyController.SetPlayer(playerTransform);
-        var flying = enemy.GetComponent<FlyingEnemyController>();
-        if (flying != null && playerTransform != null)
-            flying.SetPlayer(playerTransform);
-
+        var flyingEnemy = enemy.GetComponent<FlyingEnemyController>();
+        if (flyingEnemy == null)
+        {
+            Debug.LogError($"❌ {prefab.name} 프리팹에 FlyingEnemyController 없음!");
+        }
+        else
+        {
+            Debug.Log($"✅ {prefab.name}에 FlyingEnemyController 발견, 타겟 설정 시도");
+            flyingEnemy.SetTarget(playerTransform);
+        }
     }
+
 
     private Vector3 GetRandomSpawnPosition()
     {

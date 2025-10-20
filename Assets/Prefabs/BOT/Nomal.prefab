@@ -593,6 +593,7 @@ GameObject:
   - component: {fileID: 967561993259685086}
   - component: {fileID: 2514174145860605757}
   - component: {fileID: 1343622033720898663}
+  - component: {fileID: 3474715489233388674}
   m_Layer: 0
   m_Name: Nomal
   m_TagString: Enemy
@@ -708,6 +709,19 @@ MonoBehaviour:
   precomputeOutline: 0
   bakeKeys: []
   bakeValues: []
+--- !u!114 &3474715489233388674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2158740643350348365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6784377fb6815b44a65f019e0a87e53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDrop: 1
 --- !u!1 &2530671995739701460
 GameObject:
   m_ObjectHideFlags: 0

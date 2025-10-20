@@ -845,6 +845,8 @@ GameObject:
   - component: {fileID: 872404598047050454}
   - component: {fileID: -4190503972383899938}
   - component: {fileID: 2007951190168118932}
+  - component: {fileID: 2242661842405075549}
+  - component: {fileID: -4564607477686471503}
   m_Layer: 0
   m_Name: SK_Orb_01
   m_TagString: Enemy
@@ -905,10 +907,28 @@ MonoBehaviour:
   moveSpeed: 6
   turnSpeed: 4
   hoverHeight: 5
-  minDistance: 3
-  maxDistance: 4
-  moveInterval: 3
-  attackRange: 7
+  minDistance: 15
+  attackRange: 15
+  expReward: 20
+  ultimateGaugeReward: 10
+  weaponDropWeight: 0
+  healDropWeight: 50
+  ammoDropWeight: 50
+  noDropWeight: 0
+  healPackPrefab: {fileID: 307774420219124244, guid: 24db9d00414b4424898134e422683eb5,
+    type: 3}
+  ammoPackPrefab: {fileID: 796601214760731350, guid: 4785d7b8a3165ce42aec4a0dc798fb78,
+    type: 3}
+  weaponIDs:
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
   attackCooldown: 2
   projectileSpeed: 25
   projectileDamage: 15
@@ -925,7 +945,7 @@ Rigidbody:
   m_GameObject: {fileID: 1758119621213600}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 2
+  m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -939,7 +959,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
-  m_IsKinematic: 1
+  m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
@@ -964,6 +984,37 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0.65, z: 0}
+--- !u!114 &2242661842405075549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1758119621213600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6784377fb6815b44a65f019e0a87e53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDrop: 1
+--- !u!114 &-4564607477686471503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1758119621213600}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 0
+  outlineColor: {r: 1, g: 0, b: 0, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &1838743157181200
 GameObject:
   m_ObjectHideFlags: 0

@@ -336,10 +336,16 @@ public class EnemyController : MonoBehaviour, ISlowable
             GameObject explosion = Instantiate(deathExplosionPrefab, transform.position, Quaternion.identity);
             Destroy(explosion, explosionDestroyTime);
         }
-        PlayerLevelSystem.Instance.AddExp(20); // 💥 적 처치 경험치
-     
+
+        PlayerLevelSystem.Instance.AddExp(20);
+
+        // 💥 공통 드랍 시스템 호출
+        var dropSystem = GetComponent<EnemyDropSystem>();
+        if (dropSystem != null) dropSystem.DropWeapon();
+
         Destroy(gameObject);
     }
+
     private void OnEnable()
     {
         // 🧭 적이 활성화될 때 레이더에 등록

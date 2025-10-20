@@ -108,6 +108,7 @@ GameObject:
   - component: {fileID: 6661198315644459074}
   - component: {fileID: -7796934204035461694}
   - component: {fileID: -7493272224051025897}
+  - component: {fileID: 1091049217326399349}
   m_Layer: 0
   m_Name: Sniper
   m_TagString: Enemy
@@ -228,6 +229,19 @@ MonoBehaviour:
   precomputeOutline: 0
   bakeKeys: []
   bakeValues: []
+--- !u!114 &1091049217326399349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1055426314030698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6784377fb6815b44a65f019e0a87e53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDrop: 1
 --- !u!1 &1087211636464568
 GameObject:
   m_ObjectHideFlags: 0
