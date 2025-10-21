@@ -41,6 +41,14 @@ public class CameraManager : MonoBehaviour
             _cameraBrain.m_DefaultBlend.m_Time = 0.1f;
 
         if (_camera == null)
+        {
+            int bulletLayer = LayerMask.NameToLayer("Bullet");
+            int shellLayer = LayerMask.NameToLayer("Shell");
+
+            // ❌ Bullet, Shell 레이어를 마스크에서 빼기
+            _obstructionMask &= ~(1 << bulletLayer);
+            _obstructionMask &= ~(1 << shellLayer);
+        }
             _camera = Camera.main;
     }
 

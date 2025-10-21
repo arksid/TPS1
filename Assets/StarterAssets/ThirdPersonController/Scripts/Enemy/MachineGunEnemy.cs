@@ -66,8 +66,9 @@ public class MachineGunEnemy : EnemyController
     }
     protected override void Die()
     {
-        base.Die(); // 부모에서 이미 dropSystem 호출 가능
+        base.Die();
         var dropSystem = GetComponent<EnemyDropSystem>();
-        if (dropSystem != null) dropSystem.DropWeapon();
+        if (dropSystem != null) dropSystem.TryDropItemByWeight();
     }
+
 }

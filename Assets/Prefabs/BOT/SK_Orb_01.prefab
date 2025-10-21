@@ -904,38 +904,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee148cdc6ef0e0e4eb057f3890e5f15e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player: {fileID: 0}
   moveSpeed: 6
-  turnSpeed: 4
-  hoverHeight: 5
-  minDistance: 15
-  attackRange: 15
+  stopDistance: 15
+  rotationSpeed: 5
+  evadeAmplitude: 2
+  evadeFrequency: 2
+  bulletPrefab: {fileID: 0}
+  firePoint: {fileID: 9027279508422343673}
+  fireRate: 1.5
+  maxHealth: 25
   expReward: 20
   ultimateGaugeReward: 10
-  weaponDropWeight: 0
-  healDropWeight: 50
-  ammoDropWeight: 50
-  noDropWeight: 0
-  healPackPrefab: {fileID: 307774420219124244, guid: 24db9d00414b4424898134e422683eb5,
-    type: 3}
-  ammoPackPrefab: {fileID: 796601214760731350, guid: 4785d7b8a3165ce42aec4a0dc798fb78,
-    type: 3}
-  weaponIDs:
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  attackCooldown: 2
-  projectileSpeed: 25
-  projectileDamage: 15
-  projectilePrefab: {fileID: 2216547676952783978, guid: 37bdb03f8f3906a48ba0d4aaac381d23,
-    type: 3}
-  firePoint: {fileID: 9027279508422343673}
-  maxHealth: 25
+  deathEffect: {fileID: 0}
 --- !u!54 &-4190503972383899938
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -996,7 +977,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6784377fb6815b44a65f019e0a87e53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableDrop: 1
+  weaponDropWeight: 50
+  healDropWeight: 30
+  ammoDropWeight: 20
+  noDropWeight: 0
+  healPackPrefab: {fileID: 307774420219124244, guid: 24db9d00414b4424898134e422683eb5,
+    type: 3}
+  ammoPackPrefab: {fileID: 6421407223492047996, guid: 245ea7bcd1a367240b9d0eb63928ce97,
+    type: 3}
 --- !u!114 &-4564607477686471503
 MonoBehaviour:
   m_ObjectHideFlags: 0

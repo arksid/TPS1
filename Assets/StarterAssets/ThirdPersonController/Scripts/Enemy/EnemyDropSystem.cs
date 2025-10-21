@@ -14,7 +14,7 @@ public class EnemyDropSystem : MonoBehaviour
     public GameObject ammoPackPrefab;
 
     /// <summary>
-    /// 확률 기반으로 드랍을 결정하고, 무기 또는 힐팩/탄약을 떨굽니다.
+    /// 가중치에 따라 아이템을 랜덤 드랍합니다.
     /// </summary>
     public void TryDropItemByWeight()
     {
@@ -41,13 +41,10 @@ public class EnemyDropSystem : MonoBehaviour
         }
         else
         {
-            Debug.Log("[DropSystem] 드랍 없음 (No Drop Weight 발동)");
+            Debug.Log("[DropSystem] 드랍 없음 (No Drop Weight)");
         }
     }
 
-    /// <summary>
-    /// PrefabManager에 등록된 무기 중 자기 프리팹만 제외하고 랜덤 드랍
-    /// </summary>
     private void DropWeapon()
     {
         var manager = PrefabManager.singleton;
@@ -63,13 +60,13 @@ public class EnemyDropSystem : MonoBehaviour
         foreach (var item in manager._items)
         {
             if (item == null) continue;
-            if (item.gameObject.name == currentPrefabName) continue;
+            if (item.gameObject.name == currentPrefabName) continue; // 자기 자신 제외
             filteredList.Add(item);
         }
 
         if (filteredList.Count == 0)
         {
-            Debug.LogWarning("[DropSystem] 자기 자신을 제외한 무기가 없습니다.");
+            Debug.LogWarning("[DropSystem] 자기 자신 제외 후 드랍할 무기가 없습니다.");
             return;
         }
 
@@ -80,9 +77,6 @@ public class EnemyDropSystem : MonoBehaviour
         Debug.Log($"[DropSystem] 무기 드랍: {selected.name}");
     }
 
-    /// <summary>
-    /// 힐팩 드랍
-    /// </summary>
     private void DropHeal()
     {
         if (healPackPrefab != null)
@@ -92,9 +86,6 @@ public class EnemyDropSystem : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 탄약팩 드랍
-    /// </summary>
     private void DropAmmo()
     {
         if (ammoPackPrefab != null)

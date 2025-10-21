@@ -281,7 +281,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6784377fb6815b44a65f019e0a87e53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableDrop: 1
+  weaponDropWeight: 50
+  healDropWeight: 30
+  ammoDropWeight: 20
+  noDropWeight: 0
+  healPackPrefab: {fileID: 307774420219124244, guid: 24db9d00414b4424898134e422683eb5,
+    type: 3}
+  ammoPackPrefab: {fileID: 796601214760731350, guid: 4785d7b8a3165ce42aec4a0dc798fb78,
+    type: 3}
 --- !u!1 &1038900827139846
 GameObject:
   m_ObjectHideFlags: 0

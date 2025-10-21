@@ -1,275 +1,136 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.AI;
 
-[RequireComponent(typeof(Rigidbody))]
-public class FlyingEnemyController : MonoBehaviour, ISlowable
+public class FlyingEnemyController : MonoBehaviour
 {
-    [Header("기본 설정")]
-    public float moveSpeed = 10f;
-    public float turnSpeed = 5f;
-    public float hoverHeight = 6f;
-    public float minDistance = 15f;
-    public float attackRange = 25f;
-    public int expReward = 20;
+    [Header("Target & Movement")]
+    public Transform player;
+    public float moveSpeed = 5f;
+    public float stopDistance = 15f;  // 플레이어 반경 15m 이내로 접근하지 않음
+    public float rotationSpeed = 5f;
+    public float evadeAmplitude = 2f;
+    public float evadeFrequency = 2f;
+
+    [Header("Combat")]
+    public GameObject bulletPrefab;
+    public Transform firePoint;
+    public float fireRate = 1.5f;
+    private float nextFireTime;
+
+    [Header("Status")]
+    public float maxHealth = 100f;
+    private float currentHealth;
+    private bool isDead = false;
+
+    [Header("Experience / Ultimate")]
+    public int expReward = 10;
     public float ultimateGaugeReward = 10f;
 
-    [Header("드랍 확률 가중치 설정 (총합 100 기준 권장)")]
-    public float weaponDropWeight = 50f;
-    public float healDropWeight = 30f;
-    public float ammoDropWeight = 20f;
-    public float noDropWeight = 0f;
+    [Header("Effect")]
+    public GameObject deathEffect;
 
-    [Header("힐팩 / 탄약 프리팹")]
-    public GameObject healPackPrefab;
-    public GameObject ammoPackPrefab;
-
-    [Header("무기 ID 목록 (PrefabManager 사용)")]
-    public string[] weaponIDs;
-
-    private Transform playerTarget;
     private Rigidbody rb;
-    private bool isDead = false;
-    private bool canShoot = true;
-    private bool hasTarget = false;
+    private Vector3 initialEvadeOffset;
 
-    // 궁극기 관련
-    private float baseMoveSpeed;
-    private float baseProjectileSpeed;
-    private float baseAttackCooldown;
-    private float localTimeScale = 1f;
-
-    // 이동 및 회피 관련
-    private Vector3 evadeOffset;
-    private float nextEvadeTime = 0f;
-    private float orbitAngle = 0f;
-    private int orbitDirection = 1;
-    private float nextOrbitSwitch = 0f;
-
-    [Header("공격 설정")]
-    public float attackCooldown = 2f;
-    public float projectileSpeed = 25f;
-    public float projectileDamage = 15f;
-    public GameObject projectilePrefab;
-    public Transform firePoint;
-
-    [Header("체력")]
-    public int maxHealth = 100;
-    private int currentHealth;
-
-    void Start()
+    private void Start()
     {
-        currentHealth = maxHealth;
         rb = GetComponent<Rigidbody>();
-        rb.useGravity = false;
-        rb.drag = 2f;
+        currentHealth = maxHealth;
 
-        baseMoveSpeed = moveSpeed;
-        baseProjectileSpeed = projectileSpeed;
-        baseAttackCooldown = attackCooldown;
-
-        PickNewEvadeOffset();
-        nextOrbitSwitch = Time.time + 5f;
-
-        // 궁극기 활성화 상태면 슬로우 적용
-        if (UltimateSkill.IsUltimateActive)
-        {
-            SetLocalTimeScale(UltimateSkill.CurrentSlowFactor);
-        }
+        // 회피 이동 시작 지점
+        initialEvadeOffset = new Vector3(
+            Random.Range(-1f, 1f),
+            Random.Range(-1f, 1f),
+            Random.Range(-1f, 1f)
+        );
     }
 
-    void FixedUpdate()
-    {
-        if (isDead) return;
-        if (!hasTarget || playerTarget == null) return;
-
-        Vector3 playerPos = new Vector3(playerTarget.position.x, hoverHeight, playerTarget.position.z);
-        float distance = Vector3.Distance(transform.position, playerPos);
-
-        if (Time.time >= nextEvadeTime) PickNewEvadeOffset();
-        if (Time.time >= nextOrbitSwitch)
-        {
-            orbitDirection *= -1;
-            nextOrbitSwitch = Time.time + 5f;
-        }
-
-        orbitAngle += 6f * orbitDirection * Time.fixedDeltaTime;
-        Vector3 orbitOffset = new Vector3(Mathf.Cos(orbitAngle), 0, Mathf.Sin(orbitAngle)) * minDistance;
-        Vector3 moveTarget = playerPos + orbitOffset + evadeOffset;
-
-        Quaternion targetRot = Quaternion.LookRotation(playerPos - transform.position);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * turnSpeed);
-
-        Vector3 dir = (moveTarget - transform.position).normalized;
-        rb.velocity = dir * (moveSpeed * localTimeScale);
-
-        if (distance <= attackRange && canShoot)
-            StartCoroutine(ShootRoutine());
-    }
-
-    void PickNewEvadeOffset()
-    {
-        Vector2 randomCircle = Random.insideUnitCircle * 4f;
-        evadeOffset = new Vector3(randomCircle.x, 0, randomCircle.y);
-        nextEvadeTime = Time.time + 2f;
-    }
-
-    IEnumerator ShootRoutine()
-    {
-        canShoot = false;
-        if (firePoint != null && projectilePrefab != null && playerTarget != null)
-        {
-            Vector3 shootDir = (playerTarget.position + Vector3.up * 1.2f - firePoint.position).normalized;
-            GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.LookRotation(shootDir));
-            Rigidbody rbBullet = bullet.GetComponent<Rigidbody>();
-
-            if (rbBullet != null)
-                rbBullet.velocity = shootDir * (projectileSpeed * localTimeScale);
-        }
-        yield return new WaitForSeconds(attackCooldown / localTimeScale);
-        canShoot = true;
-    }
-
-    public void SetLocalTimeScale(float scale)
-    {
-        localTimeScale = scale;
-        moveSpeed = baseMoveSpeed * localTimeScale;
-        projectileSpeed = baseProjectileSpeed * localTimeScale;
-        attackCooldown = baseAttackCooldown / localTimeScale;
-    }
-
-    public void ResetLocalTimeScale()
-    {
-        localTimeScale = 1f;
-        moveSpeed = baseMoveSpeed;
-        projectileSpeed = baseProjectileSpeed;
-        attackCooldown = baseAttackCooldown;
-    }
-
-    public void TakeDamage(float dmg)
+    private void Update()
     {
         if (isDead) return;
 
-        currentHealth -= Mathf.RoundToInt(dmg);
-        if (CanvasManager.singleton != null)
-            CanvasManager.singleton.ShowDamage(dmg);
-
-        if (currentHealth <= 0) Die();
-    }
-
-    void Die()
-{
-    if (isDead) return;
-    isDead = true;
-
-    if (PlayerLevelSystem.Instance != null)
-        PlayerLevelSystem.Instance.AddExp(expReward);
-
-    var ult = FindObjectOfType<UltimateSkill>();
-    if (ult != null)
-        ult.AddGauge(ultimateGaugeReward);
-
-    // 💥 공통 드랍 시스템 호출
-    var dropSystem = GetComponent<EnemyDropSystem>();
-    if (dropSystem != null) dropSystem.DropWeapon();
-
-    Destroy(gameObject, 0.1f);
-}
-
-    private void TryDropItemByWeight()
-    {
-        float totalWeight = weaponDropWeight + healDropWeight + ammoDropWeight + noDropWeight;
-        if (totalWeight <= 0f) return;
-
-        float roll = Random.Range(0f, totalWeight);
-
-        if (roll < weaponDropWeight)
+        if (player != null)
         {
-            DropWeapon();
-        }
-        else if (roll < weaponDropWeight + healDropWeight)
-        {
-            DropHeal();
-        }
-        else if (roll < weaponDropWeight + healDropWeight + ammoDropWeight)
-        {
-            DropAmmo();
-        }
-        else
-        {
-            Debug.Log("[FlyingEnemy] 아무것도 드랍되지 않음");
+            MoveAndEvade();
+            Attack();
         }
     }
 
-    private void DropWeapon()
+    private void MoveAndEvade()
     {
-        var manager = PrefabManager.singleton;
-        if (manager == null)
+        Vector3 direction = (player.position - transform.position);
+        float distance = direction.magnitude;
+
+        // 플레이어를 바라보게 회전
+        if (direction != Vector3.zero)
         {
-            Debug.LogWarning("❌ PrefabManager를 찾을 수 없습니다.");
-            return;
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
 
-        var items = manager._items;
-        if (items == null || items.Length == 0)
+        // 일정 거리 이상일 때만 접근
+        if (distance > stopDistance)
         {
-            Debug.LogWarning("[FlyingEnemy] PrefabManager에 아이템이 없습니다.");
-            return;
-        }
-
-        // 🧠 현재 프리팹 이름 (자기 자신)
-        string currentPrefabName = this.gameObject.name;
-
-        var filteredList = new System.Collections.Generic.List<Item>();
-        foreach (var item in items)
-        {
-            if (item == null) continue;
-
-            // 자기 자신 프리팹만 제외
-            if (item.gameObject.name == currentPrefabName)
-                continue;
-
-            filteredList.Add(item);
-        }
-
-        if (filteredList.Count == 0)
-        {
-            Debug.LogWarning("[FlyingEnemy] 자기 자신을 제외한 무기가 없습니다.");
-            return;
-        }
-
-        // 랜덤으로 하나 선택
-        int randIndex = Random.Range(0, filteredList.Count);
-        Item selected = filteredList[randIndex];
-
-        // 드랍
-        Instantiate(selected.gameObject, transform.position, Quaternion.identity);
-        Debug.Log($"[FlyingEnemy] 자기 자신 제외 후 무기 랜덤 드랍: {selected.name}");
-    }
-
-
-
-
-    private void DropHeal()
-    {
-        if (healPackPrefab != null)
-        {
-            Instantiate(healPackPrefab, transform.position, Quaternion.identity);
-            Debug.Log("[FlyingEnemy] 힐팩 드랍");
+            Vector3 evadeOffset = initialEvadeOffset * Mathf.Sin(Time.time * evadeFrequency) * evadeAmplitude;
+            Vector3 moveDir = (direction.normalized + evadeOffset.normalized).normalized;
+            rb.MovePosition(transform.position + moveDir * moveSpeed * Time.deltaTime);
         }
     }
 
-    private void DropAmmo()
+    private void Attack()
     {
-        if (ammoPackPrefab != null)
+        if (Time.time >= nextFireTime)
         {
-            Instantiate(ammoPackPrefab, transform.position, Quaternion.identity);
-            Debug.Log("[FlyingEnemy] 탄약팩 드랍");
+            if (bulletPrefab != null && firePoint != null)
+            {
+                Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+            }
+            nextFireTime = Time.time + fireRate;
         }
     }
 
-    public void SetTarget(Transform playerTransform)
+    public void TakeDamage(float damage)
     {
-        playerTarget = playerTransform;
-        hasTarget = true;
+        if (isDead) return;
+
+        currentHealth -= damage;
+        if (currentHealth <= 0f)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        if (isDead) return;
+        isDead = true;
+
+        // 이펙트
+        if (deathEffect != null)
+        {
+            GameObject fx = Instantiate(deathEffect, transform.position, Quaternion.identity);
+            Destroy(fx, 2f);
+        }
+
+        // 경험치 및 궁극기 게이지
+        if (PlayerLevelSystem.Instance != null)
+            PlayerLevelSystem.Instance.AddExp(expReward);
+
+        var ult = FindObjectOfType<UltimateSkill>();
+        if (ult != null)
+            ult.AddGauge(ultimateGaugeReward);
+
+        // ✅ 공통 드랍 시스템 호출
+        var dropSystem = GetComponent<EnemyDropSystem>();
+        if (dropSystem != null) dropSystem.TryDropItemByWeight();
+
+        Destroy(gameObject, 0.1f);
+    }
+
+    public void SetTarget(Transform newTarget)
+    {
+        player = newTarget;
     }
 }

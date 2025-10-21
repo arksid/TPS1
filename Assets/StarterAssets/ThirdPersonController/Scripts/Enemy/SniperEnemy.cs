@@ -62,6 +62,7 @@ public class SniperEnemy : EnemyController
     {
         base.Die(); // 부모에서 이미 dropSystem 호출 가능
         var dropSystem = GetComponent<EnemyDropSystem>();
-        if (dropSystem != null) dropSystem.DropWeapon();
+        if (dropSystem != null) dropSystem.TryDropItemByWeight();
     }
+
 }

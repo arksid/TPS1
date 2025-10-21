@@ -341,7 +341,7 @@ public class EnemyController : MonoBehaviour, ISlowable
 
         // 💥 공통 드랍 시스템 호출
         var dropSystem = GetComponent<EnemyDropSystem>();
-        if (dropSystem != null) dropSystem.DropWeapon();
+        if (dropSystem != null) dropSystem.TryDropItemByWeight();
 
         Destroy(gameObject);
     }
