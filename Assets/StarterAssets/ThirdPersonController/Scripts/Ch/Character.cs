@@ -81,7 +81,6 @@ public class Character : MonoBehaviour
         {
             int oldHealth = _health;
             _health = Mathf.Clamp(value, 0, MaxHealth);
-
             if (CanvasManager.singleton != null)
                 CanvasManager.singleton.UpdateHealth(_health, MaxHealth);
         }

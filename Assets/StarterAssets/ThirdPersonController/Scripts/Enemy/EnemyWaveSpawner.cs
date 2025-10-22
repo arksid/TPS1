@@ -68,7 +68,7 @@ public class EnemyWaveSpawner : MonoBehaviour
         var flyingEnemy = enemy.GetComponent<FlyingEnemyController>();
         if (flyingEnemy == null)
         {
-            Debug.LogError($"❌ {prefab.name} 프리팹에 FlyingEnemyController 없음!");
+          
         }
         else
         {

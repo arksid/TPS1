@@ -3129,11 +3129,9 @@ MonoBehaviour:
   augmentOptionPrefab: {fileID: 5692234731888016939, guid: 64b79ce4650400d46a9defc294c2d016,
     type: 3}
   allAugments:
-  - {fileID: 11400000, guid: b2ef2d5506a8f7a4bb2ac3fcaf034f86, type: 2}
-  - {fileID: 11400000, guid: 631bbf7f349efd94da2384d7ed3b312e, type: 2}
-  - {fileID: 11400000, guid: 1a071f2b0e1fab34cab62a6fe4297c98, type: 2}
-  - {fileID: 11400000, guid: 8af91d4568e0d9747b1a8ae17225e127, type: 2}
-  - {fileID: 11400000, guid: d38c801ba2d1e924cb83385178cf1da2, type: 2}
+  - {fileID: 11400000, guid: 298da52746ab99343a7ff8cb2447a3ef, type: 2}
+  - {fileID: 11400000, guid: 915b0a1b0adaa7840b4b75025c326501, type: 2}
+  - {fileID: 11400000, guid: 4a1fd3d8959f99f42899401b24d8395e, type: 2}
 --- !u!114 &1156359950
 MonoBehaviour:
   m_ObjectHideFlags: 0
