@@ -11,11 +11,14 @@ public enum AugmentRarity
 
 public enum AugmentCategory
 {
-    Offense,   // 공격 관련
-    Utility,   // 유틸리티
-    Movement,  // 이동 관련
-    Defense    // 🛡 방어 관련 (CSV 'Defense' 값 대응)
+    Normal,     // 🟢 일반 특성
+    Special,    // 🟡 특수 특성
+    Offense,    // 공격 관련
+    Utility,    // 유틸리티
+    Movement,   // 이동 관련
+    Defense     // 방어 관련
 }
+
 
 [CreateAssetMenu(fileName = "NewAugment", menuName = "Augment System/Augment")]
 public class AugmentData : ScriptableObject
