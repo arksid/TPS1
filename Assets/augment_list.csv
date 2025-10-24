@@ -1,4 +1,11 @@
-Name,Description,Rarity,Category,Value
-ì²´ë ¥ ì¦ê°€,ìµœëŒ€ ì²´ë ¥ì´ 20 ì¦ê°€í•©ë‹ˆë‹¤,Normal,Normal,20
-ì²´ë ¥ ëŒ€í­ ì¦ê°€,ìµœëŒ€ ì²´ë ¥ì´ 50 ì¦ê°€í•©ë‹ˆë‹¤,Rare,Normal,50
-ì²´ë ¥ í­ë°œ ì¦ê°€,ìµœëŒ€ ì²´ë ¥ì´ 100 ì¦ê°€í•©ë‹ˆë‹¤,Epic,Normal,100
+Name,Description,Rarity,Category,Type,Value
+Ä¡¸íÅ¸ È®·ü ¾÷ 1,Ä¡¸íÅ¸ È®·üÀÌ 5% Áõ°¡ÇÕ´Ï´Ù,Normal,Normal,CriticalChanceUp,5
+Ä¡¸íÅ¸ È®·ü ¾÷ 2,Ä¡¸íÅ¸ È®·üÀÌ 10% Áõ°¡ÇÕ´Ï´Ù,Rare,Normal,CriticalChanceUp,10
+Ä¡¸íÅ¸ È®·ü ¾÷ 3,Ä¡¸íÅ¸ È®·üÀÌ 20% Áõ°¡ÇÕ´Ï´Ù,Epic,Normal,CriticalChanceUp,20
+Ä¡¸íÅ¸ È®·ü ¾÷ 4,Ä¡¸íÅ¸ È®·üÀÌ 30% Áõ°¡ÇÕ´Ï´Ù,Legendary,Normal,CriticalChanceUp,30
+Ä¡¸íÅ¸ È®·ü ¾÷ 5,Ä¡¸íÅ¸ È®·üÀÌ 50% Áõ°¡ÇÕ´Ï´Ù,Legendary,Normal,CriticalChanceUp,50
+°­È­ ½Çµå,½Çµå ÃÖ´ëÄ¡°¡ Áõ°¡ÇÕ´Ï´Ù.,Common,Defense,ShieldMax,20
+Àç»ı ½Çµå,ÀÏÁ¤ ½Ã°£ µ¥¹ÌÁö¸¦ ¹ŞÁö ¾ÊÀ¸¸é ½Çµå°¡ ÃÊ´ç 2¾¿ È¸º¹µË´Ï´Ù.,Rare,Defense,ShieldRegen,2
+¼ø°£ °­È­,½Çµå°¡ 0ÀÌ µÇ¸é 50¸¸Å­ ÀÚµ¿ È¸º¹µË´Ï´Ù.,Epic,Defense,ShieldEmergencyRegen,50
+Èí¼ö ½Çµå,¹Ş´Â µ¥¹ÌÁöÀÇ 20%¸¸ ½Çµå¿¡ Àû¿ëµË´Ï´Ù.,Epic,Defense,ShieldAbsorb,0.2
+°­È­ È¸º¹,È¸º¹ ¾ÆÀÌÅÛ »ç¿ë ½Ã ½Çµåµµ 20¸¸Å­ Ãß°¡ È¸º¹µË´Ï´Ù.,Rare,Defense,ShieldHeal,20

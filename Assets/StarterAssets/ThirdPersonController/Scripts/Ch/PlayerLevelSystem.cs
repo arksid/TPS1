@@ -19,6 +19,15 @@ public class PlayerLevelSystem : MonoBehaviour
         Instance = this;
     }
 
+    private void Start()
+    {
+        OnExpChanged += CanvasManager.singleton.UpdateExpUI;
+
+        // 게임 시작 시 초기 경험치 표시
+        CanvasManager.singleton.UpdateExpUI(currentExp, expToNextLevel);
+    }
+
+
     public void AddExp(int amount)
     {
         currentExp += amount;

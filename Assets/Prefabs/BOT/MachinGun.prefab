@@ -1584,6 +1584,7 @@ MonoBehaviour:
   shootCooldown: 0.3
   projectileSpeed: 25
   projectileDamage: 10
+  expReward: 30
   rotationSpeed: 8
   deathExplosionPrefab: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
     type: 3}

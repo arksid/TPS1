@@ -9,6 +9,17 @@ public class CanvasManager : MonoBehaviour
     public Slider healthSlider;
     [SerializeField] private TMP_Text healthText;
 
+    [Header("Shield UI ")]
+    [SerializeField] private Slider shieldSlider;
+    [SerializeField] private TMPro.TMP_Text shieldText;
+
+    [Header("Experience UI ✨")]
+    [SerializeField] private Slider expSlider;
+    [SerializeField] private TMP_Text expText;
+    [SerializeField] private TMP_Text expRemainText;
+    [SerializeField] private float expLerpSpeed = 5f; // 게이지 부드럽게 따라가는 속도
+    private float targetExpValue = 0f; // 목표 경험치 값
+
     [Header("Weapon UI")]
     public TMP_Text weaponNameText;
     public TMP_Text ammoText;
@@ -38,10 +49,21 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private UnityEngine.UI.Slider ultimateGaugeSlider;
     private void Awake()
     {
+        if (singleton != null && singleton != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
         singleton = this;
-        if (reloadRadial) reloadRadial.fillAmount = 0f;
     }
-
+    private void Update()
+    {
+        // EXP 게이지 부드럽게 이동
+        if (expSlider != null)
+        {
+            expSlider.value = Mathf.Lerp(expSlider.value, targetExpValue, Time.deltaTime * expLerpSpeed);
+        }
+    }
     // ===== 체력 =====
     public void UpdateHealth(int current, int max)
     {
@@ -50,10 +72,10 @@ public class CanvasManager : MonoBehaviour
             healthSlider.maxValue = max;
             healthSlider.value = current;
         }
-        if (healthText != null)
-            healthText.text = $"HP: {current} / {max}";
-    }
 
+        if (healthText != null)
+            healthText.text = $"HP : {current} / {max}";
+    }
     // ===== 무기 & 탄약 =====
     public void UpdateWeapon(string weaponName)
     {
@@ -71,6 +93,42 @@ public class CanvasManager : MonoBehaviour
                 StopCoroutine(ammoAnimRoutine);
 
             ammoAnimRoutine = StartCoroutine(AmmoTextPop(ammoText));
+        }
+    }
+    // ✨ 경험치 UI
+    // ================================
+    public void UpdateExpUI(int currentExp, int expToNextLevel)
+    {
+        if (expSlider != null)
+        {
+            expSlider.maxValue = expToNextLevel;
+            targetExpValue = currentExp; // 목표치만 변경하고 실제 값은 Lerp로 부드럽게 이동
+        }
+
+        if (expText != null)
+            expText.text = $"EXP : {currentExp} / {expToNextLevel}";
+
+        if (expRemainText != null)
+        {
+            int remain = Mathf.Max(expToNextLevel - currentExp, 0);
+            expRemainText.text = $"남은 경험치 : {remain}";
+        }
+    }
+
+public void UpdateShield(int current, int max)
+    {
+        if (shieldSlider != null)
+        {
+            shieldSlider.maxValue = max;
+            shieldSlider.value = current;
+        }
+
+        if (shieldText != null)
+        {
+            if (max > 0)
+                shieldText.text = $"SD : {current} / {max}";
+            else
+                shieldText.text = "SD : 0 / 0";
         }
     }
 

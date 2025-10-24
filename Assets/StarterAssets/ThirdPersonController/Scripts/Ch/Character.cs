@@ -4,13 +4,18 @@ using UnityEngine;
 
 public class Character : MonoBehaviour
 {
+    public static Character Instance { get; private set; }
+
+
     [SerializeField] private MonoBehaviour[] scriptsToDisableOnDeath;
     [SerializeField] private Transform _weaponHolder = null;
+    [SerializeField] private int _maxHealth = 200;   // ✅ 초기 체력 200
     [SerializeField] private int _health;
-    [SerializeField] public int MaxHealth = 100;
+
     [SerializeField] private Transform weaponHolder;
     [SerializeField] private RigManager rigManager;
 
+    [SerializeField] private RagdollController ragdollController;
     private Weapon _weapon = null; public Weapon weapon => _weapon;
     private Ammo _ammo = null; public Ammo ammo => _ammo;
     private readonly List<Item> _items = new List<Item>();
@@ -41,19 +46,92 @@ public class Character : MonoBehaviour
     public float extraLootRate = 0f;        // 드랍률 증가
 
     [Header("Shield System")]
-    public float maxShield = 0f;
-    public float currentShield = 0f;
+
+    // 🛡 실드 관련 필드
+    [SerializeField] private int _maxShield = 100;
+    [SerializeField] private int _shield = 0;
+    [SerializeField] private float shieldRegenDelay = 5f; // 데미지 안 받은 시간
+    [SerializeField] private float shieldRegenRate = 0.5f; // 초당 회복 속도
+    private float lastDamageTime;
 
     // Animator hash 캐싱
     private static readonly int EquipTrigger = Animator.StringToHash("Equip");
     private static readonly int HolsterTrigger = Animator.StringToHash("Holster");
     private static readonly int ReloadTrigger = Animator.StringToHash("Reload");
 
+    [SerializeField] private float criticalChance = 0f;  // 퍼센트 (0~100)
+    [SerializeField] private float criticalMultiplier = 2f;
+
+
+    public int MaxHealth
+    {
+        get => _maxHealth;
+        set
+        {
+            Debug.Log($"[Character] MaxHealth 변경: {_maxHealth} → {value}");
+            _maxHealth = value;
+            if (Health > _maxHealth)
+                Health = _maxHealth;
+
+            if (CanvasManager.singleton != null)
+                CanvasManager.singleton.UpdateHealth(Health, _maxHealth);
+        }
+    }
+    public int Health
+    {
+        get => _health;
+        set
+        {
+            _health = Mathf.Clamp(value, 0, MaxHealth);
+            if (CanvasManager.singleton != null)
+                CanvasManager.singleton.UpdateHealth(_health, MaxHealth);
+        }
+    }
+    public int MaxShield
+    {
+        get => _maxShield;
+        set
+        {
+            _maxShield = value;
+            if (_shield > _maxShield)
+                _shield = _maxShield;
+            CanvasManager.singleton?.UpdateShield(_shield, _maxShield);
+        }
+    }
+    public int Shield
+    {
+        get => _shield;
+        set
+        {
+            _shield = Mathf.Clamp(value, 0, _maxShield);
+            CanvasManager.singleton?.UpdateShield(_shield, _maxShield);
+        }
+    }
+    public float CriticalChance
+    {
+        get => criticalChance;
+        set => criticalChance = Mathf.Clamp(value, 0f, 100f);
+    }
+    public float CriticalMultiplier
+    {
+        get => criticalMultiplier;
+        set => criticalMultiplier = value;
+    }
+    public bool RollCritical()
+    {
+        return Random.Range(0f, 100f) <= criticalChance;
+    }
     private void Awake()
     {
         _rigManager = GetComponent<RigManager>();
         _animator = GetComponent<Animator>();
-
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+       
         // 테스트용 초기 탄약
         Initialized(new Dictionary<string, int>
     {
@@ -73,19 +151,18 @@ public class Character : MonoBehaviour
         // 시작 시 1번 무기 장착
         EquipWeapon(0);
     }
-
-    public int Health
+    private void Start()
     {
-        get => _health;
-        set
-        {
-            int oldHealth = _health;
-            _health = Mathf.Clamp(value, 0, MaxHealth);
-            if (CanvasManager.singleton != null)
-                CanvasManager.singleton.UpdateHealth(_health, MaxHealth);
-        }
+        Health = MaxHealth;
+        if (CanvasManager.singleton != null)
+            CanvasManager.singleton.UpdateHealth(Health, MaxHealth);
     }
-
+    public void RefreshStats()
+    {
+        Health = Mathf.Clamp(Health, 0, MaxHealth);
+        if (CanvasManager.singleton != null)
+            CanvasManager.singleton.UpdateHealth(Health, MaxHealth);
+    }
     // ===== 아이템 초기화 =====
     public void Initialized(Dictionary<string, int> items)
     {
@@ -367,25 +444,81 @@ public class Character : MonoBehaviour
     }
 
     // ===== 데미지 처리 =====
-    public void ApplyDamage(Character shooter, Transform hit, float damage)
+    public void ApplyDamage(GameObject attacker, Transform hitTransform, float amount)
     {
-        if (isInvincible) return;
+        lastDamageTime = Time.time;
+        int intAmount = Mathf.RoundToInt(amount);
 
-        Health -= (int)damage;
-
-        if (_health <= 0)
+        if (Shield > 0)
         {
-            GetComponent<RagdollController>()?.ActivateRagdoll();
+            int remain = intAmount - Shield;
+            Shield -= intAmount;
+            if (Shield < 0) Shield = 0;
+            if (remain > 0) Health -= remain;
+        }
+        else
+        {
+            Health -= intAmount;
+        }
 
+        // UI 갱신
+        CanvasManager.singleton?.UpdateHealth(Health, MaxHealth);
+        Debug.Log($"[Character] 데미지 {intAmount} 받음 (공격자:{attacker?.name ?? "알 수 없음"}) 남은 체력:{Health}");
+
+        // 💀 체력이 0 이하일 경우 사망 처리
+        if (Health <= 0)
+        {
+            Die();
+        }
+    }
+    private bool isDead = false;
+
+    private void Die()
+    {
+        if (isDead) return;
+        isDead = true;
+
+        Debug.Log("[Character] 플레이어 사망 처리 시작");
+
+        // 🧊 조작 스크립트 비활성화
+        if (scriptsToDisableOnDeath != null)
+        {
             foreach (var script in scriptsToDisableOnDeath)
             {
                 if (script != null) script.enabled = false;
             }
-
-            Destroy(this);
         }
+
+        // 🎯 무기 숨기기
+        if (_weapon != null)
+        {
+            _weapon.gameObject.SetActive(false);
+        }
+
+        // 💀 레그돌 활성화
+        if (ragdollController != null)
+        {
+            ragdollController.ActivateRagdoll();
+        }
+
+        // 🩸 애니메이션 (Ragdoll 켜면 Animator가 꺼지므로 주의)
+        if (_animator != null)
+        {
+            _animator.SetTrigger("Die");
+        }
+
+      
     }
 
+
+    private void Update()
+    {
+        // 🛡 일정 시간 피해를 받지 않으면 회복 시작
+        if (Time.time - lastDamageTime >= shieldRegenDelay && _shield < _maxShield)
+        {
+            Shield += 1;
+        }
+    }
     // ===== 재장전 시작 =====
     public void Reload()
     {
@@ -557,13 +690,6 @@ public class Character : MonoBehaviour
         Debug.Log($"🟠 {slotIndex + 1}번 무기 {weapon.name}을(를) 몸에서 뱉듯이 버렸습니다. (지속 존재)");
     }
 
-    // ✅ 실드 증가 함수
-    public void AddShield(float amount)
-    {
-        maxShield += amount;
-        currentShield = maxShield;
-        // HUD 업데이트가 있다면 여기서 호출 가능
-    }
     // ✅ 슬로우 오라 기능
     public bool slowAuraActive = false;
     public float slowAuraValue = 0f;

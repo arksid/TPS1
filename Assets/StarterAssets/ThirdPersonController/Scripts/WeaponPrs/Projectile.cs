@@ -40,13 +40,21 @@ public class Projectile : MonoBehaviour, ISlowable
     {
         Initialize();
         _shooter = shooterChar;
-        _damage = damage;
 
+        // 치명타 판정
+        float finalDamage = damage;
+        if (shooterChar != null && shooterChar.RollCritical())
+        {
+            finalDamage *= shooterChar.CriticalMultiplier;
+            Debug.Log("💥 치명타 발동! " + finalDamage);
+        }
+
+        _damage = finalDamage;
         transform.LookAt(target);
         _rigidbody.velocity = transform.forward.normalized * _speed;
-
         Destroy(gameObject, 5f);
     }
+
 
     private void Update()
     {

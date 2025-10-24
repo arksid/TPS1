@@ -1,11 +1,11 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEditor;
 using System.IO;
 
 public class AugmentCSVImporter : EditorWindow
 {
-    private string csvPath = "Assets/augment_list.csv";  // CSV ÆÄÀÏ °æ·Î
-    private string saveFolder = "Assets/Augments";      // ScriptableObject°¡ ÀúÀåµÉ Æú´õ °æ·Î
+    private string csvPath = "Assets/augment_list.csv";  // CSV íŒŒì¼ ê²½ë¡œ
+    private string saveFolder = "Assets/Augments";      // ScriptableObjectê°€ ì €ì¥ë  í´ë” ê²½ë¡œ
 
     [MenuItem("Tools/Augment CSV Importer")]
     public static void ShowWindow()
@@ -15,11 +15,11 @@ public class AugmentCSVImporter : EditorWindow
 
     void OnGUI()
     {
-        GUILayout.Label("CSV·Î Æ¯¼º ÀÚµ¿ »ı¼º", EditorStyles.boldLabel);
-        csvPath = EditorGUILayout.TextField("CSV ÆÄÀÏ °æ·Î", csvPath);
-        saveFolder = EditorGUILayout.TextField("ÀúÀå Æú´õ °æ·Î", saveFolder);
+        GUILayout.Label("CSVë¡œ íŠ¹ì„± ìë™ ìƒì„±", EditorStyles.boldLabel);
+        csvPath = EditorGUILayout.TextField("CSV íŒŒì¼ ê²½ë¡œ", csvPath);
+        saveFolder = EditorGUILayout.TextField("ì €ì¥ í´ë” ê²½ë¡œ", saveFolder);
 
-        if (GUILayout.Button("CSV ºÒ·¯¿Í¼­ »ı¼º"))
+        if (GUILayout.Button("CSV ë¶ˆëŸ¬ì™€ì„œ ìƒì„±"))
         {
             ImportCSV();
         }
@@ -29,11 +29,11 @@ public class AugmentCSVImporter : EditorWindow
     {
         if (!File.Exists(csvPath))
         {
-            Debug.LogError($"? CSV ÆÄÀÏÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù: {csvPath}");
+            Debug.LogError($"âŒ CSV íŒŒì¼ì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤: {csvPath}");
             return;
         }
 
-        // Æú´õ ¾øÀ¸¸é ÀÚµ¿ »ı¼º
+        // í´ë” ìë™ ìƒì„±
         if (!AssetDatabase.IsValidFolder(saveFolder))
         {
             string[] parts = saveFolder.Split('/');
@@ -49,32 +49,52 @@ public class AugmentCSVImporter : EditorWindow
 
         string[] lines = File.ReadAllLines(csvPath);
 
-        // Ã¹ ÁÙÀº Çì´õÀÌ¹Ç·Î 1ºÎÅÍ ½ÃÀÛ
+        // í—¤ë”ëŠ” 0ë²ˆì´ë¯€ë¡œ 1ë¶€í„°
         for (int i = 1; i < lines.Length; i++)
         {
             string[] cols = lines[i].Split(',');
-            if (cols.Length < 5) continue;
+            if (cols.Length < 6)
+            {
+                Debug.LogWarning($"âš ï¸ {i + 1}ë²ˆì§¸ ì¤„ì˜ ë°ì´í„°ê°€ ë¶€ì¡±í•©ë‹ˆë‹¤. (6ê°œ í•„ìš”)");
+                continue;
+            }
 
             string augmentName = cols[0].Trim();
             string description = cols[1].Trim();
             AugmentRarity rarity = (AugmentRarity)System.Enum.Parse(typeof(AugmentRarity), cols[2].Trim());
             AugmentCategory category = (AugmentCategory)System.Enum.Parse(typeof(AugmentCategory), cols[3].Trim());
-            float value = float.Parse(cols[4].Trim());
+
+            // ğŸ†• Type íŒŒì‹±
+            string typeString = cols[4].Trim();
+            if (!System.Enum.TryParse(typeString, out AugmentType parsedType))
+            {
+                Debug.LogError($"âŒ '{typeString}' ì€(ëŠ”) ìœ íš¨í•œ AugmentTypeì´ ì•„ë‹™ë‹ˆë‹¤. ({i + 1}ë²ˆì§¸ ì¤„)");
+                continue;
+            }
+
+            float value;
+            if (!float.TryParse(cols[5].Trim(), out value))
+            {
+                Debug.LogError($"âŒ {i + 1}ë²ˆì§¸ ì¤„ì˜ valueë¥¼ ìˆ«ìë¡œ ë³€í™˜í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
+                continue;
+            }
 
             AugmentData asset = ScriptableObject.CreateInstance<AugmentData>();
             asset.augmentName = augmentName;
             asset.description = description;
             asset.rarity = rarity;
             asset.category = category;
+            asset.type = parsedType;  // âœ… Type ë°˜ì˜
             asset.value = value;
             asset.isStackable = true;
 
             string path = $"{saveFolder}/{augmentName}.asset";
             AssetDatabase.CreateAsset(asset, path);
+            Debug.Log($"âœ… ìƒì„±ë¨: {augmentName} ({parsedType}, {value})");
         }
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log($"? ÃÑ {lines.Length - 1}°³ÀÇ Æ¯¼ºÀÌ CSV·ÎºÎÅÍ ÀÚµ¿ »ı¼ºµÇ¾ú½À´Ï´Ù!");
+        Debug.Log($"ğŸ‰ ì´ {lines.Length - 1}ê°œì˜ íŠ¹ì„±ì´ CSVë¡œë¶€í„° ìë™ ìƒì„±ë˜ì—ˆìŠµë‹ˆë‹¤!");
     }
 }

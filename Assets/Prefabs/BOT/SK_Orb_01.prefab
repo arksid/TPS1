@@ -910,13 +910,15 @@ MonoBehaviour:
   rotationSpeed: 5
   evadeAmplitude: 2
   evadeFrequency: 2
-  bulletPrefab: {fileID: 0}
+  bulletPrefab: {fileID: 2216547676952783978, guid: 37bdb03f8f3906a48ba0d4aaac381d23,
+    type: 3}
   firePoint: {fileID: 9027279508422343673}
   fireRate: 1.5
   maxHealth: 25
-  expReward: 20
+  expReward: 10
   ultimateGaugeReward: 10
-  deathEffect: {fileID: 0}
+  deathEffect: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
+    type: 3}
 --- !u!54 &-4190503972383899938
 Rigidbody:
   m_ObjectHideFlags: 0

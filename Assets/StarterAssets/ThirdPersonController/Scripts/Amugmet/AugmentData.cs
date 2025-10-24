@@ -2,16 +2,19 @@
 
 public enum AugmentRarity
 {
-    Normal,     // 일반
-    Rare,       // 희귀
-    Epic,       // 에픽
-    Legendary   // 전설
+    Common,     // ✅ CSV의 "Common" 값과 일치하도록 추가
+    Normal,     // 기존 값 유지
+    Rare,
+    Epic,
+    Legendary
 }
 
 public enum AugmentCategory
 {
-    Normal,     // 기본 특성 (공격력, 체력 증가 등)
-    Special     // 특수 특성 (슬로우 오라, 자동장전 등)
+    Offense,   // 공격 관련
+    Utility,   // 유틸리티
+    Movement,  // 이동 관련
+    Defense    // 🛡 방어 관련 (CSV 'Defense' 값 대응)
 }
 
 [CreateAssetMenu(fileName = "NewAugment", menuName = "Augment System/Augment")]
@@ -46,5 +49,7 @@ public enum AugmentType
     UltimateChargeBoost,
     RecoilReduction,
     ExtraLoot,
-    MaxHealthUp        // 🆕 체력 증가 추가
+    MaxHealthUp,
+    MaxShieldUp,          // 🛡 실드 최대치 증가
+    CriticalChanceUp      // 💥 치명타 확률 증가
 }

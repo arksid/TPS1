@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
-
-public class EnemyController : MonoBehaviour, ISlowable
+public class EnemyController : MonoBehaviour, ISlowable, IEnemyReward
 {
     [Header("체력 설정")]
     public int maxHealth = 100;
@@ -20,6 +19,11 @@ public class EnemyController : MonoBehaviour, ISlowable
     public float projectileDamage = 10f;
     protected float lastShootTime;
 
+    [Header("보상 설정")]
+    [SerializeField] private int expReward = 20;
+    public int ExpReward => expReward;
+
+
     [Header("AI 관련")]
     public float rotationSpeed = 8f;
     protected NavMeshAgent agent;
@@ -35,7 +39,16 @@ public class EnemyController : MonoBehaviour, ISlowable
     public int flankSearchSteps = 12;
     public float lineOfSightCheckHeight = 1.2f;
     [SerializeField] private LayerMask sightMask;
-
+    protected virtual void Awake()
+    {
+        agent = GetComponent<NavMeshAgent>();
+        animator = GetComponent<Animator>();
+    }
+    public void GiveReward()
+    {
+        if (PlayerLevelSystem.Instance != null)
+            PlayerLevelSystem.Instance.AddExp(expReward);
+    }
     protected virtual void Start()
     {
         currentHealth = maxHealth;
@@ -164,12 +177,12 @@ public class EnemyController : MonoBehaviour, ISlowable
         if (found)
         {
             agent.SetDestination(bestPoint);
-            Debug.Log($"[EnemyController] 우회 경로로 이동: {bestPoint}");
+            //Debug.Log($"[EnemyController] 우회 경로로 이동: {bestPoint}");
         }
         else
         {
             agent.SetDestination(playerTarget.position);
-            Debug.Log("[EnemyController] 우회 경로 없음 → 플레이어 직진");
+           // Debug.Log("[EnemyController] 우회 경로 없음 → 플레이어 직진");
         }
     }
 
@@ -182,7 +195,7 @@ public class EnemyController : MonoBehaviour, ISlowable
     // 🧱 총알이 벽에 막혔을 때 우회 경로 탐색
     public void OnBulletBlocked(Vector3 hitPos)
     {
-        Debug.Log($"[EnemyController] 총알이 {hitPos} 에서 장애물에 막힘 → 우회 경로 탐색 시작");
+        //Debug.Log($"[EnemyController] 총알이 {hitPos} 에서 장애물에 막힘 → 우회 경로 탐색 시작");
 
         if (playerTarget == null || agent == null) return;
 
@@ -224,13 +237,13 @@ public class EnemyController : MonoBehaviour, ISlowable
 
         if (found)
         {
-            Debug.Log($"[EnemyController] 우회 경로 발견 → {bestPoint}");
+            //.Log($"[EnemyController] 우회 경로 발견 → {bestPoint}");
             agent.isStopped = false;
             agent.SetDestination(bestPoint);
         }
         else
         {
-            Debug.Log("[EnemyController] 우회 경로를 찾지 못함. 플레이어 위치로 이동");
+            //Debug.Log("[EnemyController] 우회 경로를 찾지 못함. 플레이어 위치로 이동");
             agent.isStopped = false;
             agent.SetDestination(playerTarget.position);
         }
@@ -250,7 +263,7 @@ public class EnemyController : MonoBehaviour, ISlowable
 
         if (Physics.Raycast(start, dir, out RaycastHit hit, dist, sightMask))
         {
-            Debug.Log($"[EnemyController] 시야 감지 대상: {hit.collider.name}");
+            //Debug.Log($"[EnemyController] 시야 감지 대상: {hit.collider.name}");
             return hit.collider.CompareTag("Player");
         }
         else
@@ -337,16 +350,19 @@ public class EnemyController : MonoBehaviour, ISlowable
             Destroy(explosion, explosionDestroyTime);
         }
 
-        PlayerLevelSystem.Instance.AddExp(20);
+        // ✅ 경험치 지급
+        GiveReward();
 
-        // 💥 공통 드랍 시스템 호출
+        // 💥 아이템 드랍 처리
         var dropSystem = GetComponent<EnemyDropSystem>();
-        if (dropSystem != null) dropSystem.TryDropItemByWeight();
+        if (dropSystem != null)
+            dropSystem.TryDropItemByWeight();
 
         Destroy(gameObject);
     }
 
-    private void OnEnable()
+
+private void OnEnable()
     {
         // 🧭 적이 활성화될 때 레이더에 등록
         if (RadarManager.Instance != null)

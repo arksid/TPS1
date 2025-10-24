@@ -17,6 +17,6 @@ MonoBehaviour:
   icon: {fileID: 0}
   rarity: 2
   category: 0
-  type: 0
-  value: 100
+  type: 10
+  value: 50
   isStackable: 1

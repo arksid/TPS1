@@ -1,9 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 
-public class FlyingEnemyController : MonoBehaviour
+public class FlyingEnemyController : MonoBehaviour, IEnemyReward
 {
     [Header("Target & Movement")]
     public Transform player;
@@ -24,15 +23,26 @@ public class FlyingEnemyController : MonoBehaviour
     private float currentHealth;
     private bool isDead = false;
 
-    [Header("Experience / Ultimate")]
-    public int expReward = 10;
-    public float ultimateGaugeReward = 10f;
+    [Header("보상 설정")]
+    [SerializeField] private int expReward = 10;
+    [SerializeField] private float ultimateGaugeReward = 10f;
+    public int ExpReward => expReward;
 
     [Header("Effect")]
     public GameObject deathEffect;
 
     private Rigidbody rb;
     private Vector3 initialEvadeOffset;
+
+    public void GiveReward()
+    {
+        if (PlayerLevelSystem.Instance != null)
+            PlayerLevelSystem.Instance.AddExp(expReward);
+
+        var ult = FindObjectOfType<UltimateSkill>();
+        if (ult != null)
+            ult.AddGauge(ultimateGaugeReward);
+    }
 
     private void Start()
     {
@@ -107,24 +117,18 @@ public class FlyingEnemyController : MonoBehaviour
         if (isDead) return;
         isDead = true;
 
-        // 이펙트
         if (deathEffect != null)
         {
             GameObject fx = Instantiate(deathEffect, transform.position, Quaternion.identity);
             Destroy(fx, 2f);
         }
 
-        // 경험치 및 궁극기 게이지
-        if (PlayerLevelSystem.Instance != null)
-            PlayerLevelSystem.Instance.AddExp(expReward);
+        // ✅ 경험치 지급
+        GiveReward();
 
-        var ult = FindObjectOfType<UltimateSkill>();
-        if (ult != null)
-            ult.AddGauge(ultimateGaugeReward);
-
-        // ✅ 공통 드랍 시스템 호출
         var dropSystem = GetComponent<EnemyDropSystem>();
-        if (dropSystem != null) dropSystem.TryDropItemByWeight();
+        if (dropSystem != null)
+            dropSystem.TryDropItemByWeight();
 
         Destroy(gameObject, 0.1f);
     }
