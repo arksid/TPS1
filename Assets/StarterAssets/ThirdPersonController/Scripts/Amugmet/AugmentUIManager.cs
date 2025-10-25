@@ -37,17 +37,17 @@ public class AugmentUIManager : MonoBehaviour
     private AugmentRarity GetRarityByChance()
     {
         float roll = Random.value;
-        if (roll < 0.6f) return AugmentRarity.Normal;       // 60%
-        else if (roll < 0.85f) return AugmentRarity.Rare;   // 25%
-        else if (roll < 0.95f) return AugmentRarity.Epic;   // 10%
-        else return AugmentRarity.Legendary;               // 5%
+        if (roll < 0.6f) return AugmentRarity.Normal;
+        else if (roll < 0.85f) return AugmentRarity.Rare;
+        else if (roll < 0.95f) return AugmentRarity.Epic;
+        else return AugmentRarity.Legendary;
     }
 
     private AugmentCategory GetCategoryByChance()
     {
         float roll = Random.value;
-        if (roll < 0.8f) return AugmentCategory.Normal;   // 🟢 80% 확률로 일반 특성
-        else return AugmentCategory.Special;             // 🟡 20% 확률로 특수 특성
+        if (roll < 0.8f) return AugmentCategory.Normal;
+        else return AugmentCategory.Special;
     }
 
     private AugmentData GetRandomAugment()
@@ -55,16 +55,13 @@ public class AugmentUIManager : MonoBehaviour
         AugmentRarity targetRarity = GetRarityByChance();
         AugmentCategory targetCategory = GetCategoryByChance();
 
-        // 필터링: 희귀도와 카테고리가 일치하는 특성만 뽑기
         List<AugmentData> pool = allAugments.FindAll(
             a => a.rarity == targetRarity && a.category == targetCategory
         );
 
-        // 만약 해당 조건에 맞는 특성이 없다면 희귀도만 기준으로 다시 뽑기
         if (pool.Count == 0)
             pool = allAugments.FindAll(a => a.rarity == targetRarity);
 
-        // 그래도 없다면 전체에서 뽑기
         if (pool.Count == 0)
             pool = allAugments;
 
@@ -118,8 +115,26 @@ public class AugmentUIManager : MonoBehaviour
         AugmentSystem.Instance.ApplyAugment(data);
         Weapon.IsPaused = false;
         Time.timeScale = 1f;
-
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    // ✅ 추가됨 : 교체 메뉴 열기용
+    public void OpenReplaceMenu(AugmentData newAug, IReadOnlyList<AugmentData> equippedList)
+    {
+        Debug.Log($"[AugmentUIManager] 교체 메뉴 열기: {newAug.augmentName}");
+        // 나중에 실제 UI를 만들어서 선택하게 할 수 있음
+    }
+
+    // ✅ 추가됨 : 선택 이벤트 처리용
+    public void OnPickAugment(AugmentData data)
+    {
+        augmentPanel.SetActive(false);
+        AugmentSystem.Instance.ApplyAugment(data);
+        Weapon.IsPaused = false;
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        Debug.Log($"[AugmentUIManager] {data.augmentName} 선택됨");
     }
 }

@@ -1,0 +1,11 @@
+Name,Description,IconPath,Type,Value,PenaltyType,PenaltyValue
+광전사,공격력이 25% 증가한다,Assets/Icons/berserk.png,DamageMultiplier,0.25,MaxHealthUp,20
+유리대포,치명타 확률이 20% 증가한다,Assets/Icons/glass.png,CriticalChanceUp,0.2,MaxShieldUp,30
+탱커 모드,실드가 60 증가한다,Assets/Icons/tank.png,MaxShieldUp,60,MoveSpeedMultiplier,0.15
+쾌속 이동,이동속도가 20% 증가한다,,MoveSpeedMultiplier,0.2,,
+불굴의 의지,체력이 50 증가한다,,MaxHealthUp,50,,
+탄창 업그레이드,발사 속도가 15% 증가한다,,FireRateMultiplier,0.15,,
+피의 계약,공격력이 40% 증가하지만 체력이 감소한다,,DamageMultiplier,0.4,MaxHealthUp,50
+치유의 손길,적을 처치할 때마다 20만큼 체력을 회복한다,,HealOnKill,20,,
+전투광,치명타 확률이 15% 증가한다,,CriticalChanceUp,0.15,FireRateMultiplier,0.1
+궁극 충전 가속,공격할 때마다 궁극기 게이지가 빠르게 차오른다,,UltimateChargeOnHit,5,,

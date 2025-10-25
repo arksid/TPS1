@@ -191,21 +191,26 @@ public class EnemyController : MonoBehaviour, ISlowable, IEnemyReward
     {
         playerTarget = player;
     }
-
-    // 🧱 총알이 벽에 막혔을 때 우회 경로 탐색
     public void OnBulletBlocked(Vector3 hitPos)
     {
-        //Debug.Log($"[EnemyController] 총알이 {hitPos} 에서 장애물에 막힘 → 우회 경로 탐색 시작");
-
         if (playerTarget == null || agent == null) return;
 
+        // 플레이어가 보이면 바로 플레이어 위치로 이동 시도
         if (CanSeePlayer())
         {
-            agent.isStopped = false;
-            agent.SetDestination(playerTarget.position);
+            if (agent != null && agent.isOnNavMesh && agent.enabled)
+            {
+                agent.isStopped = false;
+                agent.SetDestination(playerTarget.position); // targetPosition → playerTarget.position
+            }
+            else
+            {
+                Debug.LogWarning("[EnemyController] NavMeshAgent가 NavMesh에 없어서 이동 명령을 무시했습니다.");
+            }
             return;
         }
 
+        // 플레이어가 안 보일 때는 우회 경로 탐색
         Vector3 dirToPlayer = (playerTarget.position - hitPos).normalized;
         Vector3 bestPoint = Vector3.zero;
         float bestDist = Mathf.Infinity;
@@ -237,17 +242,27 @@ public class EnemyController : MonoBehaviour, ISlowable, IEnemyReward
 
         if (found)
         {
-            //.Log($"[EnemyController] 우회 경로 발견 → {bestPoint}");
-            agent.isStopped = false;
-            agent.SetDestination(bestPoint);
+            if (agent != null && agent.isOnNavMesh && agent.enabled)
+            {
+                agent.isStopped = false;
+                agent.SetDestination(bestPoint);
+            }
         }
         else
         {
-            //Debug.Log("[EnemyController] 우회 경로를 찾지 못함. 플레이어 위치로 이동");
-            agent.isStopped = false;
-            agent.SetDestination(playerTarget.position);
+            if (agent != null && agent.isOnNavMesh && agent.enabled)
+            {
+                agent.isStopped = false;
+                agent.SetDestination(playerTarget.position);
+            }
+        }
+        if (!agent.isOnNavMesh)
+        {
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 5f, NavMesh.AllAreas))
+                agent.Warp(hit.position);
         }
     }
+
 
     // 👁️ 시야 체크 함수
     private bool CanSeePlayer()

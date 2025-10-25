@@ -38,14 +38,13 @@ public class AugmentSystem : MonoBehaviour
         Debug.Log($"data.value = {data.value}");
         Debug.Log($"Before MaxHealth = {player.MaxHealth}");
         Debug.Log($"Before Health = {player.Health}");
-        
+
         switch (data.type)
         {
             case AugmentType.MaxShieldUp:
                 player.MaxShield += (int)data.value;
                 player.Shield = player.MaxShield;
                 break;
-
             case AugmentType.CriticalChanceUp:
                 player.CriticalChance += data.value;
                 break;
@@ -59,25 +58,19 @@ public class AugmentSystem : MonoBehaviour
                 player.Health = player.MaxHealth;
                 player.RefreshStats();
                 break;
-
             default:
                 Debug.LogWarning($"[AugmentSystem] ▶ {data.type} 타입은 현재 처리 대상이 아님");
                 break;
         }
 
-        Debug.Log($"After MaxHealth = {player.MaxHealth}");
-        Debug.Log($"After Health = {player.Health}");
-
         if (CanvasManager.singleton == null)
         {
             CanvasManager.singleton = FindObjectOfType<CanvasManager>();
-            Debug.LogWarning("[AugmentSystem] CanvasManager.singleton이 null이라 재할당함");
         }
 
         if (CanvasManager.singleton != null)
         {
             CanvasManager.singleton.UpdateHealth(player.Health, player.MaxHealth);
-            Debug.Log("[AugmentSystem] 체력 UI 갱신 호출 완료");
         }
         else
         {
@@ -87,4 +80,27 @@ public class AugmentSystem : MonoBehaviour
         Debug.Log("===== [AugmentSystem] 특성 적용 종료 =====");
     }
 
+    // ✅ 추가됨 : 특성 제거 기능
+    public void RemoveAugment(AugmentData data)
+    {
+        Debug.Log($"[AugmentSystem] 특성 제거: {data.augmentName}");
+
+        switch (data.type)
+        {
+            case AugmentType.MaxHealthUp:
+                player.MaxHealth -= (int)data.value;
+                player.Health = Mathf.Min(player.Health, player.MaxHealth);
+                player.RefreshStats();
+                break;
+
+            case AugmentType.MaxShieldUp:
+                player.MaxShield -= (int)data.value;
+                player.Shield = Mathf.Min(player.Shield, player.MaxShield);
+                break;
+
+            case AugmentType.CriticalChanceUp:
+                player.CriticalChance -= data.value;
+                break;
+        }
+    }
 }

@@ -157,6 +157,18 @@ public class Character : MonoBehaviour
         if (CanvasManager.singleton != null)
             CanvasManager.singleton.UpdateHealth(Health, MaxHealth);
     }
+    public void Heal(float amount)
+    {
+        int healAmount = Mathf.RoundToInt(amount);
+        Health = Mathf.Min(Health + healAmount, MaxHealth);
+        Debug.Log($"[Character] 체력 {healAmount} 회복 → 현재 체력 {Health}");
+    }
+    public void RestoreShield(int amount)
+    {
+        Shield = Mathf.Min(Shield + amount, MaxShield);
+        Debug.Log($"[Character] 실드 {amount} 회복 → 현재 실드 {Shield}");
+    }
+
     public void RefreshStats()
     {
         Health = Mathf.Clamp(Health, 0, MaxHealth);
