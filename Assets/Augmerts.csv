@@ -1,11 +1,17 @@
-Name,Description,IconPath,Type,Value,PenaltyType,PenaltyValue
-광전사,공격력이 25% 증가한다,Assets/Icons/berserk.png,DamageMultiplier,0.25,MaxHealthUp,20
-유리대포,치명타 확률이 20% 증가한다,Assets/Icons/glass.png,CriticalChanceUp,0.2,MaxShieldUp,30
-탱커 모드,실드가 60 증가한다,Assets/Icons/tank.png,MaxShieldUp,60,MoveSpeedMultiplier,0.15
-쾌속 이동,이동속도가 20% 증가한다,,MoveSpeedMultiplier,0.2,,
-불굴의 의지,체력이 50 증가한다,,MaxHealthUp,50,,
-탄창 업그레이드,발사 속도가 15% 증가한다,,FireRateMultiplier,0.15,,
-피의 계약,공격력이 40% 증가하지만 체력이 감소한다,,DamageMultiplier,0.4,MaxHealthUp,50
-치유의 손길,적을 처치할 때마다 20만큼 체력을 회복한다,,HealOnKill,20,,
-전투광,치명타 확률이 15% 증가한다,,CriticalChanceUp,0.15,FireRateMultiplier,0.1
-궁극 충전 가속,공격할 때마다 궁극기 게이지가 빠르게 차오른다,,UltimateChargeOnHit,5,,
+Name,Description,Rarity,Category,Type,Value,IsStackable
+"Berserker","공격력이 20% 증가",Rare,Offense,Berserker,0.2,false
+"Slayer","치명타 확률이 15% 증가",Rare,Offense,Slayer,0.15,false
+"Overdrive","발사 속도가 20% 증가",Rare,Offense,Overdrive,0.2,false
+"IronSkin","실드 최대치가 50 증가",Common,Defense,IronSkin,50,false
+"Survivor","적 처치 시 체력 10 회복",Common,Defense,Survivor,10,true
+"Retaliation","피격 시 실드 10 회복",Rare,Defense,Retaliation,10,false
+"Predator","체력 50% 이하일 때 공격력 +25%",Epic,Offense,Predator,0.25,false
+"TriggerRush","적 처치 시 3초간 이속 +30%",Epic,Movement,TriggerRush,0.3,false
+"AdrenalSurge","연속 명중 시 공속 증가(스택)",Epic,Offense,AdrenalSurge,0.15,true
+"ChainReaction","처치 시 폭발 효과 발생",Legendary,Offense,ChainReaction,1,false
+"Vengeance","피격 후 5초간 공격력 +20%",Epic,Offense,Vengeance,0.2,false
+"BulletFever","연속 사격 시 크리티컬 확률 증가",Legendary,Offense,BulletFever,0.05,true
+"ColdRage","체력이 낮을수록 치명타 확률 증가",Legendary,Offense,ColdRage,0.3,false
+"SecondWind","체력 20% 이하일 때 실드 50 회복",Rare,Defense,SecondWind,50,false
+"UltCharger","명중 시 궁극기 게이지 +1% 충전",Legendary,Utility,UltCharger,1,true
+

@@ -54,5 +54,20 @@ public enum AugmentType
     ExtraLoot,
     MaxHealthUp,
     MaxShieldUp,          // 🛡 실드 최대치 증가
-    CriticalChanceUp      // 💥 치명타 확률 증가
+    CriticalChanceUp,   // 💥 치명타 확률 증가
+     Berserker,
+    Slayer,
+    Overdrive,
+    IronSkin,
+    Survivor,
+    Retaliation,
+    Predator,
+    TriggerRush,
+    AdrenalSurge,
+    ChainReaction,
+    Vengeance,
+    BulletFever,
+    ColdRage,
+    SecondWind,
+    UltCharger
 }

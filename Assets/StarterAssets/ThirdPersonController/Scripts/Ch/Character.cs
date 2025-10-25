@@ -54,6 +54,19 @@ public class Character : MonoBehaviour
     [SerializeField] private float shieldRegenRate = 0.5f; // 초당 회복 속도
     private float lastDamageTime;
 
+    // 버프 효과 플래그
+    [HideInInspector] public bool enableRetaliation;
+    [HideInInspector] public bool enablePredator;
+    [HideInInspector] public bool enableTriggerRush;
+    [HideInInspector] public bool enableAdrenalSurge;
+    [HideInInspector] public bool enableChainReaction;
+    [HideInInspector] public bool enableVengeance;
+    [HideInInspector] public bool enableBulletFever;
+    [HideInInspector] public bool enableColdRage;
+    [HideInInspector] public bool enableSecondWind;
+    [HideInInspector] public bool enableUltCharger;
+
+
     // Animator hash 캐싱
     private static readonly int EquipTrigger = Animator.StringToHash("Equip");
     private static readonly int HolsterTrigger = Animator.StringToHash("Holster");

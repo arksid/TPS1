@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad783205f14b50641b8ef3479b1172bd, type: 3}
+  m_Name: BulletFever
+  m_EditorClassIdentifier: 
+  augmentName: BulletFever
+  description: "\uC5F0\uC18D \uC0AC\uACA9 \uC2DC \uD06C\uB9AC\uD2F0\uCEEC \uC0C1\uC2B9"
+  icon: {fileID: 0}
+  rarity: 4
+  category: 2
+  type: 24
+  value: 0.05
+  isStackable: 1

@@ -1563,6 +1563,10 @@ MonoBehaviour:
   healthText: {fileID: 1561712390}
   shieldSlider: {fileID: 2129910658}
   shieldText: {fileID: 453072504}
+  expSlider: {fileID: 0}
+  expText: {fileID: 0}
+  expRemainText: {fileID: 0}
+  expLerpSpeed: 5
   weaponNameText: {fileID: 2844387472450857885}
   ammoText: {fileID: 550827792596017486}
   reloadRadial: {fileID: 3493987478528797993}
@@ -3987,14 +3991,21 @@ MonoBehaviour:
   augmentOptionPrefab: {fileID: 5692234731888016939, guid: 64b79ce4650400d46a9defc294c2d016,
     type: 3}
   allAugments:
-  - {fileID: 11400000, guid: 298da52746ab99343a7ff8cb2447a3ef, type: 2}
-  - {fileID: 11400000, guid: 915b0a1b0adaa7840b4b75025c326501, type: 2}
-  - {fileID: 11400000, guid: 4a1fd3d8959f99f42899401b24d8395e, type: 2}
-  - {fileID: 11400000, guid: 8b68022d54f8d9749914138ba3e83e6c, type: 2}
-  - {fileID: 11400000, guid: e1d75fdee013023439706376f57a5f81, type: 2}
-  - {fileID: 11400000, guid: 8c82591c0d16bca4db18ccb9dd603547, type: 2}
-  - {fileID: 11400000, guid: 52deefe4e6c0f654091d4a73dd27a871, type: 2}
-  - {fileID: 11400000, guid: 667e62b24bba45d45b4b03ad6585e70c, type: 2}
+  - {fileID: 11400000, guid: 7e5f70d80fe994142b62f865ad406ac7, type: 2}
+  - {fileID: 11400000, guid: 7ec4c667c13c86845a9b06797f760440, type: 2}
+  - {fileID: 11400000, guid: 86f92c70de5b01b4fa164c8eeaf8aafc, type: 2}
+  - {fileID: 11400000, guid: 095fd1a527720b24c927e5e7fe789137, type: 2}
+  - {fileID: 11400000, guid: fe4097bfebeeca74b9158d1bf5191416, type: 2}
+  - {fileID: 11400000, guid: 4b19e21002754f3428236d6dd5eb9cf9, type: 2}
+  - {fileID: 11400000, guid: 532af926809f5e54b94092f98d4f4c67, type: 2}
+  - {fileID: 11400000, guid: bac79f88406b1f349807f56e4ada12f9, type: 2}
+  - {fileID: 11400000, guid: 90b6c7f1fdbb23c48abd361e52f7b699, type: 2}
+  - {fileID: 11400000, guid: 6700bf96d66815947813083efc8806f4, type: 2}
+  - {fileID: 11400000, guid: 2cb9405ec2d5390459ff6ffc6c6f65c2, type: 2}
+  - {fileID: 11400000, guid: 868ddd0d1441f5743b1176d2b2400959, type: 2}
+  - {fileID: 11400000, guid: 4c3771cac42d2af4290ab43e7796d7f2, type: 2}
+  - {fileID: 11400000, guid: 0be4c600e4170f04f9396f8cfb8be5e9, type: 2}
+  - {fileID: 11400000, guid: ab099ea3eaef33340930cded7041f8ff, type: 2}
 --- !u!114 &1156359950
 MonoBehaviour:
   m_ObjectHideFlags: 0

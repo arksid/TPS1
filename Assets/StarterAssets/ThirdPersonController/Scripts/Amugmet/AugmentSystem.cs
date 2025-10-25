@@ -2,105 +2,147 @@
 
 public class AugmentSystem : MonoBehaviour
 {
-    public static AugmentSystem Instance { get; private set; }
-
-    private Character player;
+    public static AugmentSystem Instance;
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
         Instance = this;
     }
 
-    private void Start()
+    public void ApplyAugment(AugmentData augment)
     {
-        if (player == null)
+        switch (augment.type)
         {
-            player = Character.Instance;
-            Debug.Log($"[AugmentSystem] Player 초기화: {player}");
+            case AugmentType.Berserker:
+                StatModifierManager.Instance.AddDamageMultiplier(0.2f);
+                break;
+
+            case AugmentType.Slayer:
+                StatModifierManager.Instance.AddCriticalChance(15f);
+                break;
+
+            case AugmentType.Overdrive:
+                StatModifierManager.Instance.AddFireRateMultiplier(0.2f);
+                break;
+
+            case AugmentType.IronSkin:
+                StatModifierManager.Instance.AddMaxShield(50);
+                break;
+
+            case AugmentType.Survivor:
+                StatModifierManager.Instance.AddOnKillHeal(10);
+                break;
+
+            case AugmentType.Retaliation:
+                // Character에서 피격 시 RestoreShield(10) 호출하도록 이벤트 연결 필요
+                Character.Instance.enableRetaliation = true;
+                break;
+
+            case AugmentType.Predator:
+                Character.Instance.enablePredator = true;
+                break;
+
+            case AugmentType.TriggerRush:
+                Character.Instance.enableTriggerRush = true;
+                break;
+
+            case AugmentType.AdrenalSurge:
+                Character.Instance.enableAdrenalSurge = true;
+                break;
+
+            case AugmentType.ChainReaction:
+                Character.Instance.enableChainReaction = true;
+                break;
+
+            case AugmentType.Vengeance:
+                Character.Instance.enableVengeance = true;
+                break;
+
+            case AugmentType.BulletFever:
+                Character.Instance.enableBulletFever = true;
+                break;
+
+            case AugmentType.ColdRage:
+                Character.Instance.enableColdRage = true;
+                break;
+
+            case AugmentType.SecondWind:
+                Character.Instance.enableSecondWind = true;
+                break;
+
+            case AugmentType.UltCharger:
+                Character.Instance.enableUltCharger = true;
+                break;
         }
+
+        Debug.Log($"[AugmentSystem] {augment.name} 적용 완료");
+    }
+    public void RemoveAugment(AugmentData augment)
+    {
+        switch (augment.type)
+        {
+            case AugmentType.Berserker:
+                StatModifierManager.Instance.AddDamageMultiplier(-0.2f);
+                break;
+
+            case AugmentType.Slayer:
+                StatModifierManager.Instance.AddCriticalChance(-15f);
+                break;
+
+            case AugmentType.Overdrive:
+                StatModifierManager.Instance.AddFireRateMultiplier(-0.2f);
+                break;
+
+            case AugmentType.IronSkin:
+                StatModifierManager.Instance.AddMaxShield(-50);
+                break;
+
+            case AugmentType.Survivor:
+                StatModifierManager.Instance.AddOnKillHeal(-10);
+                break;
+
+            case AugmentType.Retaliation:
+                Character.Instance.enableRetaliation = false;
+                break;
+
+            case AugmentType.Predator:
+                Character.Instance.enablePredator = false;
+                break;
+
+            case AugmentType.TriggerRush:
+                Character.Instance.enableTriggerRush = false;
+                break;
+
+            case AugmentType.AdrenalSurge:
+                Character.Instance.enableAdrenalSurge = false;
+                break;
+
+            case AugmentType.ChainReaction:
+                Character.Instance.enableChainReaction = false;
+                break;
+
+            case AugmentType.Vengeance:
+                Character.Instance.enableVengeance = false;
+                break;
+
+            case AugmentType.BulletFever:
+                Character.Instance.enableBulletFever = false;
+                break;
+
+            case AugmentType.ColdRage:
+                Character.Instance.enableColdRage = false;
+                break;
+
+            case AugmentType.SecondWind:
+                Character.Instance.enableSecondWind = false;
+                break;
+
+            case AugmentType.UltCharger:
+                Character.Instance.enableUltCharger = false;
+                break;
+        }
+
+        Debug.Log($"[AugmentSystem] {augment.name} 제거 완료");
     }
 
-    public void ApplyAugment(AugmentData data)
-    {
-        if (player == null)
-        {
-            player = Character.Instance;
-            Debug.LogWarning("[AugmentSystem] Player가 null이라 다시 할당했습니다.");
-        }
-
-        Debug.Log("===== [AugmentSystem] 특성 적용 시작 =====");
-        Debug.Log($"data.type  = {data.type}");
-        Debug.Log($"data.value = {data.value}");
-        Debug.Log($"Before MaxHealth = {player.MaxHealth}");
-        Debug.Log($"Before Health = {player.Health}");
-
-        switch (data.type)
-        {
-            case AugmentType.MaxShieldUp:
-                player.MaxShield += (int)data.value;
-                player.Shield = player.MaxShield;
-                break;
-            case AugmentType.CriticalChanceUp:
-                player.CriticalChance += data.value;
-                break;
-        }
-
-        switch (data.type)
-        {
-            case AugmentType.MaxHealthUp:
-                Debug.Log("[AugmentSystem] ▶ MaxHealthUp 적용 중…");
-                player.MaxHealth += (int)data.value;
-                player.Health = player.MaxHealth;
-                player.RefreshStats();
-                break;
-            default:
-                Debug.LogWarning($"[AugmentSystem] ▶ {data.type} 타입은 현재 처리 대상이 아님");
-                break;
-        }
-
-        if (CanvasManager.singleton == null)
-        {
-            CanvasManager.singleton = FindObjectOfType<CanvasManager>();
-        }
-
-        if (CanvasManager.singleton != null)
-        {
-            CanvasManager.singleton.UpdateHealth(player.Health, player.MaxHealth);
-        }
-        else
-        {
-            Debug.LogError("[AugmentSystem] CanvasManager를 찾을 수 없음!");
-        }
-
-        Debug.Log("===== [AugmentSystem] 특성 적용 종료 =====");
-    }
-
-    // ✅ 추가됨 : 특성 제거 기능
-    public void RemoveAugment(AugmentData data)
-    {
-        Debug.Log($"[AugmentSystem] 특성 제거: {data.augmentName}");
-
-        switch (data.type)
-        {
-            case AugmentType.MaxHealthUp:
-                player.MaxHealth -= (int)data.value;
-                player.Health = Mathf.Min(player.Health, player.MaxHealth);
-                player.RefreshStats();
-                break;
-
-            case AugmentType.MaxShieldUp:
-                player.MaxShield -= (int)data.value;
-                player.Shield = Mathf.Min(player.Shield, player.MaxShield);
-                break;
-
-            case AugmentType.CriticalChanceUp:
-                player.CriticalChance -= data.value;
-                break;
-        }
-    }
 }
