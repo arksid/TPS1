@@ -1,0 +1,16 @@
+Name,Description,Rarity,Category,Type,Value,IsStackable
+광전사,기본 피해가 20% 증가한다,Epic,Offense,DamageBoost,0.20,false
+오버드라이브,공격 속도가 20% 증가한다,Epic,Offense,AttackSpeedBoost,0.20,false
+도살자,치명타 확률이 10%p 증가한다,Rare,Offense,CriticalChanceUp,10,false
+아이언스킨,실드 최대치가 50 증가한다,Rare,Defense,MaxShieldUp,50,false
+생존본능,적 처치 시 10 회복한다,Rare,Defense,HealOnKill,10,false
+스프린터,이동 속도가 10% 증가한다,Common,Movement,MoveSpeedBoost,0.10,false
+리코일 테이머,반동이 20% 감소한다,Rare,Utility,RecoilTamer,0.20,false
+확장탄창,장탄수가 10발 증가한다,Epic,Utility,ExtendedMag,10,false
+스텝 앤 건,이동 중 사격 시 추가로 반동이 20% 줄어든다,Rare,Utility,StepAndGun,0.20,false
+페니트레이터,총알이 적을 2명 더 관통한다,Epic,Offense,Penetrator,2,false
+퀵 리로드,적 처치 후 5초간 다음 장전이 매우 빨라진다,Rare,Utility,QuickReload,1,false
+기어 올려!,장전 직후 3초간 피해가 25% 증가한다,Epic,Offense,GearUp,0.25,false
+찢어발기기,같은 적을 1초 내 3회 맞히면 5초간 그 적에게 추가 피해 20%,Epic,Offense,Rend,0.20,false
+과열탄,연속 명중 시 2초간 피해가 25% 증가한다,Epic,Offense,Overheat,0.25,false
+울트 차저,적 명중 시 궁극기 충전량이 증가한다,Rare,Utility,UltimateChargeBoost,0.10,false

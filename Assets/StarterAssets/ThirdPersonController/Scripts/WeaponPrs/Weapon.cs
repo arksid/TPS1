@@ -350,9 +350,22 @@ public class Weapon : Item
     // ✅ 반동 감소용 함수
     public void ApplyRecoilMultiplier(float multiplier)
     {
-        float recoilMul = (StatModifierManager.Instance != null) ? StatModifierManager.Instance.RecoilMultiplier : 1f;
-        recoilX *= recoilMul;
-        recoilY *= recoilMul;
+
+        float recoilMul = 1f;
+        if (StatModifierManager.Instance != null)
+        {
+            recoilMul = StatModifierManager.Instance.RecoilMultiplier; // 기존 전역 반동
+            if (StatModifierManager.Instance.StepAndGunEnabled)
+            {
+                // 캐릭터가 움직이는지 체크 (컨트롤러/속도 사용)
+                bool moving = Character.Instance != null && Character.Instance.CurrentSpeed > StatModifierManager.Instance.StepAndGunMoveThreshold;
+                if (moving)
+                {
+                    float reduce = 1f - StatModifierManager.Instance.StepAndGunRecoilReduce; // 0.8 = 20% 감소
+                    recoilMul *= Mathf.Clamp(reduce, 0.2f, 1f);
+                }
+            }
+        }
     }
     public void HideMagazineMesh() { if (magazineMesh != null) magazineMesh.SetActive(false); }
     public void ShowMagazineMesh() { if (magazineMesh != null) magazineMesh.SetActive(true); }

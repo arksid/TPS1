@@ -2,178 +2,248 @@
 
 public class AugmentSystem : MonoBehaviour
 {
-    public static AugmentSystem Instance;
+    public static AugmentSystem Instance { get; private set; }
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Instance = this;
+        // 씬 전환 유지가 필요하면 주석 해제:
+        // DontDestroyOnLoad(gameObject);
     }
 
     public void ApplyAugment(AugmentData augment)
     {
+        if (augment == null) return;
+
+        var SM = StatModifierManager.Instance;
+        var CH = Character.Instance;
+
         switch (augment.type)
         {
-            // ===== 즉시형(StatModifierManager 직접 가감) =====
+            // ===== 즉시형(배율/가산) =====
+            case AugmentType.DamageBoost:
             case AugmentType.Berserker:
-                StatModifierManager.Instance.AddDamageMultiplier(augment.value); // 예: 0.2 → +20%
+                SM?.AddDamageMultiplier(augment.value);             // ex) 0.2 → +20%
                 break;
 
-            case AugmentType.Slayer:
-                StatModifierManager.Instance.AddCriticalChance(augment.value);   // 예: 15 → +15%p
-                break;
-
+            case AugmentType.AttackSpeedBoost:
             case AugmentType.Overdrive:
-                StatModifierManager.Instance.AddFireRateMultiplier(augment.value); // 예: 0.2 → +20%
+                SM?.AddFireRateMultiplier(augment.value);
                 break;
 
+            case AugmentType.CriticalChanceUp:
+            case AugmentType.Slayer:
+                SM?.AddCriticalChance(augment.value);               // %p
+                break;
+
+            case AugmentType.MaxShieldUp:
             case AugmentType.IronSkin:
-                StatModifierManager.Instance.AddMaxShield(Mathf.RoundToInt(augment.value)); // 예: 50
+                SM?.AddMaxShield(Mathf.RoundToInt(augment.value));  // ex) 50
                 break;
 
+            case AugmentType.HealOnKill:
             case AugmentType.Survivor:
-                StatModifierManager.Instance.AddOnKillHeal(Mathf.RoundToInt(augment.value)); // 예: 10
+                SM?.AddOnKillHeal(Mathf.RoundToInt(augment.value)); // ex) 10
                 break;
 
-            // ===== 조건부(값도 함께 세팅) =====
-            case AugmentType.Retaliation:
-                Character.Instance.enableRetaliation = true;
-                // 필요 시 Retaliation 세부값도 만들었다면 여기서 세팅
+            case AugmentType.MoveSpeedBoost:
+                SM?.AddMoveSpeedMultiplier(augment.value);
                 break;
 
-            case AugmentType.Predator:
-                Character.Instance.enablePredator = true;
-                Character.Instance.predatorValue = augment.value;   // HP 50%↓ 때 데미지 +v
-                break;
-
-            case AugmentType.TriggerRush:
-                Character.Instance.enableTriggerRush = true;
-                Character.Instance.triggerRushValue = augment.value; // 처치 후 3초 이속 +v
-                break;
-
-            case AugmentType.AdrenalSurge:
-                Character.Instance.enableAdrenalSurge = true;
-                Character.Instance.adrenalSurgeValue = augment.value; // 명중시 공속 +v(스택/2초 유지)
-                break;
-
-            case AugmentType.ChainReaction:
-                Character.Instance.enableChainReaction = true;
-                // 필요 시 ChainReaction 세부값 세팅
-                break;
-
-            case AugmentType.Vengeance:
-                Character.Instance.enableVengeance = true;
-                Character.Instance.vengeanceValue = augment.value; // 피격 후 5초 데미지 +v
-                break;
-
-            case AugmentType.BulletFever:
-                Character.Instance.enableBulletFever = true;
-                // CSV에서 0.05 같은 비율이면 %p로 바꿔주기
-                Character.Instance.bulletFeverValue = (augment.value <= 1f ? augment.value * 100f : augment.value);
-                break;
-
-            case AugmentType.ColdRage:
-                Character.Instance.enableColdRage = true;
-                // 마찬가지로 %p (최대 보너스치)
-                Character.Instance.coldRageMaxBonus = (augment.value <= 1f ? augment.value * 100f : augment.value);
-                break;
-
-            case AugmentType.SecondWind:
-                Character.Instance.enableSecondWind = true;
-                Character.Instance.secondWindShield = Mathf.RoundToInt(augment.value); // 예: 50
-                break;
-
+            case AugmentType.UltimateChargeBoost:
             case AugmentType.UltCharger:
-                Character.Instance.enableUltCharger = true;
-                // Ult 명중충전량을 augment.value로 쓰고 싶다면 UltimateSkill쪽에서 참조하도록 확장
+                SM?.AddUltimateCharge(augment.value);
+                if (CH != null) CH.enableUltCharger = true;
                 break;
-            // ===== ApplyAugment =====
+
+            case AugmentType.RecoilReduction:
             case AugmentType.RecoilTamer:
-                // CSV 값: 0.2 -> 반동 20% 감소
-                StatModifierManager.Instance.AddRecoilReduction(augment.value);
+                SM?.AddRecoilReduction(augment.value);              // 0.2 → 반동 20% 감소
                 break;
 
             case AugmentType.ExtendedMag:
-                StatModifierManager.Instance.AddMagazineSizeBonus(Mathf.RoundToInt(augment.value));
-                if (Character.Instance?.weapon != null)
+                SM?.AddMagazineSizeBonus(Mathf.RoundToInt(augment.value)); // +N
+                if (CH?.weapon != null)
                 {
-                    var w = Character.Instance.weapon;
-                    w.ClampAmmoToMagazine(); // 🔑 바로 숫자 맞추기
-                    CanvasManager.singleton?.UpdateAmmo(w.ammo, Character.Instance.ammo?.amount ?? 0); // HUD 즉시 반영
+                    CH.weapon.ClampAmmoToMagazine();
+                    CanvasManager.singleton?.UpdateAmmo(CH.weapon.ammo, CH.ammo?.amount ?? 0);
                 }
+                break;
+
+            case AugmentType.StepAndGun:
+                SM?.EnableStepAndGun(augment.value, 0.1f);
+                break;
+
+            case AugmentType.Penetrator:
+                SM?.AddPenetrationBonus(Mathf.RoundToInt(augment.value)); // 관통 +N
+                break;
+
+            // ===== 토글/조건형(캐릭터 플래그) =====
+            case AugmentType.Retaliation: if (CH != null) CH.enableRetaliation = true; break;
+
+            case AugmentType.Predator:
+                if (CH != null) { CH.enablePredator = true; CH.predatorValue = augment.value; }
+                break;
+
+            case AugmentType.TriggerRush:
+                if (CH != null) { CH.enableTriggerRush = true; CH.triggerRushValue = augment.value; }
+                break;
+
+            case AugmentType.AdrenalSurge:
+                if (CH != null) { CH.enableAdrenalSurge = true; CH.adrenalSurgeValue = augment.value; }
+                break;
+
+            case AugmentType.ChainReaction:
+                if (CH != null) CH.enableChainReaction = true;
+                break;
+
+            case AugmentType.Vengeance:
+                if (CH != null) { CH.enableVengeance = true; CH.vengeanceValue = augment.value; }
+                break;
+
+            case AugmentType.BulletFever:
+                if (CH != null)
+                {
+                    CH.enableBulletFever = true;
+                    CH.bulletFeverValue = (augment.value <= 1f ? augment.value * 100f : augment.value);
+                }
+                break;
+
+            case AugmentType.ColdRage:
+                if (CH != null)
+                {
+                    CH.enableColdRage = true;
+                    CH.coldRageMaxBonus = (augment.value <= 1f ? augment.value * 100f : augment.value);
+                }
+                break;
+
+            case AugmentType.SecondWind:
+                if (CH != null)
+                {
+                    CH.enableSecondWind = true;
+                    CH.secondWindShield = Mathf.RoundToInt(augment.value);
+                }
+                break;
+
+            case AugmentType.QuickReload:
+                if (CH != null) CH.enableQuickReload = true;
+                break;
+
+            case AugmentType.GearUp:
+                if (CH != null) CH.enableGearUp = true;
+                break;
+
+            case AugmentType.Rend:
+                if (CH != null) CH.enableRend = true;
+                break;
+
+            case AugmentType.Overheat:
+                if (CH != null) CH.enableOverheat = true;
+                break;
+
+            default:
+                Debug.Log($"[AugmentSystem] 적용 미정의: {augment.type}");
                 break;
         }
 
-        Debug.Log($"[AugmentSystem] {augment.name} 적용 완료");
+        Debug.Log($"[AugmentSystem] {augment.augmentName} 적용 완료");
     }
 
     public void RemoveAugment(AugmentData augment)
     {
+        if (augment == null) return;
+
+        var SM = StatModifierManager.Instance;
+        var CH = Character.Instance;
+
         switch (augment.type)
         {
+            // ===== 즉시형 원복 =====
+            case AugmentType.DamageBoost:
             case AugmentType.Berserker:
-                StatModifierManager.Instance.AddDamageMultiplier(-augment.value);
-                break;
-            case AugmentType.Slayer:
-                StatModifierManager.Instance.AddCriticalChance(-augment.value);
-                break;
-            case AugmentType.Overdrive:
-                StatModifierManager.Instance.AddFireRateMultiplier(-augment.value);
-                break;
-            case AugmentType.IronSkin:
-                StatModifierManager.Instance.AddMaxShield(-Mathf.RoundToInt(augment.value));
-                break;
-            case AugmentType.Survivor:
-                StatModifierManager.Instance.AddOnKillHeal(-Mathf.RoundToInt(augment.value));
+                SM?.AddDamageMultiplier(-augment.value);
                 break;
 
-            case AugmentType.Retaliation:
-                Character.Instance.enableRetaliation = false;
+            case AugmentType.AttackSpeedBoost:
+            case AugmentType.Overdrive:
+                SM?.AddFireRateMultiplier(-augment.value);
                 break;
-            case AugmentType.Predator:
-                Character.Instance.enablePredator = false;
+
+            case AugmentType.CriticalChanceUp:
+            case AugmentType.Slayer:
+                SM?.AddCriticalChance(-augment.value);
                 break;
-            case AugmentType.TriggerRush:
-                Character.Instance.enableTriggerRush = false;
+
+            case AugmentType.MaxShieldUp:
+            case AugmentType.IronSkin:
+                SM?.AddMaxShield(-Mathf.RoundToInt(augment.value));
                 break;
-            case AugmentType.AdrenalSurge:
-                Character.Instance.enableAdrenalSurge = false;
+
+            case AugmentType.HealOnKill:
+            case AugmentType.Survivor:
+                SM?.AddOnKillHeal(-Mathf.RoundToInt(augment.value));
                 break;
-            case AugmentType.ChainReaction:
-                Character.Instance.enableChainReaction = false;
+
+            case AugmentType.MoveSpeedBoost:
+                SM?.AddMoveSpeedMultiplier(-augment.value);
                 break;
-            case AugmentType.Vengeance:
-                Character.Instance.enableVengeance = false;
-                break;
-            case AugmentType.BulletFever:
-                Character.Instance.enableBulletFever = false;
-                break;
-            case AugmentType.ColdRage:
-                Character.Instance.enableColdRage = false;
-                break;
-            case AugmentType.SecondWind:
-                Character.Instance.enableSecondWind = false;
-                break;
+
+            case AugmentType.UltimateChargeBoost:
             case AugmentType.UltCharger:
-                Character.Instance.enableUltCharger = false;
+                SM?.AddUltimateCharge(-augment.value);
+                if (CH != null) CH.enableUltCharger = false;
                 break;
+
+            case AugmentType.RecoilReduction:
             case AugmentType.RecoilTamer:
-                // 간단 복원(정확한 역연산이 필요하면 합산-재계산 방식으로 바꿔도 됨)
-                StatModifierManager.Instance.AddRecoilReduction(-augment.value);
+                SM?.AddRecoilReduction(-augment.value);
                 break;
 
             case AugmentType.ExtendedMag:
-                StatModifierManager.Instance.AddMagazineSizeBonus(-Mathf.RoundToInt(augment.value));
-                if (Character.Instance?.weapon != null)
+                SM?.AddMagazineSizeBonus(-Mathf.RoundToInt(augment.value));
+                if (CH?.weapon != null)
                 {
-                    var w = Character.Instance.weapon;
-                    w.ClampAmmoToMagazine(); // 🔑 최대치가 줄었으면 잘라주기
-                    CanvasManager.singleton?.UpdateAmmo(w.ammo, Character.Instance.ammo?.amount ?? 0);
+                    CH.weapon.ClampAmmoToMagazine();
+                    CanvasManager.singleton?.UpdateAmmo(CH.weapon.ammo, CH.ammo?.amount ?? 0);
                 }
                 break;
+
+            case AugmentType.StepAndGun:
+                SM?.DisableStepAndGun();
+                break;
+
+            case AugmentType.Penetrator:
+                SM?.AddPenetrationBonus(-Mathf.RoundToInt(augment.value));
+                break;
+
+            // ===== 토글 원복 =====
+            case AugmentType.Retaliation: if (CH != null) CH.enableRetaliation = false; break;
+            case AugmentType.Predator: if (CH != null) CH.enablePredator = false; break;
+            case AugmentType.TriggerRush: if (CH != null) CH.enableTriggerRush = false; break;
+            case AugmentType.AdrenalSurge: if (CH != null) CH.enableAdrenalSurge = false; break;
+            case AugmentType.ChainReaction: if (CH != null) CH.enableChainReaction = false; break;
+            case AugmentType.Vengeance: if (CH != null) CH.enableVengeance = false; break;
+            case AugmentType.BulletFever: if (CH != null) CH.enableBulletFever = false; break;
+            case AugmentType.ColdRage: if (CH != null) CH.enableColdRage = false; break;
+            case AugmentType.SecondWind: if (CH != null) CH.enableSecondWind = false; break;
+
+            case AugmentType.QuickReload:
+                if (CH != null) CH.enableQuickReload = false;
+                SM?.GrantQuickReload(1f, 0f); // 남은 가속 즉시 원복
+                break;
+
+            case AugmentType.GearUp: if (CH != null) CH.enableGearUp = false; break;
+            case AugmentType.Rend: if (CH != null) CH.enableRend = false; break;
+            case AugmentType.Overheat: if (CH != null) CH.enableOverheat = false; break;
+
+            default:
+                Debug.Log($"[AugmentSystem] 제거 미정의: {augment.type}");
+                break;
         }
-
-        Debug.Log($"[AugmentSystem] {augment.name} 제거 완료");
     }
-
-
 }

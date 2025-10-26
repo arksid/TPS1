@@ -6,6 +6,7 @@ public class Projectile : MonoBehaviour, ISlowable
 {
     [SerializeField] private float _speed = 20f;
     [SerializeField] private GameObject hitParticlePrefab;
+    public int remainingPenetrations = 0; // 관통 가능 횟수
 
     public float damage => _damage;
 
@@ -19,6 +20,7 @@ public class Projectile : MonoBehaviour, ISlowable
     public GameObject shooter;
 
     private float localTimeScale = 1f;
+    // projectile.remainingPenetrations = StatModifierManager.Instance?.ProjectilePenetrationBonus ?? 0;
 
     private void Awake() => Initialize();
 
@@ -68,7 +70,7 @@ public class Projectile : MonoBehaviour, ISlowable
     {
         if (collision.gameObject == shooter) return;
 
-        // ✨ 1. 피격 파티클
+        // 피격 파티클
         if (hitParticlePrefab != null)
         {
             var contact = collision.contacts[0];
@@ -76,43 +78,61 @@ public class Projectile : MonoBehaviour, ISlowable
             Destroy(particle, 1f);
         }
 
-        // ✨ 2. 적에 맞았는지 확인 (Enemy 태그)
-        if (collision.transform.root.CompareTag("Enemy"))
+        bool hitEnemy = collision.transform.root.CompareTag("Enemy");
+
+        // === 데미지 처리 + 렌드 가중치 ===
+        if (hitEnemy)
         {
-            // 🧠 적 컨트롤러 찾기 (보스, 자폭병 등 상위에서 찾음)
             var enemy = collision.transform.root.GetComponent<EnemyController>();
             var suicide = collision.transform.root.GetComponent<SuicideEnemyController>();
             var flying = collision.transform.GetComponentInParent<FlyingEnemyController>();
-            if (flying != null)
+            if (flying != null) flying.TakeDamage(_damage);
+
+            float finalDamage = _damage;
+
+            // 🔥 Shooter가 갖고 있는 'Rend' 보너스가 있으면 대상 한정 가중치 적용
+            if (enemy != null && _shooter != null)
             {
-                flying.TakeDamage(_damage);
+                float rendBonus = _shooter.GetRendBonusForEnemy(enemy); // 0~0.2 등
+                if (rendBonus > 0f) finalDamage *= (1f + rendBonus);
             }
 
-            if (enemy != null || suicide != null)
-            {
-                // ✅ 3. 궁극기 게이지 증가
-                if (shooter != null)
-                {
-                    var ult = shooter.GetComponent<UltimateSkill>();
-                    if (ult != null)
-                        ult.AddGauge(ult.GaugePerHit);
-                }
+            if (enemy != null) enemy.TakeDamage(finalDamage);
+            if (suicide != null) suicide.TakeDamage(finalDamage);
 
-                // ✅ 4. 데미지 처리
-                if (enemy != null) enemy.TakeDamage(_damage);
-                if (suicide != null) suicide.TakeDamage(_damage);
-
-                // ✅ 5. 히트마커 표시
-                if (HitmarkerManager.instance != null)
-                    HitmarkerManager.instance.ShowHitmarker();
-            }
-            _shooter?.OnPlayerHitEnemyHook();                 // 캐릭터 조건부(Adrenal/BulletFever 등)
-            StatModifierManager.Instance?.OnPlayerHitEnemy(); // (쓰는 중이면) 명중-기반 궁극충전
-
+            // 히트마커/궁극충전/명중훅
+            if (HitmarkerManager.instance != null) HitmarkerManager.instance.ShowHitmarker();
+            _shooter?.OnPlayerHitEnemyHook(enemy != null ? enemy : null);
+            StatModifierManager.Instance?.OnPlayerHitEnemy();
         }
 
-        // 총알 파괴
-        Destroy(gameObject);
+        // === 관통 분기 ===
+        bool shouldDestroy = true;
+
+        if (hitEnemy && remainingPenetrations > 0)
+        {
+            remainingPenetrations--;
+
+            // 같은 콜라이더 재충돌 방지(잠깐 무시)
+            if (_collider != null && collision.collider != null)
+            {
+                Physics.IgnoreCollision(_collider, collision.collider, true);
+                StartCoroutine(ReenableCollision(collision.collider, 0.06f));
+            }
+
+            shouldDestroy = false; // 계속 날아감
+        }
+
+        if (shouldDestroy)
+            Destroy(gameObject);
     }
+
+    private IEnumerator ReenableCollision(Collider other, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (_collider != null && other != null)
+            Physics.IgnoreCollision(_collider, other, false);
+    }
+
 
 }

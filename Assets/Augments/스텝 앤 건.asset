@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ad783205f14b50641b8ef3479b1172bd, type: 3}
-  m_Name: BulletFever
+  m_Name: "\uC2A4\uD15D \uC564 \uAC74"
   m_EditorClassIdentifier: 
-  augmentName: BulletFever
-  description: "\uC5F0\uC18D \uC0AC\uACA9 \uC2DC \uD06C\uB9AC\uD2F0\uCEEC \uC0C1\uC2B9(\uBA85\uC911\uB2F9
-    +5%p, 2\uCD08 \uC720\uC9C0)"
+  augmentName: "\uC2A4\uD15D \uC564 \uAC74"
+  description: "\uC774\uB3D9 \uC911 \uC0AC\uACA9 \uC2DC \uCD94\uAC00\uB85C \uBC18\uB3D9\uC774
+    20% \uC904\uC5B4\uB4E0\uB2E4"
   icon: {fileID: 0}
-  rarity: 4
-  category: 2
-  type: 24
-  value: 0.05
-  isStackable: 1
+  rarity: 2
+  category: 3
+  type: 30
+  value: 0.2
+  isStackable: 0

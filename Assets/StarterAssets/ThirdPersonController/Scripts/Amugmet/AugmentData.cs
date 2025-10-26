@@ -71,5 +71,11 @@ public enum AugmentType
     SecondWind,
     UltCharger,
     RecoilTamer,     // 반동 감소(퍼센트)
-    ExtendedMag   // 장탄수(탄창 용량) +정수
+    ExtendedMag,
+    StepAndGun,     // 이동 중 반동 감소 (recoil 감소 계수)
+    QuickReload,    // 처치 후 5초 내 다음 리로드 속도 증가 (reloadSpeedMultiplier)
+    Penetrator,     // 투사체 관통 가능 횟수 +N
+    GearUp,         // 리로드 직후 3초간 데미지 증가
+    Rend,           // 동일 적 1초내 3회 명중 → 그 적에게 5초간 추가피해
+    Overheat,  // 장탄수(탄창 용량) +정수
 }

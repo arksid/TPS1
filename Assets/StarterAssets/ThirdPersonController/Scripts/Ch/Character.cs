@@ -88,7 +88,22 @@ public class Character : MonoBehaviour
     public bool enableChainReaction; // (추후 확장: 처치 시 폭발 연쇄 등)
     public bool enableUltCharger;    // (추후 확장: 명중 시 궁극 충전 보조 등)
 
+    // --- 이번에 쓰는 토글 플래그들(새로 추가) ---
+    public bool enableQuickReload = false;  // 처치 후 리로드가 빨라지는 버프 사용 여부
+    public bool enableGearUp = false;       // 리로드 직후 데미지 버프 사용 여부
+    public bool enableOverheat = false;     // 연속 명중 시 데미지 버프 사용 여부
+    public bool enableRend = false;         // 동일 적 히트 추적 버프 사용 여부
+                                            // ===== 시간형 증강 '적용된 값/스택' 추적 (이번 6종에서 추가 사용) =====
+    private Coroutine _gearUpCo;
+    private float _gearUpApplied = 0f;
 
+    private Coroutine _overheatCo;
+    private int _overheatHitStreak = 0;
+    private float _overheatApplied = 0f;
+
+    // Rend: 적별 히트 스택/버프
+    private class RendInfo { public int hits; public float lastHitTime; public float expireTime; }
+    private Dictionary<int, RendInfo> _rendMap = new Dictionary<int, RendInfo>(); // enemyID -> info
 
     // Animator hash 캐싱
     private static readonly int EquipTrigger = Animator.StringToHash("Equip");
@@ -98,7 +113,7 @@ public class Character : MonoBehaviour
     [SerializeField] private float criticalChance = 0f;  // 퍼센트 (0~100)
     [SerializeField] private float criticalMultiplier = 2f;
 
-
+    public float CurrentSpeed { get; private set; }
     public int MaxHealth
     {
         get => _maxHealth;
@@ -568,11 +583,30 @@ public class Character : MonoBehaviour
         {
             Shield += 1;
         }
+        SM?.TickQuickReload(Time.deltaTime);
+
+        HandleRendExpire(); // Rend 버프 만료 정리
         // 기존 실드 재생 로직 아래에 추가
         HandlePredator();
         HandleColdRage();
         HandleSecondWind();
 
+    }
+    void HandleRendExpire()
+    {
+        if (_rendMap.Count == 0) return;
+        float now = Time.time;
+        // 만료만 정리 (실제 데미지 가중은 Projectile에서 질의)
+        List<int> remove = null;
+        foreach (var kv in _rendMap)
+        {
+            if (kv.Value.expireTime > 0 && now >= kv.Value.expireTime)
+            {
+                if (remove == null) remove = new List<int>();
+                remove.Add(kv.Key);
+            }
+        }
+        if (remove != null) foreach (var id in remove) _rendMap.Remove(id);
     }
     // ===== 재장전 시작 =====
     public void Reload()
@@ -814,37 +848,7 @@ public class Character : MonoBehaviour
     }
 
 
-  // ===== [교체] 명중 트리거: AdrenalSurge(공속 스택) + BulletFever(크확 스택) =====
-public void OnPlayerHitEnemyHook()
-{
-    // --- AdrenalSurge: 연속 명중 = 공속 스택 ---
-    if (enableAdrenalSurge && SM != null)
-    {
-        _adrenalStacks++;
-
-        // 기존 총합 제거 → 새 총합 적용
-        if (_adrenalApplied != 0f) SM.AddFireRateMultiplier(-_adrenalApplied);
-        _adrenalApplied = _adrenalStacks * adrenalSurgeValue;
-        SM.AddFireRateMultiplier(_adrenalApplied);
-
-        // 2초 내 다시 맞추면 타이머만 연장
-        if (_adrenalDecayCo != null) StopCoroutine(_adrenalDecayCo);
-        _adrenalDecayCo = StartCoroutine(AdrenalDecayTimer(2f));
-    }
-
-    // --- BulletFever: 연속 명중 = 크확 스택(퍼센트포인트) ---
-    if (enableBulletFever && SM != null)
-    {
-        _bulletStacks++;
-
-        if (_bulletApplied != 0f) SM.AddCriticalChance(-_bulletApplied);
-        _bulletApplied = _bulletStacks * bulletFeverValue; // 예: 명중당 +5%p
-        SM.AddCriticalChance(_bulletApplied);
-
-        if (_bulletDecayCo != null) StopCoroutine(_bulletDecayCo);
-        _bulletDecayCo = StartCoroutine(BulletDecayTimer(2f));
-    }
-}
+   
 
 private IEnumerator AdrenalDecayTimer(float seconds)
 {
@@ -943,8 +947,100 @@ private IEnumerator BulletDecayTimer(float seconds)
         _secondWindOnCooldown = false;
     }
 
- 
+    // 호환용(Projectile에서 파라미터 없이 부를 때 대비)
+    // 필요하면 여기서 Adrenal/BulletFever 같은 '대상 불필요' 트리거를 처리하도록 확장 가능.
+    public void OnPlayerHitEnemyHook()
+    {
+        // 현재는 특별 처리 없이 반환(컴파일러/호출자 호환 목적)
+    }
 
- 
+
+    public void OnPlayerHitEnemyHook(EnemyController enemy)
+    {
+        if (enemy == null) return;
+        float now = Time.time;
+
+        // Overheat
+        if (enableOverheat && SM != null)
+        {
+            _overheatHitStreak++;
+            if (_overheatHitStreak >= SM.OverheatHitNeed)
+            {
+                if (_overheatApplied == 0f)
+                {
+                    SM.AddDamageMultiplier(SM.OverheatBuffValue);
+                    _overheatApplied = SM.OverheatBuffValue;
+                }
+                if (_overheatCo != null) StopCoroutine(_overheatCo);
+                _overheatCo = StartCoroutine(_OverheatTimer(SM.OverheatBuffDuration));
+                _overheatHitStreak = 0;
+            }
+        }
+
+        // Rend
+        if (enableRend && SM != null)
+        {
+            int id = enemy.GetInstanceID();
+            RendInfo info;
+            if (!_rendMap.TryGetValue(id, out info))
+            {
+                info = new RendInfo() { hits = 0, lastHitTime = 0f, expireTime = 0f };
+                _rendMap[id] = info;
+            }
+            if (now - info.lastHitTime > SM.RendWindow) info.hits = 0;
+            info.hits++;
+            info.lastHitTime = now;
+
+            if (info.hits >= SM.RendHitNeed)
+            {
+                info.expireTime = now + SM.RendDuration; // 5초 버프
+                info.hits = 0;
+            }
+        }
+    }
+
+
+
+    public void OnReloadFinished_GearUp()
+    {
+        if (!enableGearUp || SM == null) return;
+
+        // 한 번만 적용, 시간 연장
+        if (_gearUpApplied == 0f)
+        {
+            SM.AddDamageMultiplier(SM.GearUpBuffValue);
+            _gearUpApplied = SM.GearUpBuffValue;
+        }
+        if (_gearUpCo != null) StopCoroutine(_gearUpCo);
+        _gearUpCo = StartCoroutine(_GearUpTimer(SM.GearUpBuffDuration));
+    }
+
+    IEnumerator _GearUpTimer(float sec)
+    {
+        yield return new WaitForSeconds(sec);
+        if (_gearUpApplied != 0f) SM?.AddDamageMultiplier(-_gearUpApplied);
+        _gearUpApplied = 0f;
+        _gearUpCo = null;
+    }
+    
+
+    IEnumerator _OverheatTimer(float sec)
+    {
+        yield return new WaitForSeconds(sec);
+        if (_overheatApplied != 0f) SM?.AddDamageMultiplier(-_overheatApplied);
+        _overheatApplied = 0f;
+        _overheatCo = null;
+    }
+    public float GetRendBonusForEnemy(EnemyController enemy)
+    {
+        if (!enableRend || enemy == null || _rendMap.Count == 0) return 0f;
+        int id = enemy.GetInstanceID();
+        RendInfo info;
+        if (_rendMap.TryGetValue(id, out info))
+        {
+            if (info.expireTime > Time.time) return SM != null ? SM.RendBonus : 0f;
+        }
+        return 0f;
+    }
 
 }

@@ -22,6 +22,35 @@ public class StatModifierManager : MonoBehaviour
     // 장탄수(탄창 용량) 보너스. +5면 30발 → 35발
     public int MagazineSizeBonus { get; private set; } = 0;
 
+
+    // === 이동 중 반동 감소(스텝 앤 건) ===
+    public bool StepAndGunEnabled { get; private set; } = false;
+    public float StepAndGunRecoilReduce { get; private set; } = 0f; // 0.2 = 20% 감소
+    public float StepAndGunMoveThreshold { get; private set; } = 0.1f; // 이동 판단 임계값(속도)
+
+    // === 빠른 장전(리로드 속도 배율) ===
+    public float ReloadSpeedMultiplier { get; private set; } = 1f; // 1.3 = 30% 빠름
+    public float QuickReloadBuffRemain { get; private set; } = 0f;  // 남은 시간(초)
+
+    // === 관통 횟수 보너스 ===
+    public int ProjectilePenetrationBonus { get; private set; } = 0;
+
+    // === 과열탄(연속 명중 스택) ===
+    public int OverheatHitNeed { get; private set; } = 4;
+    public float OverheatBuffValue { get; private set; } = 0.25f; // 25% 데미지
+    public float OverheatBuffDuration { get; private set; } = 2f;
+
+    // === 기어 올라가기(리로드 직후 버프) ===
+    public float GearUpBuffValue { get; private set; } = 0.2f;
+    public float GearUpBuffDuration { get; private set; } = 3f;
+
+    // === 찢어발기기(동일 적 히트 트래킹) ===
+    public int RendHitNeed { get; private set; } = 3;
+    public float RendWindow { get; private set; } = 1f;
+    public float RendBonus { get; private set; } = 0.2f;
+    public float RendDuration { get; private set; } = 5f;
+
+
     // (선택) 예비탄 보너스도 원하면 사용: public int ReserveAmmoBonus { get; private set; } = 0;
     private void Awake()
     {
@@ -197,6 +226,46 @@ public class StatModifierManager : MonoBehaviour
         if (MagazineSizeBonus < 0) MagazineSizeBonus = 0;
         Debug.Log($"[StatMod] MagazineSizeBonus = +{MagazineSizeBonus}");
     }
+    // Step&Gun 토글/값
+    public void EnableStepAndGun(float reducePercent, float moveThreshold = 0.1f)
+    {
+        StepAndGunEnabled = true;
+        StepAndGunRecoilReduce = Mathf.Clamp01(reducePercent);
+        StepAndGunMoveThreshold = Mathf.Max(0.01f, moveThreshold);
+    }
+    public void DisableStepAndGun()
+    {
+        StepAndGunEnabled = false;
+        StepAndGunRecoilReduce = 0f;
+    }
+
+    // QuickReload: 5초 내 다음 리로드 속도 배율(누적 X, 시간 연장 O)
+    public void GrantQuickReload(float speedMul, float duration)
+    {
+        ReloadSpeedMultiplier = Mathf.Max(1f, speedMul);
+        QuickReloadBuffRemain = Mathf.Max(QuickReloadBuffRemain, duration);
+    }
+    public void TickQuickReload(float dt)
+    {
+        if (QuickReloadBuffRemain > 0f)
+        {
+            QuickReloadBuffRemain -= dt;
+            if (QuickReloadBuffRemain <= 0f)
+            {
+                QuickReloadBuffRemain = 0f;
+                ReloadSpeedMultiplier = 1f;
+            }
+        }
+    }
+
+    // Penetrator
+    public void AddPenetrationBonus(int add)
+    {
+        ProjectilePenetrationBonus = Mathf.Max(0, ProjectilePenetrationBonus + add);
+    }
+
+    // GearUp / Overheat / Rend 값은 Character가 시간형으로 관리 (StatMod는 값 제공만)
+
     // ─────────────────────────────────────────────────────────────
     // 리셋 (디버그용)
     // ─────────────────────────────────────────────────────────────

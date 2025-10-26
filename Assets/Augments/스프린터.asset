@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ad783205f14b50641b8ef3479b1172bd, type: 3}
-  m_Name: "\uCCB4\uB825 \uB300\uD3ED \uC99D\uAC00"
+  m_Name: "\uC2A4\uD504\uB9B0\uD130"
   m_EditorClassIdentifier: 
-  augmentName: "\uCCB4\uB825 \uB300\uD3ED \uC99D\uAC00"
-  description: "\uCD5C\uB300 \uCCB4\uB825\uC774 50 \uC99D\uAC00\uD569\uB2C8\uB2E4"
+  augmentName: "\uC2A4\uD504\uB9B0\uD130"
+  description: "\uC774\uB3D9 \uC18D\uB3C4\uAC00 10% \uC99D\uAC00\uD55C\uB2E4"
   icon: {fileID: 0}
-  rarity: 1
-  category: 0
-  type: 10
-  value: 30
-  isStackable: 1
+  rarity: 0
+  category: 4
+  type: 4
+  value: 0.1
+  isStackable: 0
