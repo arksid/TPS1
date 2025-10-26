@@ -71,6 +71,19 @@ public class Character : MonoBehaviour
     private int _hitStreak;               // 연속 명중 카운트(AdrenalSurge, BulletFever 공용)
     private Coroutine _vengeanceCo, _rushCo, _adrenalDecayCo, _bulletDecayCo;
 
+    // ===== 시간형 증강 '적용된 값/스택' 추적 =====
+    private bool _vengeanceActive = false;
+    private float _vengeanceApplied = 0f;
+
+    private float _rushApplied = 0f;
+
+    private int _adrenalStacks = 0;
+    private float _adrenalApplied = 0f;
+
+    private int _bulletStacks = 0;
+    private float _bulletApplied = 0f;
+
+
     public bool enableRetaliation;   // (추후 확장: 피탄 시 반격 등)
     public bool enableChainReaction; // (추후 확장: 처치 시 폭발 연쇄 등)
     public bool enableUltCharger;    // (추후 확장: 명중 시 궁극 충전 보조 등)
@@ -766,41 +779,124 @@ public class Character : MonoBehaviour
     // ===== [조건부 특성 실행 로직] =====
     private StatModifierManager SM => StatModifierManager.Instance;
 
+    // ===== [교체] 피격 트리거: Vengeance =====
     public void OnPlayerDamaged(float damageTaken)
     {
         if (!enableVengeance || SM == null) return;
+
+        // 이미 켜져 있으면 '값은 그대로', 시간만 연장
+        if (_vengeanceActive)
+        {
+            if (_vengeanceCo != null) StopCoroutine(_vengeanceCo);
+            _vengeanceCo = StartCoroutine(VengeanceTimer(5f)); // 예: 5초 지속
+            return;
+        }
+
+        // 꺼져 있던 상태 → 1회만 적용
+        SM.AddDamageMultiplier(vengeanceValue);
+        _vengeanceApplied = vengeanceValue;
+        _vengeanceActive = true;
+
         if (_vengeanceCo != null) StopCoroutine(_vengeanceCo);
-        _vengeanceCo = StartCoroutine(TempDamageBuff(vengeanceValue, 5f)); // 피격 후 5초 데미지+
+        _vengeanceCo = StartCoroutine(VengeanceTimer(5f));
     }
 
-    public void OnPlayerHitEnemyHook()
+    // 새 코루틴
+    private IEnumerator VengeanceTimer(float duration)
     {
-        if (enableAdrenalSurge)
-        {
-            _hitStreak++;
-            // 명중할 때마다 공속 +adrenalSurgeValue, 2초간 맞추지 않으면 누적분 회수
-            if (_adrenalDecayCo != null) StopCoroutine(_adrenalDecayCo);
-            SM?.AddFireRateMultiplier(adrenalSurgeValue);
-            _adrenalDecayCo = StartCoroutine(ResetHitStreakAfter(2.0f));
-        }
+        yield return new WaitForSeconds(duration);
 
-        if (enableBulletFever)
-        {
-            // 명중할 때마다 크확 +bulletFeverValue(%p), 2초 후 회수
-            if (_bulletDecayCo != null) StopCoroutine(_bulletDecayCo);
-            SM?.AddCriticalChance(bulletFeverValue);
-            _bulletDecayCo = StartCoroutine(RemoveCritAfter(2.0f, bulletFeverValue));
-        }
+        // 끝날 때 '적용돼 있던 만큼'만 정확히 회수
+        if (_vengeanceApplied != 0f) SM?.AddDamageMultiplier(-_vengeanceApplied);
+        _vengeanceApplied = 0f;
+        _vengeanceActive = false;
+        _vengeanceCo = null;
     }
 
+
+  // ===== [교체] 명중 트리거: AdrenalSurge(공속 스택) + BulletFever(크확 스택) =====
+public void OnPlayerHitEnemyHook()
+{
+    // --- AdrenalSurge: 연속 명중 = 공속 스택 ---
+    if (enableAdrenalSurge && SM != null)
+    {
+        _adrenalStacks++;
+
+        // 기존 총합 제거 → 새 총합 적용
+        if (_adrenalApplied != 0f) SM.AddFireRateMultiplier(-_adrenalApplied);
+        _adrenalApplied = _adrenalStacks * adrenalSurgeValue;
+        SM.AddFireRateMultiplier(_adrenalApplied);
+
+        // 2초 내 다시 맞추면 타이머만 연장
+        if (_adrenalDecayCo != null) StopCoroutine(_adrenalDecayCo);
+        _adrenalDecayCo = StartCoroutine(AdrenalDecayTimer(2f));
+    }
+
+    // --- BulletFever: 연속 명중 = 크확 스택(퍼센트포인트) ---
+    if (enableBulletFever && SM != null)
+    {
+        _bulletStacks++;
+
+        if (_bulletApplied != 0f) SM.AddCriticalChance(-_bulletApplied);
+        _bulletApplied = _bulletStacks * bulletFeverValue; // 예: 명중당 +5%p
+        SM.AddCriticalChance(_bulletApplied);
+
+        if (_bulletDecayCo != null) StopCoroutine(_bulletDecayCo);
+        _bulletDecayCo = StartCoroutine(BulletDecayTimer(2f));
+    }
+}
+
+private IEnumerator AdrenalDecayTimer(float seconds)
+{
+    yield return new WaitForSeconds(seconds);
+
+    if (_adrenalApplied != 0f) SM?.AddFireRateMultiplier(-_adrenalApplied);
+    _adrenalApplied = 0f;
+    _adrenalStacks = 0;
+    _adrenalDecayCo = null;
+}
+
+private IEnumerator BulletDecayTimer(float seconds)
+{
+    yield return new WaitForSeconds(seconds);
+
+    if (_bulletApplied != 0f) SM?.AddCriticalChance(-_bulletApplied);
+    _bulletApplied = 0f;
+    _bulletStacks = 0;
+    _bulletDecayCo = null;
+}
+
+
+    // ===== [교체] 처치 트리거: TriggerRush =====
     public void OnEnemyKilledHook()
     {
-        if (enableTriggerRush)
+        if (!enableTriggerRush || SM == null) return;
+
+        // 이미 켜져 있으면 '시간만 연장'
+        if (_rushApplied != 0f)
         {
             if (_rushCo != null) StopCoroutine(_rushCo);
-            _rushCo = StartCoroutine(TempMoveBuff(triggerRushValue, 3f)); // 처치 후 3초 이속+
+            _rushCo = StartCoroutine(RushTimer(3f)); // 예: 3초 지속
+            return;
         }
+
+        // 꺼져 있던 상태 → 1회만 적용
+        SM.AddMoveSpeedMultiplier(triggerRushValue);
+        _rushApplied = triggerRushValue;
+
+        if (_rushCo != null) StopCoroutine(_rushCo);
+        _rushCo = StartCoroutine(RushTimer(3f));
     }
+
+    private IEnumerator RushTimer(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+
+        if (_rushApplied != 0f) SM?.AddMoveSpeedMultiplier(-_rushApplied);
+        _rushApplied = 0f;
+        _rushCo = null;
+    }
+
 
     void HandlePredator()
     {
@@ -847,32 +943,8 @@ public class Character : MonoBehaviour
         _secondWindOnCooldown = false;
     }
 
-    IEnumerator TempDamageBuff(float v, float dur)
-    {
-        SM?.AddDamageMultiplier(v);
-        yield return new WaitForSeconds(dur);
-        SM?.AddDamageMultiplier(-v);
-    }
+ 
 
-    IEnumerator TempMoveBuff(float v, float dur)
-    {
-        SM?.AddMoveSpeedMultiplier(v);
-        yield return new WaitForSeconds(dur);
-        SM?.AddMoveSpeedMultiplier(-v);
-    }
-
-    IEnumerator ResetHitStreakAfter(float seconds)
-    {
-        yield return new WaitForSeconds(seconds);
-        if (SM != null && _hitStreak > 0)
-            SM.AddFireRateMultiplier(-_hitStreak * adrenalSurgeValue);
-        _hitStreak = 0;
-    }
-
-    IEnumerator RemoveCritAfter(float seconds, float critGain)
-    {
-        yield return new WaitForSeconds(seconds);
-        SM?.AddCriticalChance(-critGain);
-    }
+ 
 
 }

@@ -15,8 +15,8 @@ MonoBehaviour:
   augmentName: "\uBC18\uB3D9\uC81C\uC5B4 \uBAA8\uB4C8"
   description: "\uBC18\uB3D9\uC744 20% \uC904\uC5EC\uC90D\uB2C8\uB2E4"
   icon: {fileID: 0}
-  rarity: 0
-  category: 2
+  rarity: 2
+  category: 3
   type: 28
   value: 0.2
   isStackable: 0
