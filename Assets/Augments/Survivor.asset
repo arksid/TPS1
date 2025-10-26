@@ -15,7 +15,7 @@ MonoBehaviour:
   augmentName: Survivor
   description: "\uCC98\uCE58 \uC2DC \uCCB4\uB825 10 \uD68C\uBCF5"
   icon: {fileID: 0}
-  rarity: 0
+  rarity: 2
   category: 5
   type: 17
   value: 10

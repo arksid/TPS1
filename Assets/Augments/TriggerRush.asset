@@ -15,7 +15,7 @@ MonoBehaviour:
   augmentName: TriggerRush
   description: "\uCC98\uCE58 \uC2DC 3\uCD08\uAC04 \uC774\uC18D +30%"
   icon: {fileID: 0}
-  rarity: 3
+  rarity: 2
   category: 4
   type: 20
   value: 0.3

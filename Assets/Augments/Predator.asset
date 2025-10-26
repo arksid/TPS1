@@ -15,7 +15,7 @@ MonoBehaviour:
   augmentName: Predator
   description: "\uCCB4\uB825 50% \uC774\uD558\uC77C \uB54C \uACF5\uACA9\uB825 +25%"
   icon: {fileID: 0}
-  rarity: 3
+  rarity: 2
   category: 2
   type: 19
   value: 0.25

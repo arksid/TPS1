@@ -15,7 +15,7 @@ MonoBehaviour:
   augmentName: "\uD655\uC7A5\uD0C4\uCC3D"
   description: "\uC7A5\uD0C4\uC218\uAC00 10\uBC1C \uC99D\uAC00\uD55C\uB2E4"
   icon: {fileID: 0}
-  rarity: 3
+  rarity: 2
   category: 3
   type: 29
   value: 10

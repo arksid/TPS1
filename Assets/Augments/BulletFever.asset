@@ -16,7 +16,7 @@ MonoBehaviour:
   description: "\uC5F0\uC18D \uC0AC\uACA9 \uC2DC \uD06C\uB9AC\uD2F0\uCEEC \uC0C1\uC2B9(\uBA85\uC911\uB2F9
     +5%p, 2\uCD08 \uC720\uC9C0)"
   icon: {fileID: 0}
-  rarity: 4
+  rarity: 2
   category: 2
   type: 24
   value: 0.05

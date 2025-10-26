@@ -15,7 +15,7 @@ MonoBehaviour:
   augmentName: AdrenalSurge
   description: "\uC5F0\uC18D \uBA85\uC911 \uC2DC \uACF5\uC18D \uC99D\uAC00(\uC2A4\uD0DD)"
   icon: {fileID: 0}
-  rarity: 3
+  rarity: 2
   category: 2
   type: 21
   value: 0.15

@@ -15,7 +15,7 @@ MonoBehaviour:
   augmentName: Vengeance
   description: "\uD53C\uACA9 \uD6C4 5\uCD08\uAC04 \uACF5\uACA9\uB825 +20%"
   icon: {fileID: 0}
-  rarity: 3
+  rarity: 2
   category: 2
   type: 23
   value: 0.2

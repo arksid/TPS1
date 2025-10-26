@@ -15,7 +15,7 @@ MonoBehaviour:
   augmentName: IronSkin
   description: "\uCD5C\uB300 \uC2E4\uB4DC +50"
   icon: {fileID: 0}
-  rarity: 0
+  rarity: 2
   category: 5
   type: 16
   value: 50

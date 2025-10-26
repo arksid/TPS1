@@ -15,7 +15,7 @@ MonoBehaviour:
   augmentName: ChainReaction
   description: "\uCC98\uCE58 \uC2DC \uD3ED\uBC1C \uD6A8\uACFC"
   icon: {fileID: 0}
-  rarity: 4
+  rarity: 2
   category: 2
   type: 22
   value: 1

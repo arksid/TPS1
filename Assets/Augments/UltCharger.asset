@@ -15,7 +15,7 @@ MonoBehaviour:
   augmentName: UltCharger
   description: "\uBA85\uC911 \uC2DC \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0 +1%"
   icon: {fileID: 0}
-  rarity: 4
+  rarity: 2
   category: 3
   type: 27
   value: 1
