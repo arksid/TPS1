@@ -106,6 +106,9 @@ public class Projectile : MonoBehaviour, ISlowable
                 if (HitmarkerManager.instance != null)
                     HitmarkerManager.instance.ShowHitmarker();
             }
+            _shooter?.OnPlayerHitEnemyHook();                 // 캐릭터 조건부(Adrenal/BulletFever 등)
+            StatModifierManager.Instance?.OnPlayerHitEnemy(); // (쓰는 중이면) 명중-기반 궁극충전
+
         }
 
         // 총알 파괴

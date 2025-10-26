@@ -151,6 +151,29 @@ public class StatModifierManager : MonoBehaviour
             Debug.LogWarning("[StatMod] UltimateSkill 없음: Ult 충전 스킵");
         }
     }
+    // === [ADD] AugmentSystem 호환용 얇은 래퍼들 ===
+
+    // IronSkin용: 실드 "최대치"를 증감
+    public void AddMaxShield(int delta)
+    {
+        var ch = Character.Instance ?? FindObjectOfType<Character>();
+        if (ch != null)
+        {
+            int oldMax = ch.MaxShield;
+            ch.MaxShield = Mathf.Max(0, ch.MaxShield + delta);
+            // 현재 실드가 최대치보다 크면 잘라주기
+            ch.Shield = Mathf.Min(ch.Shield, ch.MaxShield);
+            Debug.Log($"[StatMod] MaxShield {oldMax} → {ch.MaxShield} (Δ {delta})");
+        }
+        else
+        {
+            Debug.LogWarning("[StatMod] Character 없음: AddMaxShield 스킵");
+        }
+    }
+
+    // Survivor용: 처치 시 회복량(누적) — 기존 AddHealOnKill과 동일 동작
+    public void AddOnKillHeal(int amount) { AddHealOnKill(amount); }
+    public void AddOnKillHeal(float amount) { AddHealOnKill(amount); }
 
     // ─────────────────────────────────────────────────────────────
     // 리셋 (디버그용)

@@ -374,10 +374,13 @@ public class EnemyController : MonoBehaviour, ISlowable, IEnemyReward
             dropSystem.TryDropItemByWeight();
 
         Destroy(gameObject);
+        Character.Instance?.OnEnemyKilledHook();          // 트리거러시 등
+        StatModifierManager.Instance?.OnEnemyKilled();    // 처치-힐 등
+
     }
 
 
-private void OnEnable()
+    private void OnEnable()
     {
         // 🧭 적이 활성화될 때 레이더에 등록
         if (RadarManager.Instance != null)

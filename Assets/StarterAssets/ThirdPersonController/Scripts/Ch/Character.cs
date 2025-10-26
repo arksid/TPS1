@@ -54,17 +54,27 @@ public class Character : MonoBehaviour
     [SerializeField] private float shieldRegenRate = 0.5f; // 초당 회복 속도
     private float lastDamageTime;
 
-    // 버프 효과 플래그
-    [HideInInspector] public bool enableRetaliation;
-    [HideInInspector] public bool enablePredator;
-    [HideInInspector] public bool enableTriggerRush;
-    [HideInInspector] public bool enableAdrenalSurge;
-    [HideInInspector] public bool enableChainReaction;
-    [HideInInspector] public bool enableVengeance;
-    [HideInInspector] public bool enableBulletFever;
-    [HideInInspector] public bool enableColdRage;
-    [HideInInspector] public bool enableSecondWind;
-    [HideInInspector] public bool enableUltCharger;
+    // ===== [조건부 특성용 상태 & 값] =====
+    [Header("Augment (Conditional) Flags & Values")]
+    public bool enablePredator; public float predatorValue;      // HP 50% 이하일 때 공격력 +v
+    public bool enableVengeance; public float vengeanceValue = 0.2f;   // 피격 후 5초 공격력 +v
+    public bool enableTriggerRush; public float triggerRushValue = 0.3f; // 처치 후 3초 이속 +v
+    public bool enableAdrenalSurge; public float adrenalSurgeValue = 0.1f; // 연속 명중 공속 스택
+    public bool enableBulletFever; public float bulletFeverValue = 5f;    // 연속 사격 크확 +v%p
+    public bool enableSecondWind; public int secondWindShield = 50;     // HP 20% 이하 즉시 실드 회복(쿨)
+    public bool enableColdRage; public float coldRageMaxBonus = 30f;   // HP ↓일수록 크확 +X%p(최대)
+
+    private bool _predatorActive;
+    private float _coldRageApplied;       // 현재까지 크확 보정치(가감형)
+    private bool _secondWindOnCooldown;
+
+    private int _hitStreak;               // 연속 명중 카운트(AdrenalSurge, BulletFever 공용)
+    private Coroutine _vengeanceCo, _rushCo, _adrenalDecayCo, _bulletDecayCo;
+
+    public bool enableRetaliation;   // (추후 확장: 피탄 시 반격 등)
+    public bool enableChainReaction; // (추후 확장: 처치 시 폭발 연쇄 등)
+    public bool enableUltCharger;    // (추후 확장: 명중 시 궁극 충전 보조 등)
+
 
 
     // Animator hash 캐싱
@@ -495,6 +505,8 @@ public class Character : MonoBehaviour
         {
             Die();
         }
+        OnPlayerDamaged(intAmount); // 피격 트리거
+
     }
     private bool isDead = false;
 
@@ -543,6 +555,11 @@ public class Character : MonoBehaviour
         {
             Shield += 1;
         }
+        // 기존 실드 재생 로직 아래에 추가
+        HandlePredator();
+        HandleColdRage();
+        HandleSecondWind();
+
     }
     // ===== 재장전 시작 =====
     public void Reload()
@@ -730,4 +747,116 @@ public class Character : MonoBehaviour
         // 레벨업 처리 로직 (경험치 초기화 등)
         AugmentUIManager.Instance.ShowAugmentOptions();
     }
+    // ===== [조건부 특성 실행 로직] =====
+    private StatModifierManager SM => StatModifierManager.Instance;
+
+    public void OnPlayerDamaged(float damageTaken)
+    {
+        if (!enableVengeance || SM == null) return;
+        if (_vengeanceCo != null) StopCoroutine(_vengeanceCo);
+        _vengeanceCo = StartCoroutine(TempDamageBuff(vengeanceValue, 5f)); // 피격 후 5초 데미지+
+    }
+
+    public void OnPlayerHitEnemyHook()
+    {
+        if (enableAdrenalSurge)
+        {
+            _hitStreak++;
+            // 명중할 때마다 공속 +adrenalSurgeValue, 2초간 맞추지 않으면 누적분 회수
+            if (_adrenalDecayCo != null) StopCoroutine(_adrenalDecayCo);
+            SM?.AddFireRateMultiplier(adrenalSurgeValue);
+            _adrenalDecayCo = StartCoroutine(ResetHitStreakAfter(2.0f));
+        }
+
+        if (enableBulletFever)
+        {
+            // 명중할 때마다 크확 +bulletFeverValue(%p), 2초 후 회수
+            if (_bulletDecayCo != null) StopCoroutine(_bulletDecayCo);
+            SM?.AddCriticalChance(bulletFeverValue);
+            _bulletDecayCo = StartCoroutine(RemoveCritAfter(2.0f, bulletFeverValue));
+        }
+    }
+
+    public void OnEnemyKilledHook()
+    {
+        if (enableTriggerRush)
+        {
+            if (_rushCo != null) StopCoroutine(_rushCo);
+            _rushCo = StartCoroutine(TempMoveBuff(triggerRushValue, 3f)); // 처치 후 3초 이속+
+        }
+    }
+
+    void HandlePredator()
+    {
+        if (!enablePredator || SM == null) return;
+        float hpRatio = (MaxHealth > 0) ? (float)Health / MaxHealth : 0f;
+        if (hpRatio <= 0.5f && !_predatorActive)
+        {
+            SM.AddDamageMultiplier(predatorValue);
+            _predatorActive = true;
+        }
+        else if (hpRatio > 0.5f && _predatorActive)
+        {
+            SM.AddDamageMultiplier(-predatorValue);
+            _predatorActive = false;
+        }
+    }
+
+    void HandleColdRage()
+    {
+        if (!enableColdRage || SM == null) return;
+        float hpRatio = (MaxHealth > 0) ? (float)Health / MaxHealth : 0f;
+        float targetBonus = (1f - hpRatio) * coldRageMaxBonus; // 0~max %p
+        float delta = targetBonus - _coldRageApplied;
+        if (Mathf.Abs(delta) > 0.01f)
+        {
+            SM.AddCriticalChance(delta);
+            _coldRageApplied = targetBonus;
+        }
+    }
+
+    void HandleSecondWind()
+    {
+        if (!enableSecondWind || _secondWindOnCooldown) return;
+        float hpRatio = (MaxHealth > 0) ? (float)Health / MaxHealth : 0f;
+        if (hpRatio <= 0.2f)
+            StartCoroutine(SecondWindRoutine());
+    }
+
+    IEnumerator SecondWindRoutine()
+    {
+        _secondWindOnCooldown = true;
+        RestoreShield(secondWindShield);
+        yield return new WaitForSeconds(10f); // 쿨 10초 (원하면 조절)
+        _secondWindOnCooldown = false;
+    }
+
+    IEnumerator TempDamageBuff(float v, float dur)
+    {
+        SM?.AddDamageMultiplier(v);
+        yield return new WaitForSeconds(dur);
+        SM?.AddDamageMultiplier(-v);
+    }
+
+    IEnumerator TempMoveBuff(float v, float dur)
+    {
+        SM?.AddMoveSpeedMultiplier(v);
+        yield return new WaitForSeconds(dur);
+        SM?.AddMoveSpeedMultiplier(-v);
+    }
+
+    IEnumerator ResetHitStreakAfter(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        if (SM != null && _hitStreak > 0)
+            SM.AddFireRateMultiplier(-_hitStreak * adrenalSurgeValue);
+        _hitStreak = 0;
+    }
+
+    IEnumerator RemoveCritAfter(float seconds, float critGain)
+    {
+        yield return new WaitForSeconds(seconds);
+        SM?.AddCriticalChance(-critGain);
+    }
+
 }
