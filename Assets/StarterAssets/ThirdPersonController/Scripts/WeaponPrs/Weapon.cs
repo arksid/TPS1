@@ -145,10 +145,10 @@ public class Weapon : Item
             StopFiring();
             return false;
         }
-
-        float effectiveInterval = UltimateSkill.IsUltimateActive
-            ? _fireRate * UltimateSkill.CurrentFireRateMultiplier
-            : _fireRate;
+        // ✅ 교체 후: 증강 연사배율(크면 더 빨라지도록 "나누기") + 궁극기 배율 반영
+        float rateMul = (StatModifierManager.Instance != null) ? StatModifierManager.Instance.FireRateMultiplier : 1f;
+        float effectiveInterval = (_fireRate / Mathf.Max(rateMul, 0.01f)) *
+                                  (UltimateSkill.IsUltimateActive ? UltimateSkill.CurrentFireRateMultiplier : 1f);
 
         float passedTime = Time.realtimeSinceStartup - _fireTimer;
         bool canShootByAmmo = UltimateSkill.IsUltimateActive || _ammo > 0;
@@ -162,7 +162,14 @@ public class Weapon : Item
 
             var p = UnityEngine.Object.Instantiate(_projectile, spawnPos, Quaternion.identity);
 
-            float shotDamage = _damage * (UltimateSkill.IsUltimateActive ? UltimateSkill.CurrentDamageMultiplier : 1f);
+            // 🔁 교체 전
+            // float shotDamage = _damage * (UltimateSkill.IsUltimateActive ? UltimateSkill.CurrentDamageMultiplier : 1f);
+
+            // ✅ 교체 후: 증강 데미지배율 * 궁극기 배율
+            float dmgMul = (StatModifierManager.Instance != null) ? StatModifierManager.Instance.DamageMultiplier : 1f;
+            float shotDamage = _damage * dmgMul *
+                               (UltimateSkill.IsUltimateActive ? UltimateSkill.CurrentDamageMultiplier : 1f);
+
 
             // ✅ 다시 한 번 안전하게 확인
             if (character != null && !character.Equals(null))
@@ -195,9 +202,14 @@ public class Weapon : Item
             if (!TryShoot(character, getTarget())) break;
 
             // 매 탄 사이 간격도 궁극기 배율 고려(원하면)
-            float interval = UltimateSkill.IsUltimateActive
-                ? _burstInterval * UltimateSkill.CurrentFireRateMultiplier
-                : _burstInterval;
+            // 🔁 교체 전
+            // float interval = UltimateSkill.IsUltimateActive ? _burstInterval * UltimateSkill.CurrentFireRateMultiplier : _burstInterval;
+
+            // ✅ 교체 후
+            float rateMul = (StatModifierManager.Instance != null) ? StatModifierManager.Instance.FireRateMultiplier : 1f;
+            float interval = (_burstInterval / Mathf.Max(rateMul, 0.01f)) *
+                             (UltimateSkill.IsUltimateActive ? UltimateSkill.CurrentFireRateMultiplier : 1f);
+
             yield return new WaitForSeconds(interval);
         }
         _isFiring = false;
@@ -212,9 +224,9 @@ public class Weapon : Item
             if (character == null || character.Equals(null)) yield break; // ✅ 캐릭터 사망 시 종료
 
             TryShoot(character, getTarget());
-            float wait = UltimateSkill.IsUltimateActive
-                ? _fireRate * UltimateSkill.CurrentFireRateMultiplier
-                : _fireRate;
+            float rateMul = (StatModifierManager.Instance != null) ? StatModifierManager.Instance.FireRateMultiplier : 1f;
+            float wait = (_fireRate / Mathf.Max(rateMul, 0.01f)) *
+                         (UltimateSkill.IsUltimateActive ? UltimateSkill.CurrentFireRateMultiplier : 1f);
             yield return new WaitForSeconds(wait);
         }
     }

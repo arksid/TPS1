@@ -292,6 +292,10 @@ namespace StarterAssets
                 _speedAnimationMultiplier = 2;
             }
 
+            // ✅ 추가: 증강 이속배율 반영
+            float moveMul = (StatModifierManager.Instance != null) ? StatModifierManager.Instance.MoveSpeedMultiplier : 1f;
+            targetSpeed *= Mathf.Max(moveMul, 0.01f);
+
             _aimedMovingAnimtionsInput = Vector2.Lerp(
             _aimedMovingAnimtionsInput,
             _input.move.normalized * _speedAnimationMultiplier,

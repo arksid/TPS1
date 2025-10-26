@@ -14,27 +14,29 @@ public class AugmentSystem : MonoBehaviour
         switch (augment.type)
         {
             case AugmentType.Berserker:
-                StatModifierManager.Instance.AddDamageMultiplier(0.2f);
+                StatModifierManager.Instance.AddDamageMultiplier(augment.value); // 0.2f 등 CSV 값 사용
                 break;
 
             case AugmentType.Slayer:
-                StatModifierManager.Instance.AddCriticalChance(15f);
+                // Slayer는 크확 %p 가산 (CSV에 0.15로 넣었다면 ApplyAugment에서 15로 변환하는 로직이 있으면 그걸 쓰세요)
+                StatModifierManager.Instance.AddCriticalChance(augment.value <= 1f ? augment.value * 100f : augment.value);
                 break;
 
             case AugmentType.Overdrive:
-                StatModifierManager.Instance.AddFireRateMultiplier(0.2f);
+                StatModifierManager.Instance.AddFireRateMultiplier(augment.value);
                 break;
 
             case AugmentType.IronSkin:
-                StatModifierManager.Instance.AddMaxShield(50);
+                // ❗ 이전: AddMaxShield(50) → 정식 메서드: AddShield(int)
+                StatModifierManager.Instance.AddShield(Mathf.RoundToInt(augment.value));
                 break;
 
             case AugmentType.Survivor:
-                StatModifierManager.Instance.AddOnKillHeal(10);
+                // ❗ 이전: AddOnKillHeal(10) → 정식 메서드: AddHealOnKill(float)
+                StatModifierManager.Instance.AddHealOnKill(augment.value);
                 break;
 
             case AugmentType.Retaliation:
-                // Character에서 피격 시 RestoreShield(10) 호출하도록 이벤트 연결 필요
                 Character.Instance.enableRetaliation = true;
                 break;
 
@@ -77,28 +79,31 @@ public class AugmentSystem : MonoBehaviour
 
         Debug.Log($"[AugmentSystem] {augment.name} 적용 완료");
     }
+
     public void RemoveAugment(AugmentData augment)
     {
         switch (augment.type)
         {
             case AugmentType.Berserker:
-                StatModifierManager.Instance.AddDamageMultiplier(-0.2f);
+                StatModifierManager.Instance.AddDamageMultiplier(-augment.value);
                 break;
 
             case AugmentType.Slayer:
-                StatModifierManager.Instance.AddCriticalChance(-15f);
+                StatModifierManager.Instance.AddCriticalChance(-(augment.value <= 1f ? augment.value * 100f : augment.value));
                 break;
 
             case AugmentType.Overdrive:
-                StatModifierManager.Instance.AddFireRateMultiplier(-0.2f);
+                StatModifierManager.Instance.AddFireRateMultiplier(-augment.value);
                 break;
 
             case AugmentType.IronSkin:
-                StatModifierManager.Instance.AddMaxShield(-50);
+                // ❗ 이전: AddMaxShield(-50) → 정식 메서드: AddShield(int)
+                StatModifierManager.Instance.AddShield(-Mathf.RoundToInt(augment.value));
                 break;
 
             case AugmentType.Survivor:
-                StatModifierManager.Instance.AddOnKillHeal(-10);
+                // ❗ 이전: AddOnKillHeal(-10) → 정식 메서드: AddHealOnKill(float)
+                StatModifierManager.Instance.AddHealOnKill(-augment.value);
                 break;
 
             case AugmentType.Retaliation:
@@ -144,5 +149,4 @@ public class AugmentSystem : MonoBehaviour
 
         Debug.Log($"[AugmentSystem] {augment.name} 제거 완료");
     }
-
 }
