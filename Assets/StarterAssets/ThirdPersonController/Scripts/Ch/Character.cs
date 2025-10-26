@@ -564,7 +564,7 @@ public class Character : MonoBehaviour
     // ===== 재장전 시작 =====
     public void Reload()
     {
-        if (_weapon != null && !_reloading && _weapon.ammo < _weapon.clipSize && _ammo != null && _ammo.amount > 0)
+        if (_weapon != null && !_reloading && _weapon.ammo < _weapon.GetEffectiveMagazineSize() && _ammo != null && _ammo.amount > 0)
         {
             float reloadDuration = _weapon.reloadDuration;
 
@@ -584,25 +584,38 @@ public class Character : MonoBehaviour
     // ===== 재장전 완료 =====
     public void ReloadFinished()
     {
-        var w = weapon;
-        if (w == null) return;
+        // 1) 방어적 체크
+        if (_weapon == null)
+        {
+            _reloading = false;
+            return;
+        }
+        if (_ammo == null)
+        {
+            _weapon.ShowMagazineMesh();
+            _reloading = false;
+            return;
+        }
 
-        // ✅ 증강 반영된 최대치
-        int magMax = w.GetEffectiveMagazineSize();
+        // 2) 유효 장탄수(증강 반영) 기준으로 채우기 ✅
+        int magMax = _weapon.GetEffectiveMagazineSize();
+        if (_weapon.ammo < magMax && _ammo.amount > 0)
+        {
+            int need = Mathf.Max(0, magMax - _weapon.ammo);
+            int toLoad = Mathf.Min(need, _ammo.amount);
+            _weapon.ammo += toLoad;
+            _ammo.amount -= toLoad;
+        }
 
-        // ⬇ 기존 로직 유지 (예시)
-        int need = Mathf.Max(0, magMax - w.ammo);       // 얼마나 채워야 하나
-        int available = (ammo != null) ? ammo.amount : need;  // 예비탄(or 무한이면 need)
-        int toLoad = Mathf.Min(need, available);
+        // 3) 혹시 모를 넘침 방지(증강 해제 등) ✅
+        _weapon.ClampAmmoToMagazine();
 
-        w.ammo += toLoad;
-        if (ammo != null) ammo.amount -= toLoad;
+        // 4) 원래 하던 마무리(메시 노출/플래그/UI) 그대로 ✅
+        _weapon.ShowMagazineMesh();
+        _reloading = false;
 
-        // (혹시 장탄이 넘쳤다면 안전하게 자르기)
-        w.ClampAmmoToMagazine();
-
-        // ✅ HUD 즉시 갱신
-        CanvasManager.singleton?.UpdateAmmo(w.ammo, ammo?.amount ?? 0);
+        if (CanvasManager.singleton != null)
+            CanvasManager.singleton.UpdateAmmo(_weapon.ammo, _ammo?.amount ?? 0);
     }
 
 
