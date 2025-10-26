@@ -15,6 +15,14 @@ public class StatModifierManager : MonoBehaviour
     public float HealOnKill { get; private set; } = 0f;          // 처치 시 회복량
     public float UltimateOnHitCharge { get; private set; } = 0f; // 명중 시 궁극기 게이지 가산(프로젝트 규약에 맞게 %/고정치)
 
+    // === [추가] 반동/탄 관련 전역 스탯 ===
+    // 반동 배율(1.0이 기본 / 0.8이면 반동 20% 감소)
+    public float RecoilMultiplier { get; private set; } = 1f;
+
+    // 장탄수(탄창 용량) 보너스. +5면 30발 → 35발
+    public int MagazineSizeBonus { get; private set; } = 0;
+
+    // (선택) 예비탄 보너스도 원하면 사용: public int ReserveAmmoBonus { get; private set; } = 0;
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -174,7 +182,21 @@ public class StatModifierManager : MonoBehaviour
     // Survivor용: 처치 시 회복량(누적) — 기존 AddHealOnKill과 동일 동작
     public void AddOnKillHeal(int amount) { AddHealOnKill(amount); }
     public void AddOnKillHeal(float amount) { AddHealOnKill(amount); }
+    public void AddRecoilReduction(float percent)
+    {
+        // percent: 0.2f → 반동 20% 감소
+        // RecoilMultiplier = 1 - percent 누적 (하한 0.2)
+        float newMul = RecoilMultiplier * Mathf.Clamp01(1f - percent);
+        RecoilMultiplier = Mathf.Max(newMul, 0.2f);
+        Debug.Log($"[StatMod] RecoilMultiplier = {RecoilMultiplier:0.00} (↓{percent * 100f:0}% 적용)");
+    }
 
+    public void AddMagazineSizeBonus(int amount)
+    {
+        MagazineSizeBonus += amount;
+        if (MagazineSizeBonus < 0) MagazineSizeBonus = 0;
+        Debug.Log($"[StatMod] MagazineSizeBonus = +{MagazineSizeBonus}");
+    }
     // ─────────────────────────────────────────────────────────────
     // 리셋 (디버그용)
     // ─────────────────────────────────────────────────────────────
@@ -185,7 +207,8 @@ public class StatModifierManager : MonoBehaviour
         MoveSpeedMultiplier = 1f;
         HealOnKill = 0f;
         UltimateOnHitCharge = 0f;
-
+        RecoilMultiplier = 1f;
+        MagazineSizeBonus = 0;
         // 캐릭터 측 수치도 초기화할지 여부는 프로젝트 정책에 따름
         var ch = Character.Instance ?? FindObjectOfType<Character>();
         if (ch != null)

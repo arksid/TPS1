@@ -69,5 +69,7 @@ public enum AugmentType
     BulletFever,
     ColdRage,
     SecondWind,
-    UltCharger
+    UltCharger,
+    RecoilTamer,     // 반동 감소(퍼센트)
+    ExtendedMag   // 장탄수(탄창 용량) +정수
 }

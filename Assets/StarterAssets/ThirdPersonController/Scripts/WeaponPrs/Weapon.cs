@@ -180,8 +180,10 @@ public class Weapon : Item
 
             _flash?.Play();
 
-            recoilY += verticalRecoil;
-            recoilX += UnityEngine.Random.Range(-horizontalRecoil, horizontalRecoil);
+            // ✅ 교체 후 (반동배율 곱하기)
+            float recoilMul = (StatModifierManager.Instance != null) ? StatModifierManager.Instance.RecoilMultiplier : 1f;
+            recoilY += verticalRecoil * recoilMul;
+            recoilX += UnityEngine.Random.Range(-horizontalRecoil, horizontalRecoil) * recoilMul;
 
             EjectCasing();
 
@@ -193,7 +195,17 @@ public class Weapon : Item
         return false;
     }
 
-
+    // ✅ 교체 후 (public + 올바른 변수명)
+    public int GetEffectiveMagazineSize()
+    {
+        int baseMag = _clipSize; // 기본 장탄수
+        int bonus = (StatModifierManager.Instance != null) ? StatModifierManager.Instance.MagazineSizeBonus : 0;
+        return Mathf.Max(1, baseMag + bonus);
+    }
+    public void ClampAmmoToMagazine()
+    {
+        ammo = Mathf.Min(ammo, GetEffectiveMagazineSize());
+    }
     private IEnumerator FireBurst(Character character, Func<Vector3> getTarget)
     {
         for (int i = 0; i < _burstCount; i++)
@@ -338,8 +350,9 @@ public class Weapon : Item
     // ✅ 반동 감소용 함수
     public void ApplyRecoilMultiplier(float multiplier)
     {
-        recoilX *= multiplier;
-        recoilY *= multiplier;
+        float recoilMul = (StatModifierManager.Instance != null) ? StatModifierManager.Instance.RecoilMultiplier : 1f;
+        recoilX *= recoilMul;
+        recoilY *= recoilMul;
     }
     public void HideMagazineMesh() { if (magazineMesh != null) magazineMesh.SetActive(false); }
     public void ShowMagazineMesh() { if (magazineMesh != null) magazineMesh.SetActive(true); }

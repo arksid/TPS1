@@ -584,24 +584,27 @@ public class Character : MonoBehaviour
     // ===== 재장전 완료 =====
     public void ReloadFinished()
     {
-        if (_weapon != null && _weapon.ammo < _weapon.clipSize && _ammo != null && _ammo.amount > 0)
-        {
-            int amount = Mathf.Min(_weapon.clipSize - _weapon.ammo, _ammo.amount);
-            _ammo.amount -= amount;
-            _weapon.ammo += amount;
-        }
+        var w = weapon;
+        if (w == null) return;
 
-        // 무기 기본 탄창 다시 켜기
-        _weapon?.ShowMagazineMesh();
+        // ✅ 증강 반영된 최대치
+        int magMax = w.GetEffectiveMagazineSize();
 
-        _reloading = false;
+        // ⬇ 기존 로직 유지 (예시)
+        int need = Mathf.Max(0, magMax - w.ammo);       // 얼마나 채워야 하나
+        int available = (ammo != null) ? ammo.amount : need;  // 예비탄(or 무한이면 need)
+        int toLoad = Mathf.Min(need, available);
 
-        if (CanvasManager.singleton != null)
-        {
-            CanvasManager.singleton.UpdateAmmo(_weapon.ammo, _ammo?.amount ?? 0);
-            CanvasManager.singleton.StopReloadUI(); // 재장전 UI 종료
-        }
+        w.ammo += toLoad;
+        if (ammo != null) ammo.amount -= toLoad;
+
+        // (혹시 장탄이 넘쳤다면 안전하게 자르기)
+        w.ClampAmmoToMagazine();
+
+        // ✅ HUD 즉시 갱신
+        CanvasManager.singleton?.UpdateAmmo(w.ammo, ammo?.amount ?? 0);
     }
+
 
     public void HolsterFinished() => _switchingWeapon = false;
     public void EquipFinished() => _switchingWeapon = false;

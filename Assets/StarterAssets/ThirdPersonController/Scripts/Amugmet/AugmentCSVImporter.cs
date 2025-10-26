@@ -179,21 +179,29 @@ public class AugmentCSVImporter : EditorWindow
 
         // 아래 타입 이름들은 AugmentData.cs의 AugmentType과 반드시 일치해야 합니다.
         // (당신 프로젝트에 실제로 들어있는 enum 값 사용)
+
+        // --- 기본 전투/방어 증강들 ---
         sb.AppendLine("\"Berserker\",\"공격력이 20% 증가\",Rare,Offense,Berserker,0.2,false");
         sb.AppendLine("\"Slayer\",\"크리티컬 확률 +15%\",Rare,Offense,Slayer,0.15,false");
         sb.AppendLine("\"Overdrive\",\"발사 속도 +20%\",Rare,Offense,Overdrive,0.2,false");
         sb.AppendLine("\"IronSkin\",\"최대 실드 +50\",Common,Defense,IronSkin,50,false");
         sb.AppendLine("\"Survivor\",\"처치 시 체력 10 회복\",Common,Defense,Survivor,10,true");
         sb.AppendLine("\"Retaliation\",\"피격 시 실드 10 회복\",Rare,Defense,Retaliation,10,false");
+
+        // --- 조건부/상태 기반 증강들 ---
         sb.AppendLine("\"Predator\",\"체력 50% 이하일 때 공격력 +25%\",Epic,Offense,Predator,0.25,false");
         sb.AppendLine("\"TriggerRush\",\"처치 시 3초간 이속 +30%\",Epic,Movement,TriggerRush,0.3,false");
         sb.AppendLine("\"AdrenalSurge\",\"연속 명중 시 공속 증가(스택)\",Epic,Offense,AdrenalSurge,0.15,true");
         sb.AppendLine("\"ChainReaction\",\"처치 시 폭발 효과\",Legendary,Offense,ChainReaction,1,false");
         sb.AppendLine("\"Vengeance\",\"피격 후 5초간 공격력 +20%\",Epic,Offense,Vengeance,0.2,false");
-        sb.AppendLine("\"BulletFever\",\"연속 사격 시 크리티컬 상승\",Legendary,Offense,BulletFever,0.05,true");
-        sb.AppendLine("\"ColdRage\",\"체력 낮을수록 크리티컬 증가\",Legendary,Offense,ColdRage,0.3,false");
+        sb.AppendLine("\"BulletFever\",\"연속 사격 시 크리티컬 상승(명중당 +5%p, 2초 유지)\",Legendary,Offense,BulletFever,0.05,true");
+        sb.AppendLine("\"ColdRage\",\"체력이 낮을수록 크리티컬 증가(최대 +30%p)\",Legendary,Offense,ColdRage,0.3,false");
         sb.AppendLine("\"SecondWind\",\"체력 20% 이하 시 실드 50 자동 회복\",Rare,Defense,SecondWind,50,false");
         sb.AppendLine("\"UltCharger\",\"명중 시 궁극기 게이지 +1%\",Legendary,Utility,UltCharger,1,true");
+
+        // --- ⬇⬇ 추가: 여기서부터 이번에 요청한 2개 ---
+        sb.AppendLine("\"반동제어 모듈\",\"반동을 20% 줄여줍니다.\",Rare,Utility,RecoilTamer,0.2,false");
+        sb.AppendLine("\"확장 탄창\",\"탄창 최대 장탄수가 5 증가합니다.\",Rare,Utility,ExtendedMag,5,false");
 
         File.WriteAllText(csvPath, sb.ToString(), Encoding.UTF8);
         AssetDatabase.Refresh();

@@ -86,6 +86,21 @@ public class AugmentSystem : MonoBehaviour
                 Character.Instance.enableUltCharger = true;
                 // Ult 명중충전량을 augment.value로 쓰고 싶다면 UltimateSkill쪽에서 참조하도록 확장
                 break;
+            // ===== ApplyAugment =====
+            case AugmentType.RecoilTamer:
+                // CSV 값: 0.2 -> 반동 20% 감소
+                StatModifierManager.Instance.AddRecoilReduction(augment.value);
+                break;
+
+            case AugmentType.ExtendedMag:
+                StatModifierManager.Instance.AddMagazineSizeBonus(Mathf.RoundToInt(augment.value));
+                if (Character.Instance?.weapon != null)
+                {
+                    var w = Character.Instance.weapon;
+                    w.ClampAmmoToMagazine(); // 🔑 바로 숫자 맞추기
+                    CanvasManager.singleton?.UpdateAmmo(w.ammo, Character.Instance.ammo?.amount ?? 0); // HUD 즉시 반영
+                }
+                break;
         }
 
         Debug.Log($"[AugmentSystem] {augment.name} 적용 완료");
@@ -140,6 +155,20 @@ public class AugmentSystem : MonoBehaviour
                 break;
             case AugmentType.UltCharger:
                 Character.Instance.enableUltCharger = false;
+                break;
+            case AugmentType.RecoilTamer:
+                // 간단 복원(정확한 역연산이 필요하면 합산-재계산 방식으로 바꿔도 됨)
+                StatModifierManager.Instance.AddRecoilReduction(-augment.value);
+                break;
+
+            case AugmentType.ExtendedMag:
+                StatModifierManager.Instance.AddMagazineSizeBonus(-Mathf.RoundToInt(augment.value));
+                if (Character.Instance?.weapon != null)
+                {
+                    var w = Character.Instance.weapon;
+                    w.ClampAmmoToMagazine(); // 🔑 최대치가 줄었으면 잘라주기
+                    CanvasManager.singleton?.UpdateAmmo(w.ammo, Character.Instance.ammo?.amount ?? 0);
+                }
                 break;
         }
 
