@@ -20,7 +20,6 @@ public class Projectile : MonoBehaviour, ISlowable
     public GameObject shooter;
 
     private float localTimeScale = 1f;
-    // projectile.remainingPenetrations = StatModifierManager.Instance?.ProjectilePenetrationBonus ?? 0;
 
     private void Awake() => Initialize();
 
@@ -34,8 +33,8 @@ public class Projectile : MonoBehaviour, ISlowable
         _rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
         _collider = GetComponent<Collider>() ?? gameObject.AddComponent<SphereCollider>();
-        _collider.isTrigger = false;
-        gameObject.tag = gameObject.tag; // 태그는 프리팹에서 설정
+        _collider.isTrigger = false; // 기본은 충돌형, 부위는 주로 트리거에서 처리
+        // 태그/레이어는 프리팹에서 설정 유지
     }
 
     public void Initialize(Character shooterChar, Vector3 target, float damage)
@@ -43,24 +42,24 @@ public class Projectile : MonoBehaviour, ISlowable
         Initialize();
         _shooter = shooterChar;
 
-        // 치명타 판정
+        // (선택) 치명타 적용 예시: 기존 구조 유지
         float finalDamage = damage;
         if (shooterChar != null && shooterChar.RollCritical())
         {
             finalDamage *= shooterChar.CriticalMultiplier;
-            Debug.Log("💥 치명타 발동! " + finalDamage);
+            Debug.Log($"💥 치명타! {finalDamage}");
         }
 
         _damage = finalDamage;
         transform.LookAt(target);
         _rigidbody.velocity = transform.forward.normalized * _speed;
+
         Destroy(gameObject, 5f);
     }
 
-
     private void Update()
     {
-        // 로컬 타임스케일 반영(궁극기 슬로우)
+        // 궁극기 슬로우 등 로컬 타임스케일 반영
         transform.position += transform.forward * _speed * Time.deltaTime * localTimeScale;
     }
 
@@ -78,9 +77,40 @@ public class Projectile : MonoBehaviour, ISlowable
             Destroy(particle, 1f);
         }
 
+        // =========================
+        // 보스: 부위 라우팅 (DamageablePart만 사용)
+        // =========================
+        var part = collision.collider.GetComponentInParent<DamageablePart>();
+        if (part != null)
+        {
+            part.ApplyDamage(Mathf.RoundToInt(_damage));
+
+            if (HitmarkerManager.instance != null) HitmarkerManager.instance.ShowHitmarker();
+            _shooter?.OnPlayerHitEnemyHook(null);
+            StatModifierManager.Instance?.OnPlayerHitEnemy();
+
+            // 관통 유지
+            if (remainingPenetrations > 0)
+            {
+                remainingPenetrations--;
+                if (_collider != null && collision.collider != null)
+                {
+                    Physics.IgnoreCollision(_collider, collision.collider, true);
+                    StartCoroutine(ReenableCollision(collision.collider, 0.06f));
+                }
+                return; // 계속 날아감
+            }
+
+            Destroy(gameObject);
+            return;
+        }
+        // =========================
+        // 보스(부위) 처리 끝 — 이하 기존 적 처리 유지
+        // =========================
+
         bool hitEnemy = collision.transform.root.CompareTag("Enemy");
 
-        // === 데미지 처리 + 렌드 가중치 ===
+        // === 기존 적 데미지 처리 (구조 유지)
         if (hitEnemy)
         {
             var enemy = collision.transform.root.GetComponent<EnemyController>();
@@ -90,7 +120,7 @@ public class Projectile : MonoBehaviour, ISlowable
 
             float finalDamage = _damage;
 
-            // 🔥 Shooter가 갖고 있는 'Rend' 보너스가 있으면 대상 한정 가중치 적용
+            // (선택) 렌드 보너스 등 기존 보정
             if (enemy != null && _shooter != null)
             {
                 float rendBonus = _shooter.GetRendBonusForEnemy(enemy); // 0~0.2 등
@@ -100,20 +130,17 @@ public class Projectile : MonoBehaviour, ISlowable
             if (enemy != null) enemy.TakeDamage(finalDamage);
             if (suicide != null) suicide.TakeDamage(finalDamage);
 
-            // 히트마커/궁극충전/명중훅
             if (HitmarkerManager.instance != null) HitmarkerManager.instance.ShowHitmarker();
             _shooter?.OnPlayerHitEnemyHook(enemy != null ? enemy : null);
             StatModifierManager.Instance?.OnPlayerHitEnemy();
         }
 
-        // === 관통 분기 ===
+        // === 기존 관통 로직 유지
         bool shouldDestroy = true;
-
         if (hitEnemy && remainingPenetrations > 0)
         {
             remainingPenetrations--;
 
-            // 같은 콜라이더 재충돌 방지(잠깐 무시)
             if (_collider != null && collision.collider != null)
             {
                 Physics.IgnoreCollision(_collider, collision.collider, true);
@@ -127,12 +154,40 @@ public class Projectile : MonoBehaviour, ISlowable
             Destroy(gameObject);
     }
 
+    // ▶ Trigger 히트박스(보스 부위)에 대응
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject == shooter) return;
+
+        if (hitParticlePrefab != null)
+        {
+            var particle = Instantiate(hitParticlePrefab, transform.position, transform.rotation);
+            Destroy(particle, 1f);
+        }
+
+        // 부위
+        var part = other.GetComponentInParent<DamageablePart>();
+        if (part != null)
+        {
+            part.ApplyDamage(Mathf.RoundToInt(_damage));
+
+            if (HitmarkerManager.instance != null) HitmarkerManager.instance.ShowHitmarker();
+            _shooter?.OnPlayerHitEnemyHook(null);
+            StatModifierManager.Instance?.OnPlayerHitEnemy();
+
+            if (remainingPenetrations > 0) { remainingPenetrations--; return; }
+            Destroy(gameObject);
+            return;
+        }
+
+        // (다른 트리거와 충돌 시 특별 처리 필요하면 여기에 추가)
+        // Destroy(gameObject);
+    }
+
     private IEnumerator ReenableCollision(Collider other, float delay)
     {
         yield return new WaitForSeconds(delay);
         if (_collider != null && other != null)
             Physics.IgnoreCollision(_collider, other, false);
     }
-
-
 }

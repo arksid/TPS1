@@ -4,7 +4,9 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 public class UltimateSkill : MonoBehaviour
-{
+{// 클래스 상단 private 필드 추가
+    private Coroutine ultimateUiDrainRoutine;
+
     [Header("궁극기 설정")]
     public float ultimateDuration = 20f;
     [Range(0.05f, 1f)] public float slowFactor = 0.2f;
@@ -49,7 +51,11 @@ public class UltimateSkill : MonoBehaviour
 
         currentGauge = 0f;
         if (CanvasManager.singleton != null)
-            CanvasManager.singleton.UpdateUltimateGauge(0f);
+        {
+            // 궁극기 발동 직후: UI를 "남은 시간" 표시 모드로 100%로 채워놓기
+            CanvasManager.singleton.UpdateUltimateGauge(1f);
+            CanvasManager.singleton.UpdateUltimatePercentByRatio(1f);
+        }
 
         // 🐢 슬로우 적용 (유지)
         foreach (var mb in FindObjectsOfType<MonoBehaviour>(true))
@@ -74,6 +80,25 @@ public class UltimateSkill : MonoBehaviour
 
 
         StartCoroutine(EndUltimate());
+        // ActivateUltimate() 맨 끝, StartCoroutine(EndUltimate()); 바로 위 또는 아래 아무 곳에
+        if (ultimateUiDrainRoutine != null) StopCoroutine(ultimateUiDrainRoutine);
+        ultimateUiDrainRoutine = StartCoroutine(DrainUltimateUi());
+
+    }
+    private IEnumerator DrainUltimateUi()
+    {
+        float elapsed = 0f;
+        while (elapsed < ultimateDuration)
+        {
+            elapsed += Time.deltaTime;
+            float remain = Mathf.Clamp01(1f - (elapsed / ultimateDuration)); // 1 → 0
+            if (CanvasManager.singleton != null)
+            {
+                // ✅ 슬라이더만 갱신 (CanvasManager.UpdateUltimateGauge 내부가 퍼센트까지 처리)
+                CanvasManager.singleton.UpdateUltimateGauge(remain);
+            }
+            yield return null;
+        }
     }
 
     private IEnumerator EndUltimate()
@@ -106,8 +131,18 @@ public class UltimateSkill : MonoBehaviour
             if (volumeRoutine != null) StopCoroutine(volumeRoutine);
             volumeRoutine = StartCoroutine(FadeVolume(0f));
         }
+        if (ultimateUiDrainRoutine != null)
+        {
+            StopCoroutine(ultimateUiDrainRoutine);
+            ultimateUiDrainRoutine = null;
+        }
+        if (CanvasManager.singleton != null)
+        {
+            // 궁극기가 끝나면 남은시간 UI는 0%로 마무리
+            CanvasManager.singleton.UpdateUltimateGauge(0f);
+            CanvasManager.singleton.UpdateUltimatePercentByRatio(0f);
+        }
 
-       
     }
 
     private IEnumerator FadeVolume(float targetWeight)
@@ -136,6 +171,9 @@ public class UltimateSkill : MonoBehaviour
 
     public void AddGauge(float amount)
     {
+        // ⛔ 궁극기 지속 중에는 게이지가 차지 않게 막기
+        if (IsUltimateActive) return;
+
         currentGauge = Mathf.Clamp(currentGauge + amount, 0f, maxGauge);
         if (CanvasManager.singleton != null)
             CanvasManager.singleton.UpdateUltimateGauge(currentGauge / maxGauge);

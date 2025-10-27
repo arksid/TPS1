@@ -1,34 +1,36 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
 
 public class PauseManager : MonoBehaviour
 {
-    [Header("ÇÊ¼ö ¿¬°á")]
-    [Tooltip("Á¤Áö È­¸é¿ë Canvas ¿ÀºêÁ§Æ®(PauseCanvas)")]
+    [Header("í•„ìˆ˜ ì—°ê²°")]
+    [Tooltip("ì •ì§€ í™”ë©´ìš© Canvas ì˜¤ë¸Œì íŠ¸(PauseCanvas)")]
     public GameObject pauseCanvas;
 
-    [Header("¼±ÅÃ ¿¬°á")]
-    [Tooltip("Á¤Áö È­¸é ÄÑÁú ¶§ ¼±ÅÃµÉ ±âº» ¹öÆ°(¾ø¾îµµ µ¿ÀÛÇÔ)")]
+    [Header("ì„ íƒ ì—°ê²°")]
+    [Tooltip("ì •ì§€ í™”ë©´ ì¼œì§ˆ ë•Œ ì„ íƒë  ê¸°ë³¸ ë²„íŠ¼(ì—†ì–´ë„ ë™ì‘í•¨)")]
     public GameObject firstSelected;
 
     private bool isPaused;
 
     void Start()
     {
-        // ½ÃÀÛ ½Ã ²¨µÎ±â(½Ç¼ö·Î ÄÑÁ®ÀÖ´Â °æ¿ì ¹æÁö)
+        // ì‹œì‘ ì‹œ êº¼ë‘ê¸°(ì‹¤ìˆ˜ë¡œ ì¼œì ¸ìˆëŠ” ê²½ìš° ë°©ì§€)
         SetPause(false);
     }
 
     void Update()
     {
-        // ±¸ Input(Old): Edit > Project Settings > Input ManagerÀÇ "Cancel" (±âº»: Esc)
+        // ğŸ”’ ì¦ê°• ì„ íƒì°½ì´ ë–  ìˆìœ¼ë©´ ESC ì…ë ¥ ë¬´ì‹œ
+        if (AugmentUIManager.Instance != null && AugmentUIManager.Instance.IsOpen)
+            return;
+
         if (Input.GetKeyDown(KeyCode.Escape) || Input.GetButtonDown("Cancel"))
         {
             TogglePause();
         }
     }
-
     public void TogglePause()
     {
         SetPause(!isPaused);
@@ -38,29 +40,29 @@ public class PauseManager : MonoBehaviour
     {
         isPaused = pause;
 
-        // UI ÄÑ±â/²ô±â
+        // UI ì¼œê¸°/ë„ê¸°
         if (pauseCanvas != null)
             pauseCanvas.SetActive(isPaused);
 
-        // ½Ã°£ ¸ØÃã/Àç°³
+        // ì‹œê°„ ë©ˆì¶¤/ì¬ê°œ
         Time.timeScale = isPaused ? 0f : 1f;
 
-        // Ä¿¼­ »óÅÂ
+        // ì»¤ì„œ ìƒíƒœ
         Cursor.visible = isPaused;
         Cursor.lockState = isPaused ? CursorLockMode.None : CursorLockMode.Locked;
 
-        // UI ¼±ÅÃ Æ÷Ä¿½º(ÆĞµå/Å°º¸µå ¹æÇâÅ°·Î ¹Ù·Î ¼±ÅÃ °¡´É)
+        // UI ì„ íƒ í¬ì»¤ìŠ¤(íŒ¨ë“œ/í‚¤ë³´ë“œ ë°©í–¥í‚¤ë¡œ ë°”ë¡œ ì„ íƒ ê°€ëŠ¥)
         if (isPaused && firstSelected != null)
         {
             EventSystem.current?.SetSelectedGameObject(null);
             EventSystem.current?.SetSelectedGameObject(firstSelected);
         }
 
-        // ¿Àµğ¿À ÀÏ½ÃÁ¤Áö´Â ÇÊ¿ä ½Ã AudioListener.pause·Îµµ °¡´É
+        // ì˜¤ë””ì˜¤ ì¼ì‹œì •ì§€ëŠ” í•„ìš” ì‹œ AudioListener.pauseë¡œë„ ê°€ëŠ¥
         // AudioListener.pause = isPaused;
     }
 
-    // === UI ¹öÆ°¿¡ ¿¬°áÇÒ ¸Ş¼­µåµé ===
+    // === UI ë²„íŠ¼ì— ì—°ê²°í•  ë©”ì„œë“œë“¤ ===
     public void OnClickResume()
     {
         SetPause(false);
@@ -68,7 +70,7 @@ public class PauseManager : MonoBehaviour
 
     public void OnClickRestart()
     {
-        // Àç°³ ÈÄ ¾À ´Ù½Ã ·Îµå
+        // ì¬ê°œ í›„ ì”¬ ë‹¤ì‹œ ë¡œë“œ
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }

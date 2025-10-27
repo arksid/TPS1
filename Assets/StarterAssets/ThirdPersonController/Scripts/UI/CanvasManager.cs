@@ -47,6 +47,15 @@ public class CanvasManager : MonoBehaviour
     [Header("Ultimate")]
     [SerializeField] private UnityEngine.UI.Image ultimateOverlay;
     [SerializeField] private UnityEngine.UI.Slider ultimateGaugeSlider;
+
+    [SerializeField] private TMPro.TMP_Text ultimatePercentText;
+    private Coroutine ultimatePercentAnimRoutine;
+    private int lastUltimatePercent = 0; // 현재 표시 중인 퍼센트 캐시
+                                         // ▼ Ultimate 섹션 근처에 추가
+    [SerializeField] private float percentAnimDuration = 0.15f; // 숫자 튀김 속도
+    [SerializeField] private float percentPopScale = 1.15f;  // 최대 팝 배율
+    private Vector3 ultimatePercentBaseScale = Vector3.one;     // 원래 스케일 기억
+
     private void Awake()
     {
         if (singleton != null && singleton != this)
@@ -55,7 +64,12 @@ public class CanvasManager : MonoBehaviour
             return;
         }
         singleton = this;
+
+        // ▼ 퍼센트 텍스트의 원래 스케일을 한 번만 기록 (누적 커짐 방지 핵심)
+        if (ultimatePercentText != null)
+            ultimatePercentBaseScale = ultimatePercentText.rectTransform.localScale;
     }
+
     private void Update()
     {
         // EXP 게이지 부드럽게 이동
@@ -351,9 +365,60 @@ public void UpdateShield(int current, int max)
     public void UpdateUltimateGauge(float ratio)
     {
         if (ultimateGaugeSlider != null)
-        {
             ultimateGaugeSlider.value = ratio;
+
+        // ⬇️ 퍼센트 텍스트도 함께 갱신
+        UpdateUltimatePercentByRatio(ratio);
+    }
+
+    public void UpdateUltimatePercentByRatio(float ratio01)
+    {
+        int target = Mathf.Clamp(Mathf.RoundToInt(ratio01 * 100f), 0, 100);
+        if (ultimatePercentText == null) return;
+
+        // ▼ 같은 수치면 코루틴 재시작 금지 (깜빡임/누적 방지)
+        if (target == lastUltimatePercent) return;
+
+        if (ultimatePercentAnimRoutine != null)
+            StopCoroutine(ultimatePercentAnimRoutine);
+
+        ultimatePercentAnimRoutine = StartCoroutine(AnimateUltimatePercent(target));
+    }
+
+    private IEnumerator AnimateUltimatePercent(int target)
+    {
+        int start = lastUltimatePercent;
+        float t = 0f;
+        var rt = ultimatePercentText.rectTransform;
+
+        // ▼ 항상 원래 스케일에서 시작 (누적 커짐 방지 핵심)
+        rt.localScale = ultimatePercentBaseScale;
+
+        while (t < percentAnimDuration)
+        {
+            t += Time.unscaledDeltaTime; // 게임이 느려져도 UI는 부드럽게
+            float p = Mathf.Clamp01(t / percentAnimDuration);
+
+            // 숫자 보간
+            int val = Mathf.RoundToInt(Mathf.Lerp(start, target, p));
+            ultimatePercentText.text = $"{val}%";
+
+            // 0→1→0으로 튕기는 팝 (부드러운 사이클)
+            float pulse = Mathf.Sin(p * Mathf.PI); // 0~1~0
+            rt.localScale = Vector3.Lerp(
+                ultimatePercentBaseScale,
+                ultimatePercentBaseScale * percentPopScale,
+                pulse
+            );
+
+            yield return null;
         }
+
+        // 종료 정리
+        ultimatePercentText.text = $"{target}%";
+        rt.localScale = ultimatePercentBaseScale;
+        lastUltimatePercent = target;
+        ultimatePercentAnimRoutine = null;
     }
 
 }

@@ -100,9 +100,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _speed: 100
-  _defaultImpact: {fileID: 0}
   hitParticlePrefab: {fileID: 4939264631899453584, guid: 3a32062c8b2a8724eb66be00a4cb0ecf,
     type: 3}
+  remainingPenetrations: 0
   shooter: {fileID: 0}
 --- !u!65 &5755938034613559080
 BoxCollider:

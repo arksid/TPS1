@@ -16,6 +16,8 @@ public class AugmentUIManager : MonoBehaviour
     public List<AugmentData> allAugments = new List<AugmentData>();
 
     private List<AugmentData> currentChoices = new List<AugmentData>();
+    // 클래스 안 어딘가에 추가
+    public bool IsOpen => augmentPanel != null && augmentPanel.activeSelf;
 
     private void Awake()
     {
@@ -137,4 +139,18 @@ public class AugmentUIManager : MonoBehaviour
         Cursor.visible = false;
         Debug.Log($"[AugmentUIManager] {data.augmentName} 선택됨");
     }
+    // AugmentUIManager 안에 추가
+    void LateUpdate()
+    {
+        if (IsOpen)
+        {
+            // 증강 UI가 열려 있으면 항상 'UI 모드' 강제
+            if (Cursor.lockState != CursorLockMode.None) Cursor.lockState = CursorLockMode.None;
+            if (!Cursor.visible) Cursor.visible = true;
+
+            Time.timeScale = 0f;   // 혹시 다른 곳에서 건드려도 유지
+            Weapon.IsPaused = true;
+        }
+    }
+
 }
