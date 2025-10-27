@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public class AugmentUIManager : MonoBehaviour
 {
     public static AugmentUIManager Instance;
-
+    [SerializeField] private GameObject augmentRoot;
     [Header("UI References")]
     public GameObject augmentPanel;
     public Transform optionParent;
@@ -70,6 +70,7 @@ public class AugmentUIManager : MonoBehaviour
         return pool[Random.Range(0, pool.Count)];
     }
 
+    // AugmentUIManager.cs (일부)
     public void ShowAugmentOptions()
     {
         Time.timeScale = 0f;
@@ -108,8 +109,12 @@ public class AugmentUIManager : MonoBehaviour
             buttonObj.GetComponent<Button>().onClick.AddListener(() => OnAugmentSelected(picked));
         }
 
+        // ✅ 여기 추가! (장식 그래픽들 Icon/bg의 Raycast 차단을 꺼줌)
+        UIRaycastUtil.MakeDecorationsNonBlocking(augmentPanel.transform);
+
         augmentPanel.SetActive(true);
     }
+
 
     private void OnAugmentSelected(AugmentData data)
     {
