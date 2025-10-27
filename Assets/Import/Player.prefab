@@ -10793,6 +10793,8 @@ GameObject:
   - component: {fileID: 2788985269852177403}
   - component: {fileID: 5797133863652098141}
   - component: {fileID: 7236434682075289890}
+  - component: {fileID: 1222928029814061752}
+  - component: {fileID: 6062892704744679991}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -10808,8 +10810,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8900757794806520401}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.01, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -11130,10 +11132,11 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 3241880604189725250}
   _weaponHolder: {fileID: 1618782977694345367}
+  _maxHealth: 200
   _health: 200
-  MaxHealth: 200
   weaponHolder: {fileID: 1618782977694345367}
   rigManager: {fileID: 6539913155123829215}
+  ragdollController: {fileID: 2788985269852177403}
   weaponSlots:
   - {fileID: 0}
   - {fileID: 0}
@@ -11143,6 +11146,41 @@ MonoBehaviour:
   slot1WeaponPrefab: {fileID: 0}
   slot2WeaponPrefab: {fileID: 0}
   slot3WeaponPrefab: {fileID: 0}
+  onKillHealAmount: 0
+  moveSpeed: 5
+  autoReloadOnKill: 0
+  extraLootRate: 0
+  _maxShield: 100
+  _shield: 0
+  shieldRegenDelay: 5
+  shieldRegenRate: 0.5
+  enablePredator: 0
+  predatorValue: 0
+  enableVengeance: 0
+  vengeanceValue: 0.2
+  enableTriggerRush: 0
+  triggerRushValue: 0.3
+  enableAdrenalSurge: 0
+  adrenalSurgeValue: 0.1
+  enableBulletFever: 0
+  bulletFeverValue: 5
+  enableSecondWind: 0
+  secondWindShield: 50
+  enableColdRage: 0
+  coldRageMaxBonus: 30
+  enableRetaliation: 0
+  enableChainReaction: 0
+  enableUltCharger: 0
+  enableQuickReload: 0
+  enableGearUp: 0
+  enableOverheat: 0
+  enableRend: 0
+  criticalChance: 0
+  criticalMultiplier: 2
+  outline: {fileID: 6062892704744679991}
+  outlineOffOnStart: 1
+  slowAuraActive: 0
+  slowAuraValue: 0
 --- !u!114 &7236434682075289890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11155,7 +11193,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 699c330fa6bc6c9409e6bd44b345e96a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ultimateDuration: 20
+  ultimateDuration: 10
   slowFactor: 0.2
   damageMultiplier: 2
   fireRateMultiplier: 0.5
@@ -11164,6 +11202,40 @@ MonoBehaviour:
   gaugePerHit: 5
   ultimateVolume: {fileID: 0}
   volumeFadeSpeed: 2
+--- !u!114 &1222928029814061752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8900757794806520401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83ea92988fc4bf84da9b77070b4d17e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentLevel: 1
+  currentExp: 0
+  expToNextLevel: 100
+  levelExpMultiplier: 1.25
+--- !u!114 &6062892704744679991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8900757794806520401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 0
+  outlineColor: {r: 1, g: 0.96862745, b: 0.41960785, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &8905023219220929781
 GameObject:
   m_ObjectHideFlags: 0
