@@ -112,7 +112,9 @@ public class Character : MonoBehaviour
 
     [SerializeField] private float criticalChance = 0f;  // 퍼센트 (0~100)
     [SerializeField] private float criticalMultiplier = 2f;
-
+    // Character.cs (필드 영역 어딘가)
+    [SerializeField] private Outline outline;  // QuickOutline 컴포넌트
+    [SerializeField] private bool outlineOffOnStart = true; // 시작 시 아웃라인 끄기 옵션
     public float CurrentSpeed { get; private set; }
     public int MaxHealth
     {
@@ -182,8 +184,10 @@ public class Character : MonoBehaviour
             return;
         }
         Instance = this;
-       
-        // 테스트용 초기 탄약
+        if (outline == null) outline = GetComponentInChildren<Outline>(true);
+
+        // 시작 상태 안전: 무적 해제
+        isInvincible = false;
         Initialized(new Dictionary<string, int>
     {
         { "9mm", 1000 }
@@ -207,6 +211,9 @@ public class Character : MonoBehaviour
         Health = MaxHealth;
         if (CanvasManager.singleton != null)
             CanvasManager.singleton.UpdateHealth(Health, MaxHealth);
+        // 시작 프레임에 아웃라인 강제 OFF
+        if (outlineOffOnStart && outline != null && outline.enabled)
+            outline.enabled = false;
     }
     public void Heal(float amount)
     {
@@ -219,7 +226,11 @@ public class Character : MonoBehaviour
         Shield = Mathf.Min(Shield + amount, MaxShield);
         Debug.Log($"[Character] 실드 {amount} 회복 → 현재 실드 {Shield}");
     }
-
+    public void SetInvincible(bool on)
+    {
+        isInvincible = on;
+        if (outline != null) outline.enabled = on;  // ✅ QuickOutline ON/OFF
+    }
     public void RefreshStats()
     {
         Health = Mathf.Clamp(Health, 0, MaxHealth);
@@ -507,9 +518,18 @@ public class Character : MonoBehaviour
     }
 
     // ===== 데미지 처리 =====
+    // Character.cs
     public void ApplyDamage(GameObject attacker, Transform hitTransform, float amount)
     {
+        // ✅ 무적이면 데미지 무시
+        if (isInvincible)
+        {
+            Debug.Log("[Character] 무적 상태: 데미지 무시");
+            return;
+        }
+
         lastDamageTime = Time.time;
+
         int intAmount = Mathf.RoundToInt(amount);
 
         if (Shield > 0)
@@ -524,17 +544,9 @@ public class Character : MonoBehaviour
             Health -= intAmount;
         }
 
-        // UI 갱신
         CanvasManager.singleton?.UpdateHealth(Health, MaxHealth);
-        Debug.Log($"[Character] 데미지 {intAmount} 받음 (공격자:{attacker?.name ?? "알 수 없음"}) 남은 체력:{Health}");
-
-        // 💀 체력이 0 이하일 경우 사망 처리
-        if (Health <= 0)
-        {
-            Die();
-        }
-        OnPlayerDamaged(intAmount); // 피격 트리거
-
+        if (Health <= 0) Die();
+        OnPlayerDamaged(intAmount);
     }
     private bool isDead = false;
 

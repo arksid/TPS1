@@ -3368,9 +3368,34 @@ MonoBehaviour:
   missilePrefab: {fileID: 1592024424479722, guid: 49170ab6903b73d4fb29b7f3bac970db,
     type: 3}
   player: {fileID: 1569135809324026711}
-  salvoInterval: 5
-  podInterval: 0.15
-  enragedSalvoMul: 0.6
+  autoStartOnEnable: 1
+  maxActiveMissiles: 12
+  spawnForwardOffset: 0.6
+  currentPattern: 0
+  patternDuration: 6
+  loopPatterns: 1
+  aimed_salvos: 2
+  aimed_perSalvo: 4
+  aimed_betweenShots: 0.25
+  aimed_betweenSalvos: 2.5
+  sweep_rows: 3
+  sweep_perRow: 6
+  sweep_betweenShots: 0.18
+  sweep_betweenRows: 1.2
+  sweep_yawAmplitude: 20
+  sweep_homingDelay: 0.35
+  rain_count: 10
+  rain_height: 12
+  rain_spreadRadius: 6
+  rain_betweenShots: 0.08
+  rain_homingDelay: 0.5
+  pincer_salvos: 3
+  pincer_betweenShots: 0.22
+  pincer_homingDelay: 0.25
+  enraged: 0
+  enragedTempoMul: 1.25
+  enragedExtraShots: 1
+  enableLogging: 0
 --- !u!1 &701459967
 GameObject:
   m_ObjectHideFlags: 0
@@ -5631,9 +5656,34 @@ MonoBehaviour:
   missilePrefab: {fileID: 1592024424479722, guid: 49170ab6903b73d4fb29b7f3bac970db,
     type: 3}
   player: {fileID: 1569135809324026711}
-  salvoInterval: 5
-  podInterval: 0.15
-  enragedSalvoMul: 0.6
+  autoStartOnEnable: 1
+  maxActiveMissiles: 12
+  spawnForwardOffset: 0.6
+  currentPattern: 0
+  patternDuration: 6
+  loopPatterns: 1
+  aimed_salvos: 2
+  aimed_perSalvo: 4
+  aimed_betweenShots: 0.25
+  aimed_betweenSalvos: 2.5
+  sweep_rows: 3
+  sweep_perRow: 6
+  sweep_betweenShots: 0.18
+  sweep_betweenRows: 1.2
+  sweep_yawAmplitude: 20
+  sweep_homingDelay: 0.35
+  rain_count: 10
+  rain_height: 12
+  rain_spreadRadius: 6
+  rain_betweenShots: 0.08
+  rain_homingDelay: 0.5
+  pincer_salvos: 3
+  pincer_betweenShots: 0.22
+  pincer_homingDelay: 0.25
+  enraged: 0
+  enragedTempoMul: 1.25
+  enragedExtraShots: 1
+  enableLogging: 0
 --- !u!1 &1230994121
 GameObject:
   m_ObjectHideFlags: 0
@@ -7800,6 +7850,7 @@ GameObject:
   - component: {fileID: 1642324897}
   - component: {fileID: 1642324898}
   - component: {fileID: 1642324899}
+  - component: {fileID: 1642324900}
   m_Layer: 0
   m_Name: BossRoot
   m_TagString: Untagged
@@ -7878,6 +7929,27 @@ MonoBehaviour:
   target: {fileID: 0}
   turnSpeedDegPerSec: 360
   lockPitch: 1
+--- !u!114 &1642324900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642324895}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39b6e09abc66e694f808a47bfdfc108b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  missileWeapon: {fileID: 0}
+  boss: {fileID: 1642324897}
+  phase2Threshold: 0.7
+  phase3Threshold: 0.4
+  minPatternHoldSeconds: 4
+  controllerDrivesPatterns: 1
+  enableEnrageOnPhase3: 1
+  disableLoopOnController: 1
+  enableLogging: 1
 --- !u!1 &1664100943
 GameObject:
   m_ObjectHideFlags: 0
@@ -11380,6 +11452,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8345f37744f58943b902b057d3a5809, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1569135809324026729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1910897871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 0
+  outlineColor: {r: 1, g: 0.96862745, b: 0.41960785, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!114 &1616631841561200060
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12425,6 +12515,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5797133863652098141, guid: da592e4107fbb2145ade0d7b534aefe7,
         type: 3}
+      propertyPath: outline
+      value: 
+      objectReference: {fileID: 1569135809324026729}
+    - target: {fileID: 5797133863652098141, guid: da592e4107fbb2145ade0d7b534aefe7,
+        type: 3}
       propertyPath: _maxHealth
       value: 200
       objectReference: {fileID: 0}
@@ -12556,6 +12651,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1569135809324026716}
+    - targetCorrespondingSourceObject: {fileID: 8900757794806520401, guid: da592e4107fbb2145ade0d7b534aefe7,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1569135809324026729}
   m_SourcePrefab: {fileID: 100100000, guid: da592e4107fbb2145ade0d7b534aefe7, type: 3}
 --- !u!1 &3085209655375800776
 GameObject:

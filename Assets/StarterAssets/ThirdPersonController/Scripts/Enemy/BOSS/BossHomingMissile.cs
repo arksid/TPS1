@@ -13,20 +13,24 @@ public class BossHomingMissile : MonoBehaviour
     public float accel = 12f;
     public float maxSpeed = 22f;
     public float startSpeed = 8f;
-    public float lifeTime = 12f;             // 발사체 수명(무기에서 보정 가능)
+    public float lifeTime = 12f;
 
-    [Header("Arming / Spawn Safe")]
-    public float spawnForwardOffset = 0.2f;  // 스폰 위치 전방 보정
+    [Header("Spawn Safe")]
+    public float spawnForwardOffset = 0.2f;  // 스폰 위치 보정
     public float armingDelay = 0.12f;        // 스폰 직후 충돌 무시
 
+    [Header("Homing Delay")]
+    [Tooltip("이 시간이 지난 뒤부터 유도 시작(지연 유도). 0이면 즉시 유도.")]
+    public float homingDelay = 0f;
+
     [Header("Fuse / Explosion")]
-    public float proximityFuse = 1.4f;       // 목표 근접 시 자동 기폭 거리
+    public float proximityFuse = 1.4f;       // 근접 신관
     public float explosionRadius = 3.5f;
     public float damage = 45f;
-    public bool damageFalloff = true;        // 중심 세게, 바깥 약하게
+    public bool damageFalloff = true;
 
     [Header("Collision")]
-    public LayerMask hitMask = ~0;           // 데미지 줄 대상(플레이어 레이어 포함)
+    public LayerMask hitMask = ~0;
     public QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Collide;
 
     [Header("FX (optional)")]
@@ -37,16 +41,17 @@ public class BossHomingMissile : MonoBehaviour
     [Header("Debug")]
     public bool enableLogging = false;
 
-    // 무기에서 활성 수 관리를 위한 콜백
     public Action onDestroyed;
 
     private Rigidbody rb;
     private Collider col;
     private float currentSpeed;
     private float armedAt;
+    private float homingStartAt;
     private bool detonated;
 
     private bool IsArmed => Time.time >= armedAt;
+    private bool CanHome => Time.time >= homingStartAt;
 
     void Awake()
     {
@@ -62,18 +67,17 @@ public class BossHomingMissile : MonoBehaviour
         detonated = false;
         currentSpeed = startSpeed;
         armedAt = Time.time + armingDelay;
+        homingStartAt = Time.time + Mathf.Max(0f, homingDelay);
 
         CancelInvoke();
         Invoke(nameof(SelfDestructTimeout), lifeTime);
 
-        // 소유자 충돌 무시
         if (owner != null && col != null)
         {
             foreach (var oc in owner.GetComponentsInChildren<Collider>())
                 if (oc && oc.enabled) Physics.IgnoreCollision(col, oc, true);
         }
 
-        // 기본 타깃 자동
         if (target == null && Character.Instance != null)
             target = Character.Instance.transform;
     }
@@ -83,16 +87,15 @@ public class BossHomingMissile : MonoBehaviour
         this.owner = owner;
         if (targetOverride != null) target = targetOverride;
 
-        // 스폰 위치 전방 보정
         transform.position += transform.forward * spawnForwardOffset;
-
         currentSpeed = startSpeed;
         rb.velocity = transform.forward * currentSpeed;
     }
 
     void FixedUpdate()
     {
-        if (target != null)
+        // 유도 (지연 전에는 직진 유지)
+        if (target != null && CanHome)
         {
             Vector3 aimPoint = target.position + Vector3.up * aimOffsetY;
             Vector3 desiredDir = (aimPoint - transform.position).normalized;
@@ -102,6 +105,7 @@ public class BossHomingMissile : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(newDir);
         }
 
+        // 가속
         currentSpeed = Mathf.Min(maxSpeed, currentSpeed + accel * Time.fixedDeltaTime);
         rb.velocity = transform.forward * currentSpeed;
 
@@ -120,11 +124,7 @@ public class BossHomingMissile : MonoBehaviour
     void OnCollisionEnter(Collision c)
     {
         if (!IsArmed || detonated) return;
-
-        // 소유자/자식 무시
         if (owner != null && (c.transform == owner || c.transform.IsChildOf(owner))) return;
-
-        // 데미지 대상 레이어만 반응
         if (((1 << c.gameObject.layer) & hitMask) == 0) return;
 
         Vector3 p = (c.contacts.Length > 0) ? c.contacts[0].point : transform.position;
@@ -137,14 +137,12 @@ public class BossHomingMissile : MonoBehaviour
         if (detonated) return;
         detonated = true;
 
-        // 폭발 FX
         if (explosionFx != null)
         {
             var fx = Instantiate(explosionFx, pos, Quaternion.LookRotation(normal));
             Destroy(fx, explosionFxLife);
         }
 
-        // 반경 데미지(플레이어 기준)
         if (Character.Instance != null)
         {
             float dist = Vector3.Distance(pos, Character.Instance.transform.position);
@@ -153,7 +151,7 @@ public class BossHomingMissile : MonoBehaviour
                 float final = damage;
                 if (damageFalloff)
                 {
-                    float t = Mathf.Clamp01(dist / explosionRadius); // 0=중심,1=경계
+                    float t = Mathf.Clamp01(dist / explosionRadius);
                     final = Mathf.Lerp(damage, damage * 0.25f, t);
                 }
                 Character.Instance.ApplyDamage(gameObject, Character.Instance.transform, final);

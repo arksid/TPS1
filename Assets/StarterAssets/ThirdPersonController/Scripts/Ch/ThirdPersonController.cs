@@ -72,7 +72,7 @@ namespace StarterAssets
         public float RollCooldown = 1f;
         public float RollDuration = 0.6f;
         public float RollSpeed = 6f;
-
+        private Coroutine _invincibleCo;
         private int rollHash;
         private bool _isInvincible = false;
         public float InvincibleDuration = 0.4f;
@@ -560,9 +560,9 @@ namespace StarterAssets
             _character.weapon?.StopFiring();
             _input.shoot = false;
 
+            // 굴러갈 방향 계산 (기존 코드 그대로)
             Vector2 moveInput = _input.move;
             Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y);
-
             Vector3 rollDirection;
             if (inputDirection.sqrMagnitude < 0.01f)
             {
@@ -574,7 +574,6 @@ namespace StarterAssets
                 Vector3 camForward = Quaternion.Euler(0, cameraY, 0) * Vector3.forward;
                 Vector3 camRight = Quaternion.Euler(0, cameraY, 0) * Vector3.right;
                 rollDirection = (camForward * moveInput.y + camRight * moveInput.x).normalized;
-
                 transform.rotation = Quaternion.LookRotation(rollDirection);
             }
 
@@ -582,11 +581,11 @@ namespace StarterAssets
             _input.canAim = false;
             CameraManager.singleton.aiming = false;
 
-            _isInvincible = true;
-            _character.isInvincible = true;
-            Invoke(nameof(EndInvincibility), InvincibleDuration);
-
             _animator.SetTrigger(rollHash);
+
+            // ✅ 무적 2초 코루틴 시작(연속 구르기 시 갱신)
+            if (_invincibleCo != null) StopCoroutine(_invincibleCo);
+            _invincibleCo = StartCoroutine(InvincibleForSeconds(2f));
 
             float timer = 0f;
             while (timer < RollDuration)
@@ -599,6 +598,21 @@ namespace StarterAssets
             _isRolling = false;
             _input.canAim = true;
         }
+
+        // ThirdPersonController.cs
+        private IEnumerator InvincibleForSeconds(float seconds)
+        {
+            _isInvincible = true;
+            _character.SetInvincible(true);   // ✅ 아웃라인 ON 포함
+
+            float until = Time.time + Mathf.Max(0.01f, seconds);
+            while (Time.time < until) yield return null;
+
+            _isInvincible = false;
+            _character.SetInvincible(false);  // ✅ 아웃라인 OFF 포함
+            _invincibleCo = null;
+        }
+
 
         private void EndInvincibility()
         {
