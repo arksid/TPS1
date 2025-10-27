@@ -1,5 +1,4 @@
-﻿// EnemyDropSystem.cs
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 
 public class EnemyDropSystem : MonoBehaviour
@@ -13,6 +12,11 @@ public class EnemyDropSystem : MonoBehaviour
     [Header("🧰 힐팩 / 탄약 프리팹")]
     public GameObject healPackPrefab;
     public GameObject ammoPackPrefab;
+
+    [Header("⏱ 자동 삭제 설정")]
+    public float itemLifeTimeSeconds = 30f;
+    public float warnBeforeSeconds = 3f;
+    public float warnBlinkIntervalSec = 0.2f;
 
     /// <summary>
     /// 가중치에 따라 아이템을 랜덤 드랍합니다.
@@ -42,7 +46,7 @@ public class EnemyDropSystem : MonoBehaviour
         }
         else
         {
-            Debug.Log("[DropSystem] 드랍 없음 (No Drop Weight)");
+            // no drop
         }
     }
 
@@ -77,38 +81,59 @@ public class EnemyDropSystem : MonoBehaviour
         // ✅ 인스턴스 생성
         GameObject dropObj = Instantiate(selected.gameObject, transform.position, Quaternion.identity);
 
-        // ✅ 드랍된 무기에서 Outline 전부 비활성화(또는 제거)
-        //    - 비활성화: 향후 필요 시 다시 켤 수 있음
-        //    - 제거: 아예 컴포넌트를 없앰 (원하면 아래 DestroyImmediate 라인 사용)
-        var outlines = dropObj.GetComponentsInChildren<Outline>(true);
-        for (int i = 0; i < outlines.Length; i++)
-        {
-            if (outlines[i] == null) continue;
-            // 방법 1) 비활성화
-            outlines[i].enabled = false;
+        // ✅ QuickOutline 충돌 방지: 드랍된 무기에서 Outline 전부 비활성화
+        DisableAllOutlines(dropObj);
 
-            // 방법 2) 완전 제거 (필요하면 주석 해제)
-            // Destroy(outlines[i]); // 런타임에서 안전 제거
-        }
+        // ✅ 자동 삭제 컴포넌트 부착/설정
+        AttachAutoDespawn(dropObj);
 
         Debug.Log($"[DropSystem] 무기 드랍: {selected.name}");
     }
 
     private void DropHeal()
     {
-        if (healPackPrefab != null)
-        {
-            Instantiate(healPackPrefab, transform.position, Quaternion.identity);
-            Debug.Log("[DropSystem] 힐팩 드랍");
-        }
+        if (healPackPrefab == null) return;
+
+        var obj = Instantiate(healPackPrefab, transform.position, Quaternion.identity);
+        AttachAutoDespawn(obj);
+        // 힐팩은 Outline이 거의 없지만 혹시 붙어있다면 방지 차원
+        DisableAllOutlines(obj);
     }
 
     private void DropAmmo()
     {
-        if (ammoPackPrefab != null)
+        if (ammoPackPrefab == null) return;
+
+        var obj = Instantiate(ammoPackPrefab, transform.position, Quaternion.identity);
+        AttachAutoDespawn(obj);
+        DisableAllOutlines(obj);
+    }
+
+    // ---------------- Helper ----------------
+
+    private void DisableAllOutlines(GameObject root)
+    {
+        if (root == null) return;
+
+        var outlines = root.GetComponentsInChildren<Outline>(true);
+        for (int i = 0; i < outlines.Length; i++)
         {
-            Instantiate(ammoPackPrefab, transform.position, Quaternion.identity);
-            Debug.Log("[DropSystem] 탄약 드랍");
+            if (outlines[i] == null) continue;
+            outlines[i].enabled = false;
+            // 필요 시 완전 제거:
+            // Destroy(outlines[i]);
         }
+    }
+
+    private void AttachAutoDespawn(GameObject go)
+    {
+        if (go == null) return;
+
+        var despawn = go.GetComponent<AutoDespawn>();
+        if (despawn == null) despawn = go.AddComponent<AutoDespawn>();
+
+        despawn.lifetime = Mathf.Max(0.1f, itemLifeTimeSeconds);
+        despawn.warnBefore = Mathf.Max(0f, warnBeforeSeconds);
+        despawn.blinkInterval = Mathf.Max(0f, warnBlinkIntervalSec);
     }
 }

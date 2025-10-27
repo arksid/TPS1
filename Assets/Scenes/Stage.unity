@@ -8420,6 +8420,55 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1502623688}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &561582303
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 561582305}
+  - component: {fileID: 561582304}
+  m_Layer: 0
+  m_Name: Beacon
+  m_TagString: Enemy
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &561582304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 561582303}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b7c6a9985355934bbf6fe7a3f04b9eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beaconPrefab: {fileID: 1247455159085814, guid: eb06316d309247a499ef668328f85529,
+    type: 3}
+  minDistance: 1
+  maxDistance: 5
+  navSampleRadius: 6
+--- !u!4 &561582305
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 561582303}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &563328261
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19596,6 +19645,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3241880604189725250, guid: da592e4107fbb2145ade0d7b534aefe7,
+        type: 3}
+      propertyPath: InvincibleDuration
+      value: 1.5
+      objectReference: {fileID: 0}
     - target: {fileID: 5797133863652098141, guid: da592e4107fbb2145ade0d7b534aefe7,
         type: 3}
       propertyPath: scriptsToDisableOnDeath.Array.data[0]
@@ -41678,6 +41732,7 @@ SceneRoots:
   - {fileID: 1173925242}
   - {fileID: 81853669}
   - {fileID: 83034748}
+  - {fileID: 561582305}
   - {fileID: 407304242}
   - {fileID: 827817551}
   - {fileID: 1474452806}

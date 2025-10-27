@@ -76,7 +76,23 @@ public class Projectile : MonoBehaviour, ISlowable
             var particle = Instantiate(hitParticlePrefab, contact.point, Quaternion.LookRotation(contact.normal));
             Destroy(particle, 1f);
         }
-
+        // ✅ 1) IHittable(= Beacon 등) 먼저 시도
+        if (TryDealHittable(collision.collider))
+        {
+            // 관통이면 계속, 아니면 삭제
+            if (remainingPenetrations > 0)
+            {
+                remainingPenetrations--;
+                if (_collider != null && collision.collider != null)
+                {
+                    Physics.IgnoreCollision(_collider, collision.collider, true);
+                    StartCoroutine(ReenableCollision(collision.collider, 0.06f));
+                }
+                return;
+            }
+            Destroy(gameObject);
+            return;
+        }
         // =========================
         // 보스: 부위 라우팅 (DamageablePart만 사용)
         // =========================
@@ -180,8 +196,42 @@ public class Projectile : MonoBehaviour, ISlowable
             return;
         }
 
+        // ✅ IHittable(= Beacon 등) 처리 추가
+        if (TryDealHittable(other))
+        {
+            if (remainingPenetrations > 0) { remainingPenetrations--; return; }
+            Destroy(gameObject);
+            return;
+        }
         // (다른 트리거와 충돌 시 특별 처리 필요하면 여기에 추가)
         // Destroy(gameObject);
+    }
+    // ✅ IHittable 찾고 즉시 데미지 주는 유틸 (Beacon 포함)
+    bool TryDealHittable(Component hitComp)
+    {
+        if (hitComp == null) return false;
+
+        // 1) 바로 붙어있나?
+        if (hitComp.TryGetComponent<IHittable>(out var h1))
+        {
+            h1.OnHit(Mathf.RoundToInt(_damage));
+            if (HitmarkerManager.instance) HitmarkerManager.instance.ShowHitmarker();
+            _shooter?.OnPlayerHitEnemyHook(null);
+            StatModifierManager.Instance?.OnPlayerHitEnemy();
+            return true;
+        }
+
+        // 2) 부모에서 찾기(콜라이더가 자식일 수 있음)
+        var h2 = hitComp.GetComponentInParent<IHittable>();
+        if (h2 != null)
+        {
+            h2.OnHit(Mathf.RoundToInt(_damage));
+            if (HitmarkerManager.instance) HitmarkerManager.instance.ShowHitmarker();
+            _shooter?.OnPlayerHitEnemyHook(null);
+            StatModifierManager.Instance?.OnPlayerHitEnemy();
+            return true;
+        }
+        return false;
     }
 
     private IEnumerator ReenableCollision(Collider other, float delay)
