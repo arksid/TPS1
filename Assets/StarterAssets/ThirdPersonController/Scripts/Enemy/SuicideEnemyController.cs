@@ -161,6 +161,7 @@ public class SuicideEnemyController : MonoBehaviour, ISlowable, IEnemyReward
         if (p != null) player = p.transform;
     }
 
+    // SuicideEnemyController.cs
     public void TakeDamage(float dmg)
     {
         if (isExploding) return;
@@ -172,8 +173,26 @@ public class SuicideEnemyController : MonoBehaviour, ISlowable, IEnemyReward
 
         Debug.Log($"[SuicideEnemy] 데미지 {dmg} 받음 / 남은 체력: {currentHealth}/{maxHealth}");
 
+        // ✅ [추가] 히트 시 궁극기 게이지 올리기
+        var ult = UltimateSkillCached.Instance;
+        if (ult != null) ult.AddGauge(ult.GaugePerHit);
+
         if (currentHealth <= 0) Explode();
     }
+    // EnemyController.cs (같은 네임스페이스/파일 끝에 추가)
+    static class UltimateSkillCached
+    {
+        private static UltimateSkill _inst;
+        public static UltimateSkill Instance
+        {
+            get
+            {
+                if (_inst == null) _inst = Object.FindObjectOfType<UltimateSkill>();
+                return _inst;
+            }
+        }
+    }
+
 
     void Explode()
     {

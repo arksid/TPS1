@@ -303,6 +303,7 @@ public class EnemyController : MonoBehaviour, ISlowable, IEnemyReward
         Destroy(bullet, 5f);
     }
 
+    // EnemyController.cs
     public virtual void TakeDamage(float damage)
     {
         currentHealth -= Mathf.RoundToInt(damage);
@@ -313,7 +314,26 @@ public class EnemyController : MonoBehaviour, ISlowable, IEnemyReward
         if (CanvasManager.singleton != null)
             CanvasManager.singleton.ShowDamage(damage);
 
+        // ✅ [추가] "맞췄을 때" 궁극기 게이지 올리기
+        //   - 궁극기 중에는 AddGauge 내부에서 자동 차단됨
+        var ult = UltimateSkillCached.Instance;                 // 아래 헬퍼 참조
+        if (ult != null) ult.AddGauge(ult.GaugePerHit);
+
         if (currentHealth <= 0) Die();
+    }
+
+    // EnemyController.cs (같은 네임스페이스/파일 끝에 추가)
+    static class UltimateSkillCached
+    {
+        private static UltimateSkill _inst;
+        public static UltimateSkill Instance
+        {
+            get
+            {
+                if (_inst == null) _inst = Object.FindObjectOfType<UltimateSkill>();
+                return _inst;
+            }
+        }
     }
 
     public void ResetLocalTimeScale()
@@ -341,6 +361,7 @@ public class EnemyController : MonoBehaviour, ISlowable, IEnemyReward
             dropSystem.TryDropItemByWeight();
 
         Destroy(gameObject);
+        QuestEvents.EnemyDied(transform.position, gameObject);
         Character.Instance?.OnEnemyKilledHook();
         StatModifierManager.Instance?.OnEnemyKilled();
     }

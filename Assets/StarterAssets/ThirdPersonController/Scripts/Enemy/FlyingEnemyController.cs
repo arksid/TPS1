@@ -101,14 +101,34 @@ public class FlyingEnemyController : MonoBehaviour, IEnemyReward
         }
     }
 
+    // FlyingEnemyController.cs
     public void TakeDamage(float damage)
     {
         if (isDead) return;
 
         currentHealth -= damage;
+
+        // ✅ [추가] 히트 시 궁극기 게이지 올리기
+        var ult = UltimateSkillCached.Instance;
+        if (ult != null) ult.AddGauge(ult.GaugePerHit);
+
         if (currentHealth <= 0f)
         {
             Die();
+        }
+    }
+
+    // EnemyController.cs (같은 네임스페이스/파일 끝에 추가)
+    static class UltimateSkillCached
+    {
+        private static UltimateSkill _inst;
+        public static UltimateSkill Instance
+        {
+            get
+            {
+                if (_inst == null) _inst = Object.FindObjectOfType<UltimateSkill>();
+                return _inst;
+            }
         }
     }
 
