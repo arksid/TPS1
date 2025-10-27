@@ -171,9 +171,10 @@ MonoBehaviour:
   projectilePrefab: {fileID: 2216547676952783978, guid: 76de6131d82f53441a3d40b98312e061,
     type: 3}
   shootRange: 30
-  shootCooldown: 3
+  shootCooldown: 2
   projectileSpeed: 50
   projectileDamage: 30
+  expReward: 20
   rotationSpeed: 8
   deathExplosionPrefab: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
     type: 3}
@@ -241,9 +242,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6784377fb6815b44a65f019e0a87e53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponDropWeight: 50
-  healDropWeight: 30
-  ammoDropWeight: 20
+  weaponDropWeight: 0
+  healDropWeight: 50
+  ammoDropWeight: 50
   noDropWeight: 0
   healPackPrefab: {fileID: 307774420219124244, guid: 24db9d00414b4424898134e422683eb5,
     type: 3}

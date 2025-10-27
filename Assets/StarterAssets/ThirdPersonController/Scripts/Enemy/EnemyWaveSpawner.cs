@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.AI;
 
 public class EnemyWaveSpawner : MonoBehaviour
 {
@@ -55,7 +56,6 @@ public class EnemyWaveSpawner : MonoBehaviour
             Debug.LogError("❌ enemyPrefabs 비어있음!");
             return;
         }
-
         if (playerTransform == null)
         {
             Debug.LogError("❌ playerTransform이 null입니다!");
@@ -63,20 +63,29 @@ public class EnemyWaveSpawner : MonoBehaviour
         }
 
         GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
-        GameObject enemy = Instantiate(prefab, GetRandomSpawnPosition(), Quaternion.identity);
+
+        // ✅ 스폰 위치 샘플링(가능하면 NavMesh 위로 보정)
+        Vector3 spawnPos = GetRandomSpawnPosition();
+        if (NavMesh.SamplePosition(spawnPos, out var hitPos, 5f, NavMesh.AllAreas))
+            spawnPos = hitPos.position;
+
+        GameObject enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
+
+        // ✅ 스폰 직후 에이전트 워프(경계/공중 대비)
+        var ag = enemy.GetComponent<NavMeshAgent>();
+        if (ag && NavMesh.SamplePosition(enemy.transform.position, out var navHit, 5f, NavMesh.AllAreas))
+        {
+            ag.Warp(navHit.position);
+        }
 
         var flyingEnemy = enemy.GetComponent<FlyingEnemyController>();
-        if (flyingEnemy == null)
-        {
-          
-        }
-        else
+        if (flyingEnemy != null)
         {
             Debug.Log($"✅ {prefab.name}에 FlyingEnemyController 발견, 타겟 설정 시도");
             flyingEnemy.SetTarget(playerTransform);
         }
+        // NavMesh 에이전트형 적(지상)이라면 EnemyController가 알아서 추적할 것임
     }
-
 
     private Vector3 GetRandomSpawnPosition()
     {
@@ -90,3 +99,4 @@ public class EnemyWaveSpawner : MonoBehaviour
         return basePos + new Vector3(randomOffset.x, 0f, randomOffset.y);
     }
 }
+

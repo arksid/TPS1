@@ -56,10 +56,12 @@ public class SuicideEnemyController : MonoBehaviour, ISlowable, IEnemyReward
         baseNormalSpeed = normalSpeed;
         baseChaseSpeed = chaseSpeed;
 
+        // ✅ 스폰 직후, 근처 NavMesh로 샘플→Warp (경계/공중 대비)
         if (agent != null)
         {
+            EnsureOnNavMesh(agent, transform.position, 8f);
             agent.speed = baseNormalSpeed * localTimeScale;
-            agent.isStopped = false;
+            agent.isStopped = false; // Resume() 대신
         }
 
         FindPlayer();
@@ -70,19 +72,21 @@ public class SuicideEnemyController : MonoBehaviour, ISlowable, IEnemyReward
 
     void Update()
     {
-        if (player == null)
-        {
-            FindPlayer();
-            return;
-        }
+        if (player == null) { FindPlayer(); return; }
         if (isExploding) return;
+        if (agent == null || !agent.isActiveAndEnabled) return;
 
-        if (agent != null)
-            agent.speed = (isBoosting ? baseChaseSpeed : baseNormalSpeed) * localTimeScale;
+        // ✅ 매 프레임 NavMesh 위 보장 (안 되면 이번 프레임 스킵)
+        if (!EnsureOnNavMesh(agent, transform.position, 8f))
+            return;
 
-        float dist = Vector3.Distance(transform.position, player.position);
+        agent.speed = (isBoosting ? baseChaseSpeed : baseNormalSpeed) * localTimeScale;
+        agent.isStopped = false; // Resume() 대신
+
+        // ✅ 이제 안전하게 목적지 설정
         agent.SetDestination(player.position);
 
+        float dist = Vector3.Distance(transform.position, player.position);
         if (dist <= detectionRange && !isBoosting)
             StartCoroutine(SpeedBoostRoutine());
 
@@ -95,6 +99,23 @@ public class SuicideEnemyController : MonoBehaviour, ISlowable, IEnemyReward
             animator.SetFloat("Speed", agent.velocity.magnitude / Mathf.Max(0.01f, baseNormalSpeed));
         }
     }
+    /// <summary>
+    /// NavMesh 위가 아니면 근처에서 샘플링 후 Warp로 올려놓는다.
+    /// 성공 시 true, 실패 시 false.
+    /// </summary>
+    bool EnsureOnNavMesh(NavMeshAgent nav, Vector3 nearPos, float maxDist = 5f)
+    {
+        if (nav == null || !nav.isActiveAndEnabled) return false;
+        if (nav.isOnNavMesh) return true;
+
+        if (NavMesh.SamplePosition(nearPos, out var hit, maxDist, NavMesh.AllAreas))
+        {
+            nav.Warp(hit.position);
+            return nav.isOnNavMesh;
+        }
+        return false;
+    }
+
 
     IEnumerator SpeedBoostRoutine()
     {
