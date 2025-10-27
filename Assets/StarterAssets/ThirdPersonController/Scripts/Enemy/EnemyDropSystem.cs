@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// EnemyDropSystem.cs
+using UnityEngine;
 using System.Collections.Generic;
 
 public class EnemyDropSystem : MonoBehaviour
@@ -72,7 +73,23 @@ public class EnemyDropSystem : MonoBehaviour
 
         int randIndex = Random.Range(0, filteredList.Count);
         Item selected = filteredList[randIndex];
-        Instantiate(selected.gameObject, transform.position, Quaternion.identity);
+
+        // ✅ 인스턴스 생성
+        GameObject dropObj = Instantiate(selected.gameObject, transform.position, Quaternion.identity);
+
+        // ✅ 드랍된 무기에서 Outline 전부 비활성화(또는 제거)
+        //    - 비활성화: 향후 필요 시 다시 켤 수 있음
+        //    - 제거: 아예 컴포넌트를 없앰 (원하면 아래 DestroyImmediate 라인 사용)
+        var outlines = dropObj.GetComponentsInChildren<Outline>(true);
+        for (int i = 0; i < outlines.Length; i++)
+        {
+            if (outlines[i] == null) continue;
+            // 방법 1) 비활성화
+            outlines[i].enabled = false;
+
+            // 방법 2) 완전 제거 (필요하면 주석 해제)
+            // Destroy(outlines[i]); // 런타임에서 안전 제거
+        }
 
         Debug.Log($"[DropSystem] 무기 드랍: {selected.name}");
     }
