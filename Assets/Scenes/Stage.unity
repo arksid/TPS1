@@ -9023,6 +9023,12 @@ MonoBehaviour:
   minDistance: 5
   maxDistance: 10
   navSampleRadius: 6
+  clearanceRadius: 1.5
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
+  groundRaycastDistance: 30
+  maxAttempts: 12
   autoSpawnOnPlay: 0
   initialSpawnCount: 1
   repeatSpawn: 1
@@ -21788,7 +21794,7 @@ PrefabInstance:
     - target: {fileID: 3214088221140713585, guid: 021f70166348eb22cb6fe53a824e2cf3,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.254
+      value: 2.6
       objectReference: {fileID: 0}
     - target: {fileID: 3214088221140713585, guid: 021f70166348eb22cb6fe53a824e2cf3,
         type: 3}
