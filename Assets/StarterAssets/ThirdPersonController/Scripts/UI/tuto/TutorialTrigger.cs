@@ -1,47 +1,54 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
 public class TutorialTrigger : MonoBehaviour
 {
-    [Header("ÇÃ·¹ÀÌ¾î ½Äº°")]
+    [Header("í”Œë ˆì´ì–´ ì‹ë³„")]
     public string playerTag = "Player";
 
-    [Header("¿¬°á(±âÁ¸ UI/¹Ì¼Ç)")]
-    public TutorialUI ui;                // »ó´Ü ¾È³»(Á¦¸ñ/ÈùÆ®)
-    public Kill100Mission killMission;   // 100Å³ ¹Ì¼Ç UI & ·ÎÁ÷
-    public PlayerControlLocker locker;   // Á¶ÀÛ Àá±İ/ÇØÁ¦ (¼±ÅÃ)
+    [Header("ì—°ê²°(ê¸°ì¡´ UI/ë¯¸ì…˜)")]
+    public TutorialUI ui;                // ìƒë‹¨ ì•ˆë‚´(ì œëª©/íŒíŠ¸)
+    public Kill100Mission killMission;   // 100í‚¬ ë¯¸ì…˜ UI & ë¡œì§
+    public PlayerControlLocker locker;   // ì¡°ì‘ ì ê¸ˆ/í•´ì œ (ì„ íƒ)
 
-    [Header("ÁøÇà ¿É¼Ç")]
-    public bool makePlayerInvincible = true;    // ¾È³» Áß ¹«Àû
-    public bool lockControlsDuringIntro = true; // ¾È³» Áß Á¶ÀÛÀá±İ
-    public KeyCode continueKey = KeyCode.E;     // ´ÙÀ½ ´Ü°è ÁøÇà Å°
-    public float autoContinueAfter = 0f;        // 0ÀÌ¸é Å° ±â´Ù¸²
+    [Header("ì§„í–‰ ì˜µì…˜")]
+    public bool makePlayerInvincible = true;    // ì•ˆë‚´ ì¤‘ ë¬´ì 
+    public bool lockControlsDuringIntro = true; // ì•ˆë‚´ ì¤‘ ì¡°ì‘ì ê¸ˆ
+    public KeyCode continueKey = KeyCode.E;     // ë‹¤ìŒ ë‹¨ê³„ ì§„í–‰ í‚¤
+    public float autoContinueAfter = 0f;        // 0ì´ë©´ í‚¤ ê¸°ë‹¤ë¦¼
 
-    [Header("¾È³» ¹®±¸")]
-    [TextArea] public string introTitle = "Æ©Åä¸®¾ó: ¹Ì¼Ç ¾È³»";
-    [TextArea] public string introHint = "EÅ°¸¦ ´­·¯ ÁøÇàÇÏ¼¼¿ä.\nÀÌ¹ø ¹Ì¼Ç: Àû 100¸¶¸® Ã³Ä¡";
-    [TextArea] public string missionTitle = "¹Ì¼Ç ½ÃÀÛ!";
-    [TextArea] public string missionHint = "ÁÂ»ó´Ü °ÔÀÌÁö¸¦ È®ÀÎÇÏ¼¼¿ä.";
+    [Header("ì•ˆë‚´ ë¬¸êµ¬")]
+    [TextArea] public string introTitle = "íŠœí† ë¦¬ì–¼: ë¯¸ì…˜ ì•ˆë‚´";
+    [TextArea] public string introHint = "Eí‚¤ë¥¼ ëˆŒëŸ¬ ì§„í–‰í•˜ì„¸ìš”.\nì´ë²ˆ ë¯¸ì…˜: ì  100ë§ˆë¦¬ ì²˜ì¹˜";
+    [TextArea] public string missionTitle = "ë¯¸ì…˜ ì‹œì‘!";
+    [TextArea] public string missionHint = "ì¢Œìƒë‹¨ ê²Œì´ì§€ë¥¼ í™•ì¸í•˜ì„¸ìš”.";
 
-    [Header("´ÙÀ½ Áö¿ª À¯µµ(¸¶Ä¿/¾Æ¿ô¶óÀÎ)")]
-    public SimpleWaypointUI waypointUI;         // Canvas ¾Æ·¡ SimpleWaypointUI
-    public Transform nextDestination;           // ¸ñÀûÁö(¾øÀ¸¸é ÀÚ±â À§Ä¡)
-    [TextArea] public string nextMessage = "´ÙÀ½ Áö¿ªÀ¸·Î ÀÌµ¿ÇØ";
+    [Header("ë‹¤ìŒ ì§€ì—­ ìœ ë„(ë§ˆì»¤/ì•„ì›ƒë¼ì¸)")]
+    public SimpleWaypointUI waypointUI;         // Canvas ì•„ë˜ SimpleWaypointUI
+    public Transform nextDestination;           // ëª©ì ì§€(ì—†ìœ¼ë©´ ìê¸° ìœ„ì¹˜)
+    [TextArea] public string nextMessage = "ë‹¤ìŒ ì§€ì—­ìœ¼ë¡œ ì´ë™í•´";
 
-    [Header("Æ®¸®°Å È°¼º/ÁøÀÔ ½Ã Ã³¸®")]
-    public bool showOnEnable = false;           // È°¼º ½Ã ÀÚµ¿Ç¥½Ã ±İÁö(¿ä±¸»çÇ×)
-    public bool hideWaypointUIOnEnable = true;  // È°¼º ½Ã "UI¸¸" ¼û±è(¾Æ¿ô¶óÀÎ À¯Áö)
-    public bool clearOnEnter = true;            // ÁøÀÔ ½Ã ¸¶Ä¿+¾Æ¿ô¶óÀÎ ¿ÏÀü Á¤¸®
+    [Header("íŠ¸ë¦¬ê±° í™œì„±/ì§„ì… ì‹œ ì²˜ë¦¬")]
+    public bool showOnEnable = false;           // í™œì„± ì‹œ ìë™í‘œì‹œ ê¸ˆì§€(ìš”êµ¬ì‚¬í•­)
+    public bool hideWaypointUIOnEnable = true;  // í™œì„± ì‹œ "UIë§Œ" ìˆ¨ê¹€(ì•„ì›ƒë¼ì¸ ìœ ì§€)
+    public bool clearOnEnter = true;     
+    
+    // ì§„ì… ì‹œ ë§ˆì»¤+ì•„ì›ƒë¼ì¸ ì™„ì „ ì •ë¦¬
+    [Header("ìŠ¤í¬ë„ˆ(ì›¨ì´ë¸Œ)")]
+    public EnemySwarmDirector swarm;
+    public bool startSwarmOnEnable = false; // â¬…ï¸ false ë¡œ ë°”ê¿”ì£¼ì„¸ìš”
+    public bool startSwarmOnEnter = true;  // â¬…ï¸ true ë¡œ ë°”ê¿”ì£¼ì„¸ìš”
 
     bool _fired;
+    bool _swarmStarted; // ì¤‘ë³µ ì‹¤í–‰ ë°©ì§€
+
+
 
     void Reset()
     {
-        var col = GetComponent<Collider>();
-        col.isTrigger = true;
 
-        // ¾ÈÁ¤Àû Æ®¸®°Å¸¦ À§ÇÑ Kinematic Rigidbody ±ÇÀå
+        // ì•ˆì •ì  íŠ¸ë¦¬ê±°ë¥¼ ìœ„í•œ Kinematic Rigidbody ê¶Œì¥
         var rb = GetComponent<Rigidbody>();
         if (!rb) rb = gameObject.AddComponent<Rigidbody>();
         rb.isKinematic = true;
@@ -50,16 +57,16 @@ public class TutorialTrigger : MonoBehaviour
 
     void OnEnable()
     {
-        // ¿ä±¸»çÇ×: Æ®¸®°Å°¡ "ÄÑÁö¸é" ¿şÀÌÆ÷ÀÎÆ® UI¸¸ ²ô°í(¾Æ¿ô¶óÀÎ À¯Áö)
+        // ìš”êµ¬ì‚¬í•­: íŠ¸ë¦¬ê±°ê°€ ì¼œì§€ë©´ ì›¨ì´í¬ì¸íŠ¸ "UIë§Œ" ìˆ¨ê¸°ê³ (ì•„ì›ƒë¼ì¸ ìœ ì§€)
         if (hideWaypointUIOnEnable)
             WaypointDirector.HideUIOnly();
 
-        // ÀÚµ¿ Ç¥½Ã´Â ±İÁö(¿øÇÏ¸é ÁÖ¼® ÇØÁ¦ÇØ¼­ »ç¿ë)
-        // if (showOnEnable)
-        // {
-        //     var target = nextDestination ? nextDestination : transform;
-        //     WaypointDirector.Show(waypointUI, target, nextMessage);
-        // }
+        // â˜… ë³€ê²½ í¬ì¸íŠ¸:
+        // - startSwarmOnEnable == true ì´ê³ 
+        // - íŠœí† ë¦¬ì–¼ì´ ì™„ë£Œë˜ì–´ WaypointDirector.HintsEnabled == true ì¼ ë•Œë§Œ
+        //   íŠ¸ë¦¬ê±°ê°€ ì¼œì§€ëŠ” ìˆœê°„ì— ìŠ¤í° ì‹œì‘
+        if (startSwarmOnEnable && WaypointDirector.HintsEnabled)
+            TryStartSwarmOnce();
     }
 
     void OnTriggerEnter(Collider other)
@@ -67,9 +74,13 @@ public class TutorialTrigger : MonoBehaviour
         if (_fired) return;
         if (!other.CompareTag(playerTag)) return;
 
-        // Æ®¸®°Å¿¡ "µé¾î¿À¸é" ±âÁ¸ ¸¶Ä¿/¾Æ¿ô¶óÀÎ ¿ÏÀü Á¤¸® (ÀÌÁß ¾ÈÀü)
+        // (ìš”êµ¬ì‚¬í•­) íŠ¸ë¦¬ê±°ì— ë“¤ì–´ì˜¤ë©´ í‘œì‹ ì™„ì „ ì •ë¦¬
         if (clearOnEnter)
             WaypointDirector.Clear();
+
+        // â˜… ì›í•œë‹¤ë©´ 'ë“¤ì–´ì™”ì„ ë•Œ' ì‹œì‘ë„ ê°€ëŠ¥(ì˜µì…˜)
+        if (startSwarmOnEnter)
+            TryStartSwarmOnce();
 
         _fired = true;
 
@@ -77,34 +88,69 @@ public class TutorialTrigger : MonoBehaviour
         StartCoroutine(RunTutorial(player));
     }
 
+    void TryStartSwarmOnce()
+    {
+        if (_swarmStarted) return;
+
+        if (swarm == null)
+        {
+            Debug.LogWarning("[TutorialTrigger] swarm(EnemySwarmDirector) ë¯¸ì§€ì •");
+            return;
+        }
+
+        // 1) ìŠ¤í¬ë„ˆ ì˜¤ë¸Œì íŠ¸/ì»´í¬ë„ŒíŠ¸ í™œì„± ë³´ì¥
+        if (!swarm.gameObject.activeSelf)
+        {
+            Debug.Log("[TutorialTrigger] EnemySwarmDirector GameObjectê°€ ë¹„í™œì„± â†’ í™œì„±í™”í•©ë‹ˆë‹¤.");
+            swarm.gameObject.SetActive(true);
+        }
+        if (!swarm.enabled)
+        {
+            Debug.Log("[TutorialTrigger] EnemySwarmDirector ì»´í¬ë„ŒíŠ¸ê°€ ë¹„í™œì„± â†’ í™œì„±í™”í•©ë‹ˆë‹¤.");
+            swarm.enabled = true;
+        }
+
+        // 2) (ì„ íƒ) ìŠ¤í¬ë„ˆ ë‚´ë¶€ì— ëŒê³  ìˆëŠ” ì½”ë£¨í‹´ì´ ìˆì—ˆë‹¤ë©´ ì•ˆì „í•˜ê²Œ ì •ë¦¬
+        if (swarm.isActiveAndEnabled)
+            swarm.StopAllCoroutines();
+
+        // 3) â˜…ì¤‘ìš”: 'ìŠ¤í¬ë„ˆ'ê°€ ì•„ë‹ˆë¼ 'í˜„ì¬ í™œì„± MonoBehaviour(ì´ ìŠ¤í¬ë¦½íŠ¸)'ì—ì„œ ì½”ë£¨í‹´ì„ ì‹œì‘
+        //    ì´ë ‡ê²Œ í•˜ë©´ ìŠ¤í¬ë„ˆ ì˜¤ë¸Œì íŠ¸ê°€ ë¹„í™œì„±ì´ì–´ë„ ì‹œì‘ ì§€ì ì´ í™œì„±ì´ë¼ ì•ˆì „í•©ë‹ˆë‹¤.
+        StartCoroutine(swarm.RunWaves());
+
+        _swarmStarted = true;
+        Debug.Log("[TutorialTrigger] EnemySwarmDirector ì›¨ì´ë¸Œ ì‹œì‘");
+    }
+
+
     IEnumerator RunTutorial(Character player)
     {
-        // 1) ¾È³» ÁØºñ: ¹«Àû/Á¶ÀÛ Àá±İ
+        // 1) ì•ˆë‚´ ì¤€ë¹„: ë¬´ì /ì¡°ì‘ ì ê¸ˆ
         if (player != null && makePlayerInvincible) player.SetInvincible(true);
         if (locker && lockControlsDuringIntro) locker.LockControls(true);
 
-        // 2) »ó´Ü UI ¾È³»
+        // 2) ìƒë‹¨ UI ì•ˆë‚´
         if (ui) ui.Show(introTitle, introHint);
 
-        // 3) ÁøÇà ´ë±â(½Ã°£ ¶Ç´Â Å°)
+        // 3) ì§„í–‰ ëŒ€ê¸°(ì‹œê°„ ë˜ëŠ” í‚¤)
         if (autoContinueAfter > 0f) yield return new WaitForSecondsRealtime(autoContinueAfter);
         else while (!Input.GetKeyDown(continueKey)) yield return null;
 
-        // 4) ¹Ì¼Ç ¾È³» ¹®±¸ º¯°æ
+        // 4) ë¯¸ì…˜ ì•ˆë‚´ ë¬¸êµ¬ ë³€ê²½
         if (ui) ui.Show(missionTitle, missionHint);
 
-        // 5) ¹Ì¼Ç ½ÃÀÛ
+        // 5) ë¯¸ì…˜ ì‹œì‘
         if (killMission)
         {
             if (!killMission.gameObject.activeSelf) killMission.gameObject.SetActive(true);
-            killMission.targetKills = 100; // ÇÊ¿ä ½Ã ¼öÁ¤
+            killMission.targetKills = 100; // í•„ìš” ì‹œ ìˆ˜ì •
         }
 
-        // 6) ÄÁÆ®·Ñ/¹«Àû ÇØÁ¦
+        // 6) ì»¨íŠ¸ë¡¤/ë¬´ì  í•´ì œ
         if (locker) locker.LockControls(false);
         if (player != null && makePlayerInvincible) player.SetInvincible(false);
 
-        // 7) (ÇÊ¿ä ½Ã) ´ÙÀ½ ¸ñÀûÁö Ç¥½Ä ´Ù½Ã ¶ç¿ì°í ½ÍÀ¸¸é ¾Æ·¡ ÁÖ¼® ÇØÁ¦
+        // 7) (í•„ìš” ì‹œ) ë‹¤ìŒ ëª©ì ì§€ í‘œì‹ ë‹¤ì‹œ ë„ìš°ê³  ì‹¶ìœ¼ë©´ ì•„ë˜ ì£¼ì„ í•´ì œ
         // var target = nextDestination ? nextDestination : transform;
         // WaypointDirector.Show(waypointUI, target, nextMessage);
     }

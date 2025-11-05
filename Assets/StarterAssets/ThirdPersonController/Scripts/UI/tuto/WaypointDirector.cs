@@ -7,6 +7,8 @@ public static class WaypointDirector
     public static void EnableHints() { _enabled = true; }
     public static void DisableHints() { _enabled = false; Clear(); }
 
+    public static bool HintsEnabled => _enabled;
+
     // ===== 현재 표시 상태 =====
     static SimpleWaypointUI _ui;
     static Transform _currentTarget;
@@ -15,6 +17,11 @@ public static class WaypointDirector
     public static bool DebugLogCallers = false; // 필요 시 true로
     static void Log(string msg) { if (DebugLogCallers) Debug.Log("[WaypointDirector] " + msg); }
     static void Warn(string msg) { Debug.LogWarning("[WaypointDirector] " + msg); }
+
+
+
+
+
 
     /// <summary>
     /// 웨이포인트 + 아웃라인 표시. (권한 없으면 무시)

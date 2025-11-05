@@ -48,7 +48,27 @@ public class EnemySwarmDirector : MonoBehaviour
     public float intervalBetweenWaves = 5f;
 
     [Header("자동 시작")]
-    public bool autoStartOnPlay = true;
+    public bool autoStartOnPlay = false; // ⬅️ false
+    public bool startDisabled = true;    // ⬅️ true (Awake에서 SetActive(false))
+
+    // === 추가: 중지 플래그/메서드 ===
+    bool _stopRequested = false;
+    public void RequestStopWaves()
+    {
+        _stopRequested = true;
+        StopAllCoroutines(); // 진행 중 코루틴 즉시 중단
+        Debug.Log("[EnemySwarmDirector] 웨이브 중지 요청");
+    }
+
+    void Awake()
+    {
+        if (startDisabled)
+        {
+            // 게임 시작 직후 스스로 꺼짐
+            gameObject.SetActive(false);
+            return; // 꺼졌으니 이하 로직 미실행
+        }
+    }
 
     void Start()
     {
@@ -62,6 +82,8 @@ public class EnemySwarmDirector : MonoBehaviour
 
     public IEnumerator RunWaves()
     {
+        _stopRequested = false;
+
         if (spawnPoints == null || spawnPoints.Length == 0)
         {
             Debug.LogError("[EnemySwarmDirector] spawnPoints가 비었습니다.");
@@ -70,12 +92,16 @@ public class EnemySwarmDirector : MonoBehaviour
 
         for (int w = 0; w < waves.Count; w++)
         {
+            if (_stopRequested) yield break; // ⬅️ 중지 즉시 종료
+
             var wave = waves[w];
             int spawned = 0;
             Debug.Log($"[EnemySwarmDirector] Wave {w + 1}/{waves.Count} 시작 (총 {wave.totalCount})");
 
             while (spawned < wave.totalCount)
             {
+                if (_stopRequested) yield break; // ⬅️ 중지 즉시 종료
+
                 int spawnNow = Mathf.Min(wave.batchSize, wave.totalCount - spawned);
                 for (int i = 0; i < spawnNow; i++)
                 {
@@ -89,7 +115,13 @@ public class EnemySwarmDirector : MonoBehaviour
             if (w < waves.Count - 1)
             {
                 Debug.Log($"[EnemySwarmDirector] Wave {w + 1} 종료. {intervalBetweenWaves}초 대기");
-                yield return new WaitForSeconds(intervalBetweenWaves);
+                float t = 0f;
+                while (t < intervalBetweenWaves && !_stopRequested)
+                {
+                    t += Time.deltaTime;
+                    yield return null;
+                }
+                if (_stopRequested) yield break;
             }
         }
 
@@ -137,7 +169,6 @@ public class EnemySwarmDirector : MonoBehaviour
 
         var go = Instantiate(prefab, pos, Quaternion.identity);
 
-        // EnemyController(또는 SniperEnemy는 EnemyController 파생) 타깃 연결
         var ec = go.GetComponent<EnemyController>();
         if (ec != null && player != null)
         {
@@ -156,7 +187,6 @@ public class EnemySwarmDirector : MonoBehaviour
 
         var go = Instantiate(prefab, pos, Quaternion.identity);
 
-        // 비행 적 타깃 연결
         var fe = go.GetComponent<FlyingEnemyController>();
         if (fe != null && player != null)
         {
