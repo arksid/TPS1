@@ -12,11 +12,11 @@ public class Kill100Mission : MonoBehaviour
     public Slider progressSlider;
     public TextMeshProUGUI mainLabel; // "처치: 0/100"
     public TextMeshProUGUI subLabel;  // "미션: 적 100마리 처치"
-    [Tooltip("성공 시 숨기고 싶은 UI 루트(없으면 자동 생성된 캔버스를 끔)")]
+    [Tooltip("성공 시 숨기고 싶은 UI 루트(캔버스 전체 말고, '패널' 오브젝트만 지정 권장)")]
     public GameObject uiRootToHideOnSuccess;
 
     [Header("미션 성공 시 호출(선택)")]
-    public MonoBehaviour waveController;      // 예: AdvancedEnemyWaveSpawner
+    public MonoBehaviour waveController;      // 예: EnemySwarmDirector
     public string endWaveMethodName = "EndWave";
 
     [Header("미션2(홀드존) 연동")]
@@ -26,14 +26,19 @@ public class Kill100Mission : MonoBehaviour
     public bool activateNextTriggerOnSuccess = true;  // 성공 시 트리거 SetActive(true)
     public bool showWaypointOnSuccess = true;         // 성공 시 웨이포인트 표시
 
+    [Header("튜토리얼 UI 연동")]
+    public TutorialUI tutorialUIToHide;       // 미션1 성공 시 끌 튜토리얼 UI
+
     [Header("상태(읽기전용)")]
     public int currentKills = 0;
     public bool isCompleted = false;
 
     [Header("디버그/테스트")]
     public bool completeImmediatelyOnStart = false;   // 시작하자마자 클리어(테스트용)
-    bool _deferShowNextWaypoint;   // 비활성/Awake 시점에 웨이포인트 표시를 지연
-    GameObject _autoUiRoot; // 자동 생성한 '패널'을 기억했다가 이것만 끈다
+
+    // 내부
+    GameObject _autoUiPanel;   // 자동 생성된 '패널'만 기억해서 끈다(캔버스는 건드리지 않음)
+
     void Awake()
     {
         EnsureUI();
@@ -44,19 +49,9 @@ public class Kill100Mission : MonoBehaviour
             currentKills = targetKills;
             isCompleted = true;
             UpdateUI();
-            OnMissionSuccess();
+            OnMissionSuccess(); // 여기서도 안전 (코루틴은 GameFlowRunner가 돌림)
         }
     }
-    void Start()
-    {
-        if (_deferShowNextWaypoint)
-        {
-            _deferShowNextWaypoint = false;
-            GlobalCoroutineRunner.Run(Co_ShowNextMissionWaypointSafely());
-        }
-    }
-
-
 
     void OnEnable() => MissionEvents.OnEnemyKilled += HandleEnemyKilled;
     void OnDisable() => MissionEvents.OnEnemyKilled -= HandleEnemyKilled;
@@ -82,69 +77,44 @@ public class Kill100Mission : MonoBehaviour
     void OnMissionSuccess()
     {
         if (subLabel) subLabel.text = "✅ 미션 성공! (적 100마리 처치)";
+
+        // (선택) 웨이브 종료 훅 (없어도 됨)
         TryEndWave();
+
+        // 1) 내 미션1 UI 패널만 끄기 (캔버스/웨이포인트UI는 유지!)
         TryHideOwnUI();
 
+        // 2) 튜토리얼 UI 끄기
+        if (tutorialUIToHide) tutorialUIToHide.Hide();
+
+        // 3) 다음 트리거 켜기
         if (activateNextTriggerOnSuccess && nextMissionTrigger)
             nextMissionTrigger.gameObject.SetActive(true);
 
-        if (showWaypointOnSuccess)
-        {
-            // 이 스크립트가 활성이라면 여기서, 아니라면 글로벌 러너로
-            var routine = Co_ShowNextMissionWaypointSafely();
-
-            if (isActiveAndEnabled) StartCoroutine(routine);
-            else
-            {
-                _deferShowNextWaypoint = true;        // Start()에서 다시 실행
-                GlobalCoroutineRunner.Run(routine);   // 즉시 전역에서 실행(둘 중 하나는 반드시 활성 상태)
-            }
-        }
+        // 4) 다음 웨이포인트 표시 (한 프레임 뒤, 항상 활성 보장)
+        if (showWaypointOnSuccess && waypointUI && nextMissionTrigger)
+            GameFlowRunner.Run(Co_ShowNextMissionWaypointSafely());
     }
 
-
-
-    System.Collections.IEnumerator Co_ShowNextMissionWaypointSafely()
+    IEnumerator Co_ShowNextMissionWaypointSafely()
     {
-        // 트리거 OnEnable(초기화/숨김)이 먼저 끝나도록 1프레임 대기
+        // 트리거 OnEnable 초기화/숨김 등이 먼저 끝나도록 한 프레임 대기
         yield return null;
 
-        // 혹시 한 프레임 더 필요할 수 있어서 최대 5프레임까지 재시도
-        const int maxTries = 5;
-
-        // 힌트 허용(안전)
         WaypointDirector.EnableHints();
 
-        if (waypointUI)
-        {
-            // SimpleWaypointUI 자신
-            if (!waypointUI.gameObject.activeSelf)
-                waypointUI.gameObject.SetActive(true);
+        // 표시 직전, UI/캔버스 활성 보장
+        if (!waypointUI.gameObject.activeSelf)
+            waypointUI.gameObject.SetActive(true);
+        if (waypointUI.canvas && !waypointUI.canvas.gameObject.activeSelf)
+            waypointUI.canvas.gameObject.SetActive(true);
 
-            // 연결된 캔버스도 켜주기 (캔버스가 꺼져 있으면 자식이 켜져도 안 보임)
-            if (waypointUI.canvas && !waypointUI.canvas.gameObject.activeSelf)
-                waypointUI.canvas.gameObject.SetActive(true);
-        }
-
-        // 이제 확실히 표기
         WaypointDirector.Show(waypointUI, nextMissionTrigger, nextMessage);
 
-        for (int i = 0; i < maxTries; i++)
-        {
-            if (waypointUI != null && nextMissionTrigger != null)
-            {
-                WaypointDirector.Show(waypointUI, nextMissionTrigger, nextMessage);
-                Debug.Log($"[Kill100Mission] 다음 미션 웨이포인트 표시 시도: {i + 1}");
-                yield return null; // 만약 OnEnable 쪽에서 또 건드리면 다음 루프에서 다시 표시
-            }
-            else
-            {
-                Debug.LogWarning("[Kill100Mission] waypointUI 또는 nextMissionTrigger 미지정");
-                yield break;
-            }
-        }
+        // 필요하면 1~2프레임 여유로 재표시
+        yield return null;
+        WaypointDirector.Show(waypointUI, nextMissionTrigger, nextMessage);
     }
-
 
     void TryEndWave()
     {
@@ -160,24 +130,20 @@ public class Kill100Mission : MonoBehaviour
 
     void TryHideOwnUI()
     {
-        // 1순위: 사용자가 지정한 루트만 끈다 (캔버스 전체를 넣지 마세요)
+        // 1순위: 사용자 지정 루트만 끈다 (절대 캔버스 전체 넣지 말 것)
         if (uiRootToHideOnSuccess != null)
         {
             uiRootToHideOnSuccess.SetActive(false);
             return;
         }
 
-        // 2순위: 자동 생성 UI의 '패널'만 끈다 (캔버스는 그대로)
-        if (_autoUiRoot != null)
+        // 2순위: 자동 생성 UI의 '패널'만 끈다 (캔버스는 계속 ON)
+        if (_autoUiPanel != null)
         {
-            _autoUiRoot.SetActive(false);
+            _autoUiPanel.SetActive(false);
             return;
         }
-
-        // ★ 기존처럼 progressSlider의 최상위 부모(root)까지 타고 올라가서 끄지 마세요.
-        // (웨이포인트 UI가 같은 캔버스에 있으면 같이 꺼져버립니다)
     }
-
 
     void UpdateUI()
     {
@@ -215,6 +181,7 @@ public class Kill100Mission : MonoBehaviour
         pr.offsetMin = Vector2.zero;
         pr.offsetMax = Vector2.zero;
 
+        // Slider
         var sliderGO = new GameObject("ProgressSlider");
         sliderGO.transform.SetParent(panelGO.transform, false);
         progressSlider = sliderGO.AddComponent<Slider>();
@@ -270,7 +237,9 @@ public class Kill100Mission : MonoBehaviour
         sr.anchorMin = new Vector2(0.05f, 0.05f);
         sr.anchorMax = new Vector2(0.95f, 0.35f);
         sr.offsetMin = Vector2.zero; sr.offsetMax = Vector2.zero;
-        _autoUiRoot = panelGO;
+
+        // 자동 생성된 '패널'만 기억 (캔버스는 끄지 않음)
+        _autoUiPanel = panelGO;
     }
 
 #if UNITY_EDITOR

@@ -197,6 +197,17 @@ public class EnemySwarmDirector : MonoBehaviour
             Debug.LogWarning($"[EnemySwarmDirector] {prefab.name}에 FlyingEnemyController가 없거나 player가 없습니다.");
         }
     }
+    // 중지 플래그/메서드가 이미 있다면 재사용하고,
+    // 없다면 최소한 이 메서드만 추가하세요.
+    public void EndWave()
+    {
+        // 예: RequestStopWaves()가 있다면 연결
+        // RequestStopWaves();
+
+        // 없다면 최소 구현:
+        StopAllCoroutines();
+        Debug.Log("[EnemySwarmDirector] EndWave 호출 → 모든 웨이브 중지");
+    }
 
 #if UNITY_EDITOR
     [ContextMenu("▶ 테스트: 웨이브 즉시 시작")]

@@ -23452,7 +23452,7 @@ Transform:
   m_GameObject: {fileID: 1699145892}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 40.58098, y: 56.316235, z: 261.2842}
+  m_LocalPosition: {x: 40.58098, y: 56.316235, z: 286.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -35483,9 +35483,10 @@ MonoBehaviour:
   nextMessage: "\uB2E4\uC74C \uAC70\uC810\uC73C\uB85C \uC774\uB3D9!"
   activateNextTriggerOnSuccess: 1
   showWaypointOnSuccess: 1
+  tutorialUIToHide: {fileID: 370866409}
   currentKills: 0
   isCompleted: 0
-  completeImmediatelyOnStart: 0
+  completeImmediatelyOnStart: 1
 --- !u!114 &6706338398097499766
 MonoBehaviour:
   m_ObjectHideFlags: 0

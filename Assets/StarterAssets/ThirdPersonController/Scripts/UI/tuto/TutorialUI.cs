@@ -49,4 +49,6 @@ public class TutorialUI : MonoBehaviour
         group.alpha = Mathf.MoveTowards(group.alpha, target, fadeSpeed * Time.deltaTime);
         group.blocksRaycasts = group.interactable = _visible;
     }
+    public void HideInstant() => SetVisible(false, true);
+
 }
