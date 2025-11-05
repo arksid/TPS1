@@ -13,6 +13,7 @@ public class ControlsTutorialUI : MonoBehaviour
     public CanvasGroup group;
     public float fadeSpeed = 8f;
 
+
     bool _visible;
 
     void Awake()
