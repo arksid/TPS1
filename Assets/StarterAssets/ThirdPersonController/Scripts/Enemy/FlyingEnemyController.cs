@@ -12,11 +12,15 @@ public class FlyingEnemyController : MonoBehaviour, IEnemyReward
     public float evadeAmplitude = 2f;
     public float evadeFrequency = 2f;
 
-    [Header("Combat")]
-    public GameObject bulletPrefab;
-    public Transform firePoint;
-    public float fireRate = 1.5f;
-    private float nextFireTime;
+    [Header("Shooting")]
+    public Transform firePoint;        // 총알이 나갈 위치(드론의 총구)
+    public GameObject bulletPrefab;    // EnemyProjectile이 붙은 프리팹
+    public float fireRate = 1.2f;      // 초당 발사 간격(예: 1.2초마다)
+    public float bulletSpeed = 30f;    // 총알 속도
+    public float bulletDamage = 15f;   // 총알 데미지
+    public float fireRange = 35f;      // 사거리(가까울 때만 쏘게)
+    public LayerMask lineOfSightMask;  // 시야 차단용(벽/지형 레이어)
+    float _nextFireTime;
 
     [Header("Status")]
     public float maxHealth = 100f;
@@ -64,7 +68,7 @@ public class FlyingEnemyController : MonoBehaviour, IEnemyReward
         if (player != null)
         {
             MoveAndEvade();
-            Attack();
+            TryAttack();
         }
     }
 
@@ -89,17 +93,48 @@ public class FlyingEnemyController : MonoBehaviour, IEnemyReward
         }
     }
 
-    private void Attack()
+    void TryAttack()
     {
-        if (Time.time >= nextFireTime)
+        if (player == null || bulletPrefab == null || firePoint == null) return;
+
+        // 사거리 체크
+        float dist = Vector3.Distance(transform.position, player.position);
+        if (dist > fireRange) return;
+
+        // 시야 막힘 체크(선택)
+        Vector3 eye = firePoint.position;
+        Vector3 toPlayer = (player.position + Vector3.up * 1.2f) - eye; // 상체 쪽 보정
+        if (Physics.Raycast(eye, toPlayer.normalized, out RaycastHit hit, fireRange, lineOfSightMask))
         {
-            if (bulletPrefab != null && firePoint != null)
-            {
-                Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-            }
-            nextFireTime = Time.time + fireRate;
+            // 레이캐스트가 플레이어를 먼저 못 맞췄다면 막힌 것
+            if (!hit.collider.CompareTag("Player")) return;
         }
+
+        // 발사 타이밍
+        if (Time.time < _nextFireTime) return;
+
+        // 총구를 플레이어 방향으로 돌리기
+        Vector3 dir = toPlayer.normalized;
+        firePoint.rotation = Quaternion.LookRotation(dir);
+
+        // 총알 생성 및 초기화 (★ EnemyProjectile 그대로 사용)
+        GameObject go = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+
+        var proj = go.GetComponent<EnemyProjectile>();
+        if (proj != null)
+        {
+            // shooter=this.gameObject, 방향=firePoint.forward, 속도/데미지 전달
+            proj.Init(this.gameObject, firePoint.forward, bulletSpeed, bulletDamage); // ← 핵심
+        }
+        else
+        {
+            Debug.LogWarning("[FlyingEnemy] bulletPrefab에 EnemyProjectile이 없습니다.");
+        }
+
+        _nextFireTime = Time.time + fireRate;
     }
+
+
 
     // FlyingEnemyController.cs
     public void TakeDamage(float damage)

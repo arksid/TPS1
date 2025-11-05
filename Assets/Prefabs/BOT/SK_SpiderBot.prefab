@@ -83,6 +83,8 @@ MonoBehaviour:
   explosionDamage: 60
   explosionEffect: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
     type: 3}
+  expReward: 25
+  ultimateGaugeReward: 10
 --- !u!54 &747332268715285304
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -289,6 +291,9 @@ MonoBehaviour:
     type: 3}
   ammoPackPrefab: {fileID: 796601214760731350, guid: 4785d7b8a3165ce42aec4a0dc798fb78,
     type: 3}
+  itemLifeTimeSeconds: 30
+  warnBeforeSeconds: 3
+  warnBlinkIntervalSec: 0.2
 --- !u!1 &1038900827139846
 GameObject:
   m_ObjectHideFlags: 0

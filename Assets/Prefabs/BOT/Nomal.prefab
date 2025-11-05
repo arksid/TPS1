@@ -656,9 +656,10 @@ MonoBehaviour:
   projectilePrefab: {fileID: 2216547676952783978, guid: 37bdb03f8f3906a48ba0d4aaac381d23,
     type: 3}
   shootRange: 10
-  shootCooldown: 0.3
+  shootCooldown: 0.2
   projectileSpeed: 50
   projectileDamage: 10
+  expReward: 25
   rotationSpeed: 5
   deathExplosionPrefab: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
     type: 3}
@@ -729,6 +730,9 @@ MonoBehaviour:
     type: 3}
   ammoPackPrefab: {fileID: 6421407223492047996, guid: 245ea7bcd1a367240b9d0eb63928ce97,
     type: 3}
+  itemLifeTimeSeconds: 30
+  warnBeforeSeconds: 3
+  warnBlinkIntervalSec: 0.2
 --- !u!1 &2530671995739701460
 GameObject:
   m_ObjectHideFlags: 0
