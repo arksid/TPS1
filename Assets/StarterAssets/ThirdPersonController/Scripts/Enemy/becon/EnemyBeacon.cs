@@ -118,7 +118,6 @@ public class EnemyBeacon : MonoBehaviour, IHittable
 
         if (outlineWhenActive != null) outlineWhenActive.enabled = false;
         StopAllCoroutines();
-        QuestEvents.BeaconDestroyed(gameObject);
 
         Destroy(gameObject, 0.05f);
     }

@@ -223,6 +223,8 @@ public class SuicideEnemyController : MonoBehaviour, ISlowable, IEnemyReward
         GiveReward();
 
         Destroy(gameObject, 0.1f);
+        MissionEvents.RaiseEnemyKilled(); // ★ 이 한 줄만 추가
+        Destroy(gameObject);
     }
 
     private void OnCollisionEnter(Collision collision)

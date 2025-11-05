@@ -361,9 +361,12 @@ public class EnemyController : MonoBehaviour, ISlowable, IEnemyReward
             dropSystem.TryDropItemByWeight();
 
         Destroy(gameObject);
-        QuestEvents.EnemyDied(transform.position, gameObject);
+        
         Character.Instance?.OnEnemyKilledHook();
         StatModifierManager.Instance?.OnEnemyKilled();
+
+        MissionEvents.RaiseEnemyKilled(); // ★ 이 한 줄만 추가
+        Destroy(gameObject);
     }
 
     private void OnEnable()

@@ -22,6 +22,17 @@ public class FlyingEnemyController : MonoBehaviour, IEnemyReward
     public LayerMask lineOfSightMask;  // 시야 차단용(벽/지형 레이어)
     float _nextFireTime;
 
+    // ▼ 5점사 + 퍼짐 설정
+    [Header("Burst Settings")]
+    public int burstCount = 5;              // 몇 발씩?
+    public float shotIntervalInBurst = 0.08f; // 점사 내 발사 간격(초)
+    public float burstCooldown = 1.2f;      // 점사 후 쿨타임(초) = 다음 점사까지 기다림
+    public float spreadDegrees = 4f;        // 퍼짐 각도(도)
+    public float aimChestOffsetY = 1.2f;    // 플레이어 상체 보정 높이
+
+    float _nextBurstTime = 0f;
+    bool _isBursting = false;
+
     [Header("Status")]
     public float maxHealth = 100f;
     private float currentHealth;
@@ -68,7 +79,7 @@ public class FlyingEnemyController : MonoBehaviour, IEnemyReward
         if (player != null)
         {
             MoveAndEvade();
-            TryAttack();
+            TryAttackBurst();  // ← 한 줄만 추가/교체
         }
     }
 
@@ -93,48 +104,79 @@ public class FlyingEnemyController : MonoBehaviour, IEnemyReward
         }
     }
 
-    void TryAttack()
+    void TryAttackBurst()
     {
+        if (_isBursting) return;
         if (player == null || bulletPrefab == null || firePoint == null) return;
 
-        // 사거리 체크
+        // 사거리
         float dist = Vector3.Distance(transform.position, player.position);
         if (dist > fireRange) return;
 
-        // 시야 막힘 체크(선택)
+        // 시야 막힘(선택): 레이가 플레이어를 먼저 못 맞추면 쏘지 않음
         Vector3 eye = firePoint.position;
-        Vector3 toPlayer = (player.position + Vector3.up * 1.2f) - eye; // 상체 쪽 보정
+        Vector3 toPlayer = (player.position + Vector3.up * aimChestOffsetY) - eye;
         if (Physics.Raycast(eye, toPlayer.normalized, out RaycastHit hit, fireRange, lineOfSightMask))
         {
-            // 레이캐스트가 플레이어를 먼저 못 맞췄다면 막힌 것
             if (!hit.collider.CompareTag("Player")) return;
         }
 
-        // 발사 타이밍
-        if (Time.time < _nextFireTime) return;
+        // 점사 쿨타임
+        if (Time.time < _nextBurstTime) return;
 
-        // 총구를 플레이어 방향으로 돌리기
-        Vector3 dir = toPlayer.normalized;
-        firePoint.rotation = Quaternion.LookRotation(dir);
-
-        // 총알 생성 및 초기화 (★ EnemyProjectile 그대로 사용)
-        GameObject go = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-
-        var proj = go.GetComponent<EnemyProjectile>();
-        if (proj != null)
-        {
-            // shooter=this.gameObject, 방향=firePoint.forward, 속도/데미지 전달
-            proj.Init(this.gameObject, firePoint.forward, bulletSpeed, bulletDamage); // ← 핵심
-        }
-        else
-        {
-            Debug.LogWarning("[FlyingEnemy] bulletPrefab에 EnemyProjectile이 없습니다.");
-        }
-
-        _nextFireTime = Time.time + fireRate;
+        StartCoroutine(BurstRoutine());
     }
 
+    System.Collections.IEnumerator BurstRoutine()
+    {
+        _isBursting = true;
 
+        for (int i = 0; i < burstCount; i++)
+        {
+            if (player == null) break;
+
+            // 1) 기본 조준 방향(플레이어 상체)
+            Vector3 baseDir = (player.position + Vector3.up * aimChestOffsetY - firePoint.position).normalized;
+
+            // 2) 퍼짐 적용(명중률 낮추기)
+            Vector3 shotDir = ApplySpread(baseDir, spreadDegrees);
+
+            // 3) 총구 방향 정렬
+            firePoint.rotation = Quaternion.LookRotation(shotDir);
+
+            // 4) 발사체 생성 + 초기화(EnemyProjectile 사용)
+            GameObject go = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+            var proj = go.GetComponent<EnemyProjectile>();
+            if (proj != null)
+            {
+                proj.Init(this.gameObject, firePoint.forward, bulletSpeed, bulletDamage);
+            }
+
+            // 5) 점사 사이 간격
+            if (i < burstCount - 1)
+                yield return new WaitForSeconds(shotIntervalInBurst);
+        }
+
+        // 다음 점사까지 대기
+        _nextBurstTime = Time.time + burstCooldown;
+
+        _isBursting = false;
+    }
+
+    // 퍼짐(스프레드) 계산: 기준 방향을 살짝 흔들어주는 함수
+    Vector3 ApplySpread(Vector3 dir, float degrees)
+    {
+        // dir을 바라보는 기준 회전
+        Quaternion toTarget = Quaternion.LookRotation(dir);
+
+        // 원 안에서 랜덤한 두 값(피치/요에 대응) -> -1~1 범위를 degrees 만큼 곱해 각도 오프셋 생성
+        Vector2 r = Random.insideUnitCircle;        // r.x = yaw, r.y = pitch
+        Quaternion spreadLocal = Quaternion.Euler(r.y * degrees, r.x * degrees, 0f);
+
+        // (toTarget * spreadLocal) * forward = 퍼짐 방향
+        Vector3 spreadDir = (toTarget * spreadLocal) * Vector3.forward;
+        return spreadDir.normalized;
+    }
 
     // FlyingEnemyController.cs
     public void TakeDamage(float damage)
@@ -186,6 +228,8 @@ public class FlyingEnemyController : MonoBehaviour, IEnemyReward
             dropSystem.TryDropItemByWeight();
 
         Destroy(gameObject, 0.1f);
+        MissionEvents.RaiseEnemyKilled(); // ★ 이 한 줄만 추가
+        Destroy(gameObject);
     }
 
     public void SetTarget(Transform newTarget)

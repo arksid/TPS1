@@ -80,7 +80,7 @@ MonoBehaviour:
   chaseSpeed: 10
   chaseDuration: 2
   explosionRange: 2
-  explosionDamage: 60
+  explosionDamage: 40
   explosionEffect: {fileID: 7960310703938764177, guid: 10de6f5bb121985428238b2803f55c96,
     type: 3}
   expReward: 25
