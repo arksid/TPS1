@@ -115,6 +115,7 @@ public class Character : MonoBehaviour
     // Character.cs (필드 영역 어딘가)
     [SerializeField] private Outline outline;  // QuickOutline 컴포넌트
     [SerializeField] private bool outlineOffOnStart = true; // 시작 시 아웃라인 끄기 옵션
+    [SerializeField] private DeathPanel deathPanel; // ← 인스펙터에 프리팹 드래그
     public float CurrentSpeed { get; private set; }
     public int MaxHealth
     {
@@ -552,6 +553,7 @@ public class Character : MonoBehaviour
 
     private void Die()
     {
+        Debug.Log("<color=red>[Character] Die() 호출됨</color>");  // ✅ 추가
         if (isDead) return;
         isDead = true;
 
@@ -583,8 +585,16 @@ public class Character : MonoBehaviour
         {
             _animator.SetTrigger("Die");
         }
+        if (deathPanel != null)
+            deathPanel.Show("사망", "메인 메뉴로 돌아가거나 재도전하세요.");
+        else
+        {
+            Debug.LogWarning("[Character] deathPanel이 비었습니다. 씬에서 자동 검색을 시도합니다.");
+            var found = FindObjectOfType<DeathPanel>(includeInactive: true);
+            if (found != null) { deathPanel = found; deathPanel.Show(); }
+            else Debug.LogError("[Character] 씬에 DeathPanel 인스턴스가 없습니다.");
 
-      
+        }
     }
 
 
@@ -602,6 +612,11 @@ public class Character : MonoBehaviour
         HandlePredator();
         HandleColdRage();
         HandleSecondWind();
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            Debug.Log("[Character] K키로 강제 사망 테스트");
+            Die();
+        }
 
     }
     void HandleRendExpire()
