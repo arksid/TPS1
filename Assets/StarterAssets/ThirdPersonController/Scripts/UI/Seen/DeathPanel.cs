@@ -2,112 +2,114 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
-using TMPro;
 using UnityEngine.UI;
+using TMPro;
+using System.Collections;
 
 public class DeathPanel : MonoBehaviour, IPointerClickHandler
 {
-    [Header("Refs (비워도 자동으로 찾습니다)")]
-    [SerializeField] private GameObject root;           // 패널 루트(캔버스 또는 그 하위)
-    [SerializeField] private CanvasGroup canvasGroup;   // 패널의 CanvasGroup
-    [SerializeField] private TextMeshProUGUI titleText;
-    [SerializeField] private TextMeshProUGUI descText;
+    [Header("Refs (비워도 자동 탐색)")]
+    [SerializeField] private GameObject root;                 // 패널 루트(보통 GameOverCanvas)
+    [SerializeField] private CanvasGroup canvasGroup;         // 페이드용
+    [SerializeField] private TextMeshProUGUI titleText;       // "사망"
+    [SerializeField] private TextMeshProUGUI descText;        // "아무 곳이나 클릭하면 ..."
 
     [Header("Options")]
     [SerializeField] private string mainMenuSceneName = "MainMenu";
-    [SerializeField] private bool pauseTimeOnShow = true;
-    [SerializeField] private float clickUnlockDelay = 0.3f;
+    [SerializeField] private bool pauseTimeOnShow = true;     // 보여줄 때 시간 멈춤
+    [SerializeField] private float clickUnlockDelay = 0.30f;  // 표시 직후 오클릭 방지
+    [SerializeField] private float fadeInSeconds = 0.25f;    // 페이드 인 시간
+    [SerializeField] private float fadeOutSeconds = 0.25f;    // 페이드 아웃 시간
+    [SerializeField] private int sortingOrder = 9999;     // 맨 위로 보이게
 
     private bool _shown;
     private float _shownAt;
+    private Coroutine _fadeCo;
 
-    // --------- 공통 유틸: 비활성 포함 안전 탐색 ----------
+    // ---------- 안전한 참조 유틸(비활성 포함 탐색) ----------
     private T FindInChildrenInactive<T>(Transform t = null) where T : Component
     {
         if (t == null) t = transform;
-        var arr = t.GetComponentsInChildren<T>(true); // includeInactive:true
+        var arr = t.GetComponentsInChildren<T>(true);
         return (arr != null && arr.Length > 0) ? arr[0] : null;
     }
 
     /// <summary>
-    /// Canvas / CanvasGroup / GraphicRaycaster / EventSystem을
-    /// "이미 있으면 재사용"하고, 없으면 "그때만 추가"합니다.
+    /// 이미 있으면 재사용, 없을 때만 추가/세팅
     /// </summary>
     private void EnsureUIInfrastructure()
     {
-        // 0) root 지정 (없으면 자기 자신)
         if (root == null) root = gameObject;
 
-        // 1) Canvas 가져오기 (이미 있으면 재사용)
-        //    - 우선 root에서 찾고, 없으면 부모에서도 찾아봄
+        // 1) Canvas 가져오되, 절대로 중복 추가하지 않음
+        //    (자신 또는 부모에 이미 있으면 재사용)
         Canvas canvas = root.GetComponent<Canvas>();
+        if (canvas == null) canvas = root.GetComponentInParent<Canvas>(true);
         if (canvas == null)
         {
-            canvas = root.GetComponentInParent<Canvas>(true); // 비활성 부모도 탐색
-            if (canvas == null)
-            {
-                // 정말 없을 때만 추가
-                canvas = root.AddComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            }
+            // 정말로 어디에도 없을 때만 추가
+            canvas = root.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         }
-        // 최상단 보장
-        canvas.sortingOrder = 9999;
+        canvas.sortingOrder = sortingOrder;
 
-        // 2) GraphicRaycaster (클릭 받기 위함)
+        // 2) 클릭 이벤트용 Raycaster 보장
         if (canvas.GetComponent<GraphicRaycaster>() == null)
             canvas.gameObject.AddComponent<GraphicRaycaster>();
 
-        // 3) CanvasScaler(선택) – 없으면 추가 (UI 스케일 안정화)
+        // 3) CanvasScaler(권장) – 없으면 추가
         if (canvas.GetComponent<CanvasScaler>() == null)
-            canvas.gameObject.AddComponent<CanvasScaler>();
-
-        // 4) EventSystem 1개 보장
-        if (FindObjectOfType<EventSystem>() == null)
         {
-            var esGO = new GameObject("EventSystem");
-            esGO.AddComponent<EventSystem>();
-            esGO.AddComponent<StandaloneInputModule>();
+            var scaler = canvas.gameObject.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
         }
 
-        // 5) CanvasGroup 찾기/생성
+        // 4) EventSystem 보장(씬에 1개 필요)
+        if (FindObjectOfType<EventSystem>() == null)
+        {
+            var es = new GameObject("EventSystem").AddComponent<EventSystem>();
+            es.gameObject.AddComponent<StandaloneInputModule>();
+        }
+
+        // 5) CanvasGroup 확보(없으면 추가)
         if (canvasGroup == null)
         {
-            // 우선 root에서 찾아보고, 없으면 자식들에서(비활성 포함) 찾음
             canvasGroup = root.GetComponent<CanvasGroup>();
-            if (canvasGroup == null)
-                canvasGroup = FindInChildrenInactive<CanvasGroup>(root.transform);
-            if (canvasGroup == null)
-                canvasGroup = root.AddComponent<CanvasGroup>(); // 마지막 수단
+            if (canvasGroup == null) canvasGroup = FindInChildrenInactive<CanvasGroup>(root.transform);
+            if (canvasGroup == null) canvasGroup = root.AddComponent<CanvasGroup>();
         }
     }
 
     private void Awake()
     {
         EnsureUIInfrastructure();
-        Hide(); // 시작 시 숨김 상태로
+        // 시작 시 보이지 않게
+        canvasGroup.alpha = 0f;
+        canvasGroup.blocksRaycasts = false;
+        canvasGroup.interactable = false;
+        if (root != null && root.activeSelf) root.SetActive(false);
+        _shown = false;
     }
 
+    /// <summary>
+    /// 게임오버 표시(페이드 인)
+    /// </summary>
     public void Show(string title = "사망",
                      string desc = "화면을 클릭하면 메인 메뉴로 이동합니다.")
     {
-        EnsureUIInfrastructure(); // 참조 보장
+        EnsureUIInfrastructure();
 
         if (titleText == null) titleText = FindInChildrenInactive<TextMeshProUGUI>(transform);
-        if (descText == null) descText = FindInChildrenInactive<TextMeshProUGUI>(transform); // 필요시 별도 지정
+        if (descText == null) descText = FindInChildrenInactive<TextMeshProUGUI>(transform);
 
         if (titleText) titleText.text = title;
         if (descText) descText.text = desc;
 
-        // ✅ 루트 활성화 강제 (비활성이어도 켬)
-        if (!root.activeSelf) root.SetActive(true);
+        if (root != null && !root.activeSelf) root.SetActive(true);
 
-        // ✅ CanvasGroup 표시/인터랙션 강제
-        canvasGroup.alpha = 1f;
-        canvasGroup.blocksRaycasts = true;
-        canvasGroup.interactable = true;
-
-        // 애니메이터가 CanvasGroup을 제어하면 충돌하므로 잠시 비활성
+        // Animator가 CanvasGroup을 제어하면 충돌하므로 일단 비활성
         var anim = root.GetComponentInChildren<Animator>(true);
         if (anim) anim.enabled = false;
 
@@ -115,28 +117,37 @@ public class DeathPanel : MonoBehaviour, IPointerClickHandler
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
+        // 페이드 인
+        if (_fadeCo != null) StopCoroutine(_fadeCo);
+        _fadeCo = StartCoroutine(FadeCanvas(canvasGroup, toAlpha: 1f, seconds: fadeInSeconds, makeInteractableAtEnd: true));
+
         _shown = true;
         _shownAt = Time.unscaledTime;
 
-        Debug.Log("[DeathPanel] Show(): root 활성화 + alpha=1 + 상단 정렬 완료");
+        Debug.Log("[DeathPanel] Show(): 페이드 인 시작");
     }
 
+    /// <summary>
+    /// 숨김(페이드 아웃)
+    /// </summary>
     public void Hide()
     {
-        EnsureUIInfrastructure(); // 참조 보장
+        EnsureUIInfrastructure();
 
-        canvasGroup.alpha = 0f;
-        canvasGroup.blocksRaycasts = false;
-        canvasGroup.interactable = false;
+        if (_fadeCo != null) StopCoroutine(_fadeCo);
+        _fadeCo = StartCoroutine(FadeCanvas(canvasGroup, toAlpha: 0f, seconds: fadeOutSeconds, makeInteractableAtEnd: false, onEnded: () =>
+        {
+            if (root != null && root.activeSelf) root.SetActive(false);
+        }));
 
-        if (root.activeSelf) root.SetActive(false);
         _shown = false;
     }
 
+    // 화면 아무 곳 클릭
     public void OnPointerClick(PointerEventData eventData)
     {
         if (!_shown) return;
-        if (Time.unscaledTime - _shownAt < clickUnlockDelay) return; // 오클릭 방지
+        if (Time.unscaledTime - _shownAt < clickUnlockDelay) return; // 표시 직후 오클릭 방지
         GoMainMenu();
     }
 
@@ -150,14 +161,46 @@ public class DeathPanel : MonoBehaviour, IPointerClickHandler
 
         Time.timeScale = 1f;
 
+        // SceneLoader가 있으면 로딩화면과 함께
         if (SceneLoader.Instance != null)
             SceneLoader.Instance.LoadSceneAsync(mainMenuSceneName);
         else
             SceneManager.LoadScene(mainMenuSceneName);
     }
 
+    // ------------------- 페이드 코루틴 -------------------
+    private IEnumerator FadeCanvas(CanvasGroup cg, float toAlpha, float seconds, bool makeInteractableAtEnd, System.Action onEnded = null)
+    {
+        if (cg == null)
+        {
+            onEnded?.Invoke();
+            yield break;
+        }
+
+        // 시작값 캡처
+        float from = cg.alpha;
+        float t = 0f;
+
+        // 페이드 시작 시에는 클릭차단만이라도 켜서 뒤 UI 클릭 방지
+        cg.blocksRaycasts = true;
+
+        while (t < seconds)
+        {
+            t += Time.unscaledDeltaTime;                     // 시간 멈춤과 무관하게 페이드
+            cg.alpha = Mathf.Lerp(from, toAlpha, t / seconds);
+            yield return null;
+        }
+        cg.alpha = toAlpha;
+
+        // 끝난 뒤 인터랙션 상태
+        cg.interactable = makeInteractableAtEnd && toAlpha > 0.99f;
+        cg.blocksRaycasts = toAlpha > 0.01f;                 // 0이면 클릭 통과, 1이면 클릭 받음
+
+        onEnded?.Invoke();
+    }
+
 #if UNITY_EDITOR
-    // 에디터 테스트용: P=표시, O=숨김
+    // 에디터 빠른 테스트: P=표시, O=숨김
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.P)) Show();
