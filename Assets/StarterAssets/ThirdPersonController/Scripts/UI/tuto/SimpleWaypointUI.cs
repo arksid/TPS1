@@ -26,11 +26,16 @@ public class SimpleWaypointUI : MonoBehaviour
 
         if (!worldCamera) worldCamera = Camera.main;
         if (!canvas) canvas = GetComponentInParent<Canvas>();
+
+        // ★ 추가: 내/캔버스 활성 보장
+        if (canvas && !canvas.gameObject.activeSelf) canvas.gameObject.SetActive(true);
+        if (!gameObject.activeSelf) gameObject.SetActive(true);
+
         if (marker) marker.gameObject.SetActive(true);
         if (distanceLabel) distanceLabel.gameObject.SetActive(true);
         if (messageLabel) messageLabel.gameObject.SetActive(true);
-        gameObject.SetActive(true);
     }
+
 
     public void Deactivate()
     {

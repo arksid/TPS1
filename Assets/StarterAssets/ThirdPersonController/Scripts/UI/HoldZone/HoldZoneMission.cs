@@ -27,6 +27,9 @@ public class HoldZoneMission : MonoBehaviour
     [Header("완료 이벤트")]
     public UnityEvent onCompleted;   // 100% 도달 시 발생(한 번만)
 
+    [Header("UI 옵션")]
+    public bool autoShowUIOnEnable = false;
+
     bool _playerInside;
     bool _completed;
 
@@ -39,13 +42,17 @@ public class HoldZoneMission : MonoBehaviour
     void OnEnable()
     {
         _completed = false;
-        // UI 초기화
         if (ui) ui.SetProgress(progressPercent / targetPercent);
         if (ui) ui.SetHint(enterMsg);
-        if (ui) ui.Show();
+
+        if (ui)
+        {
+            if (autoShowUIOnEnable) ui.Show();
+            else ui.Hide(); // ← 기본은 숨김
+        }
     }
 
-    void Update()
+        void Update()
     {
         if (_completed) return;
 
