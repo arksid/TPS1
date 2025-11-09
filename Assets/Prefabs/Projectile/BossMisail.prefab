@@ -150,21 +150,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 0}
+  owner: {fileID: 0}
+  aimOffsetY: 1.2
   turnRateDegPerSec: 160
   accel: 20
-  maxSpeed: 30
+  maxSpeed: 10
   startSpeed: 10
   lifeTime: 12
-  aimOffsetY: 1.2
+  spawnForwardOffset: 0.2
+  armingDelay: 0.12
+  homingDelay: 0
   proximityFuse: 1.2
   explosionRadius: 3.5
   damage: 45
   damageFalloff: 1
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  triggerInteraction: 2
   explosionFx: {fileID: 3911229923933492915, guid: 590c18679dd71a1498b1042ea72a7dac,
     type: 3}
   explosionFxLife: 2
   trailFx: {fileID: 0}
-  hitMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  owner: {fileID: 0}
+  enableLogging: 0

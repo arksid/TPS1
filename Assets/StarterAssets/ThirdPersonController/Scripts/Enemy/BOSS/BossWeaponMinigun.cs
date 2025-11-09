@@ -1,35 +1,56 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections;
+using UnityEngine;
 
 public class BossWeaponMinigun : MonoBehaviour, ISlowable
 {
-    [Header("References")]
-    public Transform muzzle;              // 총구(메쉬 밖으로 배치)
-    public GameObject bulletPrefab;       // PF_BossBullet (BossBullet 스크립트 포함)
-    public Transform player;              // 비우면 Character.Instance 사용
+    [Header("참조")]
+    public Transform player;                    // 비워두면 Tag=Player 자동 탐색
+    public Transform muzzle;                    // 단일 총구(써도 되고)
+    public Transform[] muzzles;                 // 다중 총구(여러 개면 여기에 넣기)
+    public GameObject enemyProjectilePrefab;    // ← 반드시 EnemyProjectile 프리팹 지정!
 
-    [Header("Fire Settings")]
-    public float bulletSpeed = 30f;
-    public float rpm = 600f;
+    [Header("발사 파라미터")]
+    [Tooltip("분당 발사수(RPM)")]
+    public float rpm = 900f;
+    [Tooltip("한 발 당 퍼짐 각도(도)")]
+    public float spreadDeg = 2.0f;
+    [Tooltip("탄 속도")]
+    public float bulletSpeed = 80f;
+    [Tooltip("탄 데미지")]
+    public float bulletDamage = 6f;
+    [Tooltip("연속 발사 모드(켜면 무한 연사)")]
+    public bool continuousFire = true;
+    [Tooltip("버스트 모드: 몇 발 쏠지(continuousFire=false 일 때만 사용)")]
     public int burstCount = 20;
-    public float spreadAngle = 2.0f;
+    [Tooltip("버스트 간 휴식(초)")]
+    public float burstRest = 0.2f;
+    [Tooltip("분노 모드 배율(RPM 가속)")]
+    public float enragedRpmMultiplier = 1.5f;
+    [Tooltip("스폰 시 총구 앞으로 밀어낼 거리(관통/자기충돌 방지)")]
+    public float spawnForwardOffset = 1.5f;
+    [Tooltip("머리쪽 살짝 조준 보정(미세 상향)")]
+    public float aimOffsetY = 1.2f;
 
-    [Header("Enraged Tuning (Optional)")]
-    public float enragedRpmMul = 1.35f;
-    public int enragedExtraShots = 10;
+    [Header("동작 옵션")]
+    public bool autoStartOnEnable = false;
+    public bool enraged = false;                // 페이즈에서 true로 바꾸면 RPM↑
 
-    [Header("Behavior")]
-    public bool autoStartOnEnable = true; // 켜지면 자동 발사
+    [Header("연출(선택)")]
+    public AudioSource sfxLoop;
+    public ParticleSystem[] muzzleFlashes;
 
-    [Header("Debug")]
-    public bool enableLogging = false;
+    // ISlowable용(궁극기 슬로우 등)
+    float _localTimeScale = 1f;
 
-    private bool firing;
-    private float localTimeScale = 1f;    // 1.0=정상, 0.5=슬로우
-    private bool enraged = false;
+    Coroutine _loop;
 
-    void OnEnable()
+    void Start()
     {
+        if (!player)
+        {
+            var p = GameObject.FindGameObjectWithTag("Player");
+            if (p) player = p.transform;
+        }
         if (autoStartOnEnable) StartFiring();
     }
 
@@ -38,107 +59,138 @@ public class BossWeaponMinigun : MonoBehaviour, ISlowable
         StopFiring();
     }
 
+    // ===== 외부 제어 API =====
     public void StartFiring()
     {
-        if (!firing) StartCoroutine(FireLoop());
-        if (enableLogging) Debug.Log("<Minigun> StartFiring()");
+        if (_loop != null) return;
+        if (!enemyProjectilePrefab)
+        {
+            Debug.LogWarning("[BossWeaponMinigun] enemyProjectilePrefab 미지정");
+            return;
+        }
+        if (sfxLoop) sfxLoop.Play();
+        PlayMuzzleFx(true);
+        _loop = StartCoroutine(Co_FireLoop());
     }
 
     public void StopFiring()
     {
-        firing = false;
-        if (enableLogging) Debug.Log("<Minigun> StopFiring()");
+        if (_loop != null)
+        {
+            StopCoroutine(_loop);
+            _loop = null;
+        }
+        if (sfxLoop) sfxLoop.Stop();
+        PlayMuzzleFx(false);
     }
 
-    public void SetEnraged(bool on)
-    {
-        enraged = on;
-        if (enableLogging) Debug.Log($"<Minigun> SetEnraged({on})");
-    }
+    public void SetEnraged(bool on) => enraged = on;
 
+    // 궁극기 슬로우 등 외부 시간 배율
     public void SetLocalTimeScale(float scale)
     {
-        localTimeScale = Mathf.Clamp(scale, 0.05f, 5f);
-        if (enableLogging) Debug.Log($"<Minigun> LocalTimeScale={localTimeScale:0.00}");
+        _localTimeScale = Mathf.Clamp(scale, 0.05f, 4f);
     }
 
-    private IEnumerator FireLoop()
+    // ===== 내부 루프 =====
+    IEnumerator Co_FireLoop()
     {
-        firing = true;
-        while (firing)
+        var mouths = GetMuzzles();
+        if (mouths.Length == 0)
         {
-            float rps = (rpm * (enraged ? enragedRpmMul : 1f)) / 60f;   // 초당 발사 수
-            float interval = 1f / Mathf.Max(1f, rps);
-            int count = burstCount + (enraged ? enragedExtraShots : 0);
+            Debug.LogWarning("[BossWeaponMinigun] 총구가 없습니다(muzzle/muzzles).");
+            yield break;
+        }
 
-            if (enableLogging)
-                Debug.Log($"<Minigun> Burst start | rps={rps:F2}, interval={interval:F3}, count={count}");
+        while (true)
+        {
+            // 유효 RPM 계산(분노/슬로우 반영)
+            float effectiveRpm = rpm * (enraged ? enragedRpmMultiplier : 1f);
+            effectiveRpm = Mathf.Max(60f, effectiveRpm); // 최소 60RPM 가드
+            float secPerShot = 60f / effectiveRpm;
 
-            for (int i = 0; i < count; i++)
+            if (continuousFire)
             {
-                FireOne();
-                yield return new WaitForSeconds(interval / Mathf.Max(0.01f, localTimeScale)); // 슬로우 고려
-                if (!firing) break;
+                // 무한 연사
+                FireOnce(mouths);
+                yield return new WaitForSeconds(secPerShot / _localTimeScale);
+            }
+            else
+            {
+                // 버스트 n발 → 휴식
+                for (int i = 0; i < Mathf.Max(1, burstCount); i++)
+                {
+                    FireOnce(mouths);
+                    yield return new WaitForSeconds(secPerShot / _localTimeScale);
+                }
+                yield return new WaitForSeconds(burstRest / _localTimeScale);
+            }
+        }
+    }
+
+    void FireOnce(Transform[] mouths)
+    {
+        var t = ResolveTarget();
+        for (int i = 0; i < mouths.Length; i++)
+        {
+            var m = mouths[i];
+            if (!m) continue;
+
+            // 조준 방향 + 퍼짐
+            Vector3 dir = (t ? (t.position + Vector3.up * aimOffsetY - m.position).normalized : m.forward);
+            dir = ApplySpread(dir, spreadDeg);
+
+            // 스폰 위치(총구 앞)
+            Vector3 spawnPos = m.position + dir * spawnForwardOffset;
+            Quaternion rot = Quaternion.LookRotation(dir);
+
+            var go = Instantiate(enemyProjectilePrefab, spawnPos, rot);
+            // 잔류 정리용 태그(프로젝트에서 사용 중이면 꼭 유지)
+            go.tag = "EnemyProjectile";
+
+            // EnemyProjectile 초기화(발사자/방향/속도/데미지)
+            var ep = go.GetComponent<EnemyProjectile>();
+            if (ep != null)
+            {
+                ep.Init(shooter: this.gameObject, direction: dir, speed: bulletSpeed, damage: bulletDamage);
             }
 
-            // 짧은 쿨타임
-            yield return new WaitForSeconds(0.6f / Mathf.Max(0.01f, localTimeScale));
+            // 머즐 플래시
+            if (i < muzzleFlashes.Length && muzzleFlashes[i]) muzzleFlashes[i].Play();
         }
     }
 
-    private void FireOne()
+    // ===== 유틸 =====
+    Transform[] GetMuzzles()
     {
-        if (muzzle == null || bulletPrefab == null)
-        {
-            if (enableLogging) Debug.LogWarning("<Minigun> muzzle/bulletPrefab 누락");
-            return;
-        }
-
-        Transform t = ResolveTarget();
-        Vector3 baseDir = (t != null ? (t.position - muzzle.position).normalized : muzzle.forward);
-
-        // 간단 퍼짐
-        float yaw = Random.Range(-spreadAngle, spreadAngle);
-        float pitch = Random.Range(-spreadAngle, spreadAngle);
-        baseDir = Quaternion.Euler(pitch, yaw, 0f) * baseDir;
-
-        var go = Instantiate(bulletPrefab, muzzle.position, Quaternion.LookRotation(baseDir));
-        var bb = go.GetComponent<BossBullet>();
-        if (bb != null)
-        {
-            bb.speed = bulletSpeed;
-            bb.enableLogging = enableLogging;
-
-            // 목표까지 거리 기반으로 lifeTime/최대거리 자동 보정 (여유분 포함)
-            if (t != null)
-            {
-                float dist = Vector3.Distance(muzzle.position, t.position);
-                float sec = Mathf.Max(2f, dist / Mathf.Max(1f, bulletSpeed) + 1.0f);  // 비행시간+여유1s
-                bb.lifeTime = Mathf.Max(bb.lifeTime, sec);
-                bb.maxTravelDistance = Mathf.Max(bb.maxTravelDistance, dist + 10f);
-            }
-
-            // 발사(머리쪽 조준 + 소유자충돌무시 + 안전스폰은 BossBullet 내부)
-            bb.FireAtTarget(t != null ? t : muzzle, transform);
-        }
-        else
-        {
-            // 백업(권장 X): BossBullet이 없을 때 RB로만 가속
-            var rb = go.GetComponent<Rigidbody>();
-            if (rb != null) rb.velocity = baseDir * bulletSpeed;
-            if (enableLogging) Debug.LogWarning("<Minigun> BossBullet 스크립트 없음 – RB 가속 사용");
-        }
-
-        go.tag = "EnemyProjectile";
-
-        if (enableLogging)
-            Debug.Log($"<Minigun> Shot | pos={muzzle.position} dir={baseDir} speed={bulletSpeed}");
+        if (muzzles != null && muzzles.Length > 0) return muzzles;
+        if (muzzle) return new[] { muzzle };
+        return new Transform[0];
     }
 
-    private Transform ResolveTarget()
+    Vector3 ApplySpread(Vector3 forward, float degrees)
     {
-        if (player != null) return player;
-        if (Character.Instance != null) return Character.Instance.transform; // 프로젝트 전역 플레이어
-        return null;
+        if (degrees <= 0.01f) return forward;
+        // 수평/수직의 작은 무작위 회전 두 번
+        Quaternion yaw = Quaternion.AngleAxis(Random.Range(-degrees, degrees), Vector3.up);
+        Quaternion pitch = Quaternion.AngleAxis(Random.Range(-degrees, degrees), Vector3.right);
+        return (yaw * pitch) * forward;
+    }
+
+    Transform ResolveTarget()
+    {
+        if (player) return player;
+        var p = GameObject.FindGameObjectWithTag("Player");
+        return p ? p.transform : null;
+    }
+
+    void PlayMuzzleFx(bool on)
+    {
+        if (muzzleFlashes == null) return;
+        foreach (var fx in muzzleFlashes)
+        {
+            if (!fx) continue;
+            if (on) fx.Play(); else fx.Stop();
+        }
     }
 }

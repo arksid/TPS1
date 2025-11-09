@@ -1,27 +1,46 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 public class BossFacePlayer : MonoBehaviour
 {
-    [Tooltip("직접 타깃을 지정하지 않으면 Character.Instance를 자동 사용")]
-    public Transform target;
+    public Transform target;          // 비워두면 Player 태그 자동 탐색
+    public float rotateSpeed = 8f;
+    public bool yawOnly = true;       // 수평(Yaw)만 회전
+    public bool keepUpright = true;   // Pitch/Roll 강제 0
 
-    [Header("회전 세팅")]
-    public float turnSpeedDegPerSec = 360f;  // 1초당 회전 속도(도)
-    public bool lockPitch = true;            // Yaw만 돌리고 싶으면 켜두기 (상/하 고개 금지)
+    NavMeshAgent agent;
+
+    void Awake()
+    {
+        agent = GetComponent<NavMeshAgent>();
+    }
 
     void LateUpdate()
     {
-        Transform t = target;
-        if (t == null && Character.Instance != null) t = Character.Instance.transform;
-        if (t == null) return;
+        if (!target)
+        {
+            var p = GameObject.FindGameObjectWithTag("Player");
+            if (p) target = p.transform;
+        }
+        if (!target) return;
 
-        Vector3 to = t.position - transform.position;
-        if (lockPitch) to.y = 0f; // 상하 고개 고정(선택)
+        // 목표 방향 계산
+        Vector3 dir = target.position - transform.position;
+        if (yawOnly) dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f) return;
 
-        if (to.sqrMagnitude < 0.0001f) return;
+        // 회전 보간(Up은 항상 세계 Up)
+        var wanted = Quaternion.LookRotation(dir.normalized, Vector3.up);
+        transform.rotation = Quaternion.Slerp(transform.rotation, wanted, rotateSpeed * Time.deltaTime);
 
-        Quaternion targetRot = Quaternion.LookRotation(to.normalized, Vector3.up);
-        float maxStep = turnSpeedDegPerSec * Time.deltaTime;
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, maxStep);
+        // Agent가 회전까지 건드리면 충돌 → Agent 회전 꺼두는 게 안전
+        if (agent) agent.updateRotation = false;
+
+        // 혹시라도 기울어졌다면 강제로 똑바로
+        if (keepUpright)
+        {
+            var e = transform.eulerAngles;
+            transform.rotation = Quaternion.Euler(0f, e.y, 0f);
+        }
     }
 }

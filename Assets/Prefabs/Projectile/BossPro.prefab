@@ -147,7 +147,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 30
-  lifeTime: 6
+  lifeTime: 10
   maxTravelDistance: 120
   useGravity: 0
   damage: 12
