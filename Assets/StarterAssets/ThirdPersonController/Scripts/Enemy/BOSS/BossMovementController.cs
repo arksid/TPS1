@@ -271,25 +271,29 @@ public class BossMovementController : MonoBehaviour
             agent.SetDestination(worldPos); // 그래도 시도
     }
 
-    void FacePlayerYawOnly()
+   void FacePlayerYawOnly()
+{
+    // 1) 우선 이동(속도) 방향을 우선
+    Vector3 dir = Vector3.zero;
+    if (agent && agent.velocity.sqrMagnitude > 0.05f)
+        dir = agent.velocity;               // 이동/스트레이프 방향
+    else if (player)
+        dir = player.position - transform.position; // 멈춰있을 때만 플레이어 쪽
+
+    if (yawOnly) dir.y = 0f;
+    if (dir.sqrMagnitude < 0.0001f) return;
+
+    var wanted = Quaternion.LookRotation(dir.normalized, Vector3.up);
+    transform.rotation = Quaternion.Slerp(transform.rotation, wanted, faceRotateSpeed * Time.deltaTime);
+
+    if (keepUpright)
     {
-        if (!player) return;
-
-        // 수평만 회전
-        Vector3 dir = player.position - transform.position;
-        if (yawOnly) dir.y = 0f;
-        if (dir.sqrMagnitude < 0.0001f) return;
-
-        var wanted = Quaternion.LookRotation(dir.normalized, Vector3.up);
-        transform.rotation = Quaternion.Slerp(transform.rotation, wanted, faceRotateSpeed * Time.deltaTime);
-
-        // 혹시라도 기울어졌으면 강제로 수직 유지
-        if (keepUpright)
-        {
-            var e = transform.eulerAngles;
-            transform.rotation = Quaternion.Euler(0f, e.y, 0f);
-        }
+        var e = transform.eulerAngles;
+        transform.rotation = Quaternion.Euler(0f, e.y, 0f);
     }
+}
+
+    
 
     void OnDrawGizmosSelected()
     {
