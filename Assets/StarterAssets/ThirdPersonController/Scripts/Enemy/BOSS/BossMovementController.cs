@@ -43,6 +43,12 @@ public class BossMovementController : MonoBehaviour
     public bool autoSampleStartOnNavmesh = true;
     public bool enableLogs = false;
 
+    // BossMovementController.cs (필드)
+    [Header("회전(정확히 플레이어 보기)")]
+    public float faceYawDegPerSec = 720f;   // 초당 회전 최대각(권장 540~1080)
+    public float snapEpsilon = 1f;          // 1도 이하이면 목표각으로 스냅
+
+
     MoveMode _mode;
     int _patrolIndex;
     float _lastPlanTime;
@@ -271,29 +277,36 @@ public class BossMovementController : MonoBehaviour
             agent.SetDestination(worldPos); // 그래도 시도
     }
 
-   void FacePlayerYawOnly()
-{
-    // 1) 우선 이동(속도) 방향을 우선
-    Vector3 dir = Vector3.zero;
-    if (agent && agent.velocity.sqrMagnitude > 0.05f)
-        dir = agent.velocity;               // 이동/스트레이프 방향
-    else if (player)
-        dir = player.position - transform.position; // 멈춰있을 때만 플레이어 쪽
-
-    if (yawOnly) dir.y = 0f;
-    if (dir.sqrMagnitude < 0.0001f) return;
-
-    var wanted = Quaternion.LookRotation(dir.normalized, Vector3.up);
-    transform.rotation = Quaternion.Slerp(transform.rotation, wanted, faceRotateSpeed * Time.deltaTime);
-
-    if (keepUpright)
+    void FacePlayerYawOnly()
     {
-        var e = transform.eulerAngles;
-        transform.rotation = Quaternion.Euler(0f, e.y, 0f);
-    }
-}
+        if (!player) return;
 
-    
+        // 플레이어까지의 수평 방향
+        Vector3 dir = player.position - transform.position;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f) return;
+
+        float targetYaw = Quaternion.LookRotation(dir, Vector3.up).eulerAngles.y;
+        float curYaw = transform.eulerAngles.y;
+        float delta = Mathf.DeltaAngle(curYaw, targetYaw);
+
+        // 각속도 기반 회전 + 스냅(언더턴 방지)
+        float step = faceYawDegPerSec * Time.deltaTime;
+        if (Mathf.Abs(delta) <= Mathf.Max(step, snapEpsilon))
+            transform.rotation = Quaternion.Euler(0f, targetYaw, 0f);
+        else
+            transform.rotation = Quaternion.Euler(0f, curYaw + Mathf.Sign(delta) * step, 0f);
+
+        // 피치/롤 고정
+        if (keepUpright)
+        {
+            var e = transform.eulerAngles;
+            transform.rotation = Quaternion.Euler(0f, e.y, 0f);
+        }
+    }
+
+
+
 
     void OnDrawGizmosSelected()
     {
