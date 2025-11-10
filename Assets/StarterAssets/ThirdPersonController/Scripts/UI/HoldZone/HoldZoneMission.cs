@@ -17,7 +17,7 @@ public class HoldZoneMission : MonoBehaviour
 
     [Header("표시/UI")]
     public HoldZoneUI ui;            // 게이지/문구 표시용 (없어도 동작)
-    public bool autoShowUIOnEnable = false;   // OnEnable 때 자동 표시할지
+    public bool autoShowUIOnEnable = false;
     [TextArea] public string enterMsg = "거점 안에 머물러 게이지를 채우세요!";
     [TextArea] public string leavingMsg = "거점 밖입니다! 안으로 복귀하세요!";
     [TextArea] public string completeMsg = "거점 확보 완료!";
@@ -28,23 +28,29 @@ public class HoldZoneMission : MonoBehaviour
     public bool stopSwarmOnComplete = true;
 
     [Header("완료 시 다음 진행(웨이포인트)")]
-    public bool clearWaypointOnComplete = true;       // 기존 마커/아웃라인 정리
-    public bool showNextWaypointOnComplete = true;    // 다음 웨이포인트 표기
-    public SimpleWaypointUI nextWaypointUI;           // 다음 미션 안내용 UI
-    public Transform nextTarget;                      // 다음 지역(트리거)의 Transform
-    [TextArea] public string nextMessage = "다음 지역으로 이동!";
+    public bool clearWaypointOnComplete = true;
+    public bool showNextWaypointOnComplete = true;
+    public SimpleWaypointUI nextWaypointUI;
+    public Transform nextTarget;                      // 다음 지역(보스방 문/트리거)
+    [TextArea] public string nextMessage = "보스 방으로 이동!";
+
+    [Header("완료 후 다음 트리거 활성화(보스방)")]
+    public bool activateNextTriggerOnComplete = true; // ← 추가
+    public Transform nextTriggerToActivate;           // ← 추가 (예: BossDoorTrigger)
+    [Tooltip("보스방 트리거의 부모 컨테이너가 꺼져 있으면 먼저 이걸 켭니다.")]
+    public GameObject nextTriggerRoot;                // ← 추가 (선택)
 
     [Header("완료 시 UI 처리")]
-    public bool hideUIOnComplete = true;   // 이 미션의 HoldZoneUI 숨김
+    public bool hideUIOnComplete = true;
 
     [Header("잔류 오브젝트 정리(옵션)")]
-    public bool despawnLeftovers = true;   // 잔류 적/투사체 제거
-    public string enemyTag = "Enemy";      // 적 태그
-    public string projectileTag = "EnemyProjectile"; // 적 투사체 태그
-    public float despawnDelay = 0f;        // (선택) 제거 전 딜레이
+    public bool despawnLeftovers = true;
+    public string enemyTag = "Enemy";
+    public string projectileTag = "EnemyProjectile";
+    public float despawnDelay = 0f;
 
     [Header("완료 이벤트(추가 훅)")]
-    public UnityEvent onCompleted;         // 100% 도달 시(마지막에 호출, 한 번만)
+    public UnityEvent onCompleted;
 
     bool _playerInside;
     bool _completed;
@@ -54,21 +60,17 @@ public class HoldZoneMission : MonoBehaviour
         var col = GetComponent<Collider>();
         col.isTrigger = true;
     }
-    // 클래스 안 아무 곳에 추가
+
+    // 플레이어가 이미 안에 있는 상태로 간주(트리거 겹침/워프 대비)
     public void ForceEnter()
     {
-        // 플레이어가 이미 안에 있는 상태로 간주
-        // UI도 보이게!
-        var wasCompleted = _completed; // 완주 후 중복 호출 방어용
+        var wasCompleted = _completed;
         _playerInside = true;
         if (ui) ui.Show();
         if (wasCompleted) return;
     }
-    public void ForceExit()
-    {
-        _playerInside = false;
-        // 나갈 때 UI를 굳이 숨길지는 프로젝트 규칙에 맞춰 판단
-    }
+    public void ForceExit() => _playerInside = false;
+
     void OnEnable()
     {
         _completed = false;
@@ -113,8 +115,6 @@ public class HoldZoneMission : MonoBehaviour
     {
         if (!other.CompareTag(playerTag)) return;
         _playerInside = true;
-
-        // 플레이어가 진입하면 UI는 보이도록 (자동표시가 꺼져 있어도)
         if (ui) ui.Show();
     }
 
@@ -126,7 +126,7 @@ public class HoldZoneMission : MonoBehaviour
 
     IEnumerator Co_CompleteSequence()
     {
-        // 0) 한 프레임 양보(다른 트리거/디렉터 OnEnable 초기화 먼저 돌게)
+        // 0) 한 프레임 양보(다른 트리거/디렉터 OnEnable 먼저)
         yield return null;
 
         // 1) 스폰 즉시 중지
@@ -134,9 +134,7 @@ public class HoldZoneMission : MonoBehaviour
         {
             StopSwarmSafe(swarm);
             if (extraSwarms != null)
-            {
                 foreach (var s in extraSwarms) StopSwarmSafe(s);
-            }
         }
 
         // 2) 잔류 적/투사체 정리
@@ -154,10 +152,9 @@ public class HoldZoneMission : MonoBehaviour
         if (clearWaypointOnComplete)
             WaypointDirector.Clear();
 
-        // 5) 다음 웨이포인트 표시(안내)
+        // 5) 다음 웨이포인트 표시(보스방)
         if (showNextWaypointOnComplete && nextWaypointUI && nextTarget)
         {
-            // 표시 직전, UI/캔버스 활성 보장
             if (!nextWaypointUI.gameObject.activeSelf)
                 nextWaypointUI.gameObject.SetActive(true);
             if (nextWaypointUI.canvas && !nextWaypointUI.canvas.gameObject.activeSelf)
@@ -167,28 +164,42 @@ public class HoldZoneMission : MonoBehaviour
             WaypointDirector.Show(nextWaypointUI, nextTarget, nextMessage);
         }
 
-        // 6) 추가 훅
+        // 6) 다음 트리거(보스방) 확실히 켜기 (부모 → 본체)
+        if (activateNextTriggerOnComplete)
+        {
+            if (nextTriggerRoot && !nextTriggerRoot.activeSelf)
+            {
+                nextTriggerRoot.SetActive(true);
+                Debug.Log("[HoldZoneMission] nextTriggerRoot 활성화");
+                // 부모가 켜진 다음 프레임에 자식 트리거를 켜도록 살짝 대기
+                yield return null;
+            }
+
+            if (nextTriggerToActivate)
+            {
+                if (!nextTriggerToActivate.gameObject.activeSelf)
+                {
+                    nextTriggerToActivate.gameObject.SetActive(true);
+                    Debug.Log($"[HoldZoneMission] 보스방 트리거 활성화: {nextTriggerToActivate.name}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[HoldZoneMission] nextTriggerToActivate 미지정(Transform). 인스펙터 연결 필요!");
+            }
+        }
+
+        // 7) 추가 훅
         onCompleted?.Invoke();
     }
 
     void StopSwarmSafe(EnemySwarmDirector s)
     {
         if (!s) return;
-
-        // 우선 EndWave()가 있으면 호출
         var mEnd = s.GetType().GetMethod("EndWave",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-        if (mEnd != null)
-        {
-            mEnd.Invoke(s, null);
-            return;
-        }
-
-        // 없으면 StopAllCoroutines()로라도 정지
+        if (mEnd != null) { mEnd.Invoke(s, null); return; }
         s.StopAllCoroutines();
-        // 필요 시 비활성화까지
-        // s.enabled = false;
-        // s.gameObject.SetActive(false);
     }
 
     void DespawnByTag(string tagName)
@@ -196,13 +207,8 @@ public class HoldZoneMission : MonoBehaviour
         if (string.IsNullOrEmpty(tagName)) return;
         GameObject[] arr;
         try { arr = GameObject.FindGameObjectsWithTag(tagName); }
-        catch { return; } // 해당 태그가 없으면 무시
+        catch { return; }
 
-        foreach (var go in arr)
-        {
-            if (!go) continue;
-            // 폭발/사망 연출이 있으면 여기서 트리거하고 Destroy로 변경 가능
-            Destroy(go);
-        }
+        foreach (var go in arr) if (go) Destroy(go);
     }
 }

@@ -99,6 +99,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4131629470452990}
   - component: {fileID: 65893472247726020}
+  - component: {fileID: 6662190160934400279}
+  - component: {fileID: 3850277248420644129}
   m_Layer: 0
   m_Name: MechBiped_Hips1Left
   m_TagString: Untagged
@@ -139,12 +141,53 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 0.43, y: 0.66, z: 1.09}
   m_Center: {x: -0.31, y: 0, z: -0.72}
+--- !u!114 &6662190160934400279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1063096729169772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36f05e5de3deea844aad9555ef2547a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  part: {fileID: 3850277248420644129}
+  damageMultiplier: 1
+--- !u!114 &3850277248420644129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1063096729169772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 752b0311441b77a43a49db6a9e1a3373, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
+  ownerBoss: {fileID: 5229534055421300864}
+  partId: Core
+  zeroHPBehavior: 0
+  forwardDamageAfterBreak: 1
+  behavioursToDisable: []
+  extraObjectsToDeactivate: []
+  disableHitboxesOnBreak: 1
+  destroyOnZero: 0
+  onHit:
+    m_PersistentCalls:
+      m_Calls: []
+  onDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1064943103167548
 GameObject:
   m_ObjectHideFlags: 0
@@ -430,6 +473,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4654874383696404}
+  - component: {fileID: 7593524460327471460}
   m_Layer: 0
   m_Name: root
   m_TagString: Untagged
@@ -445,14 +489,36 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1107190657680940}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: -0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4747666791923446}
+  - {fileID: 6505399615920564222}
   m_Father: {fileID: 4377748316588964}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
+--- !u!95 &7593524460327471460
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1107190657680940}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1111868273698942
 GameObject:
   m_ObjectHideFlags: 0
@@ -965,6 +1031,9 @@ GameObject:
   - component: {fileID: 23705759766734752}
   - component: {fileID: 65677795704428222}
   - component: {fileID: 65562818024003428}
+  - component: {fileID: 5949876327773769522}
+  - component: {fileID: 7361716768189752789}
+  - component: {fileID: 5443248833439712293}
   m_Layer: 0
   m_Name: MechBiped_MissileRack_Left
   m_TagString: Untagged
@@ -1057,7 +1126,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -1084,6 +1153,99 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.3, y: 0.62, z: 0.49709696}
   m_Center: {x: -0.6, y: -0.02, z: 0.0007564798}
+--- !u!114 &5949876327773769522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1249306639931506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36f05e5de3deea844aad9555ef2547a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  part: {fileID: 7361716768189752789}
+  damageMultiplier: 1
+--- !u!114 &7361716768189752789
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1249306639931506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 752b0311441b77a43a49db6a9e1a3373, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
+  ownerBoss: {fileID: 5229534055421300864}
+  partId: Core
+  zeroHPBehavior: 0
+  forwardDamageAfterBreak: 1
+  behavioursToDisable: []
+  extraObjectsToDeactivate: []
+  disableHitboxesOnBreak: 1
+  destroyOnZero: 0
+  onHit:
+    m_PersistentCalls:
+      m_Calls: []
+  onDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &5443248833439712293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1249306639931506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 392d07753ca024a429f916df04d9b01f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pods:
+  - {fileID: 4497263698948842}
+  - {fileID: 4809050150754424}
+  - {fileID: 4765259206484238}
+  - {fileID: 4681805466868656}
+  - {fileID: 4596870563898562}
+  - {fileID: 4769410689080036}
+  - {fileID: 4292300769626798}
+  - {fileID: 4529251681447514}
+  missilePrefab: {fileID: 1592024424479722, guid: 49170ab6903b73d4fb29b7f3bac970db,
+    type: 3}
+  player: {fileID: 0}
+  autoStartOnEnable: 0
+  maxActiveMissiles: 12
+  spawnForwardOffset: 0.5
+  currentPattern: 0
+  patternDuration: 6
+  loopPatterns: 1
+  aimed_salvos: 2
+  aimed_perSalvo: 4
+  aimed_betweenShots: 0.25
+  aimed_betweenSalvos: 2.5
+  sweep_rows: 3
+  sweep_perRow: 6
+  sweep_betweenShots: 0.18
+  sweep_betweenRows: 1.2
+  sweep_yawAmplitude: 20
+  sweep_homingDelay: 0.35
+  rain_count: 10
+  rain_height: 12
+  rain_spreadRadius: 6
+  rain_betweenShots: 0.08
+  rain_homingDelay: 0.5
+  pincer_salvos: 3
+  pincer_betweenShots: 0.22
+  pincer_homingDelay: 0.25
+  enraged: 0
+  enragedTempoMul: 1.25
+  enragedExtraShots: 1
+  enableLogging: 0
 --- !u!1 &1259917279625570
 GameObject:
   m_ObjectHideFlags: 0
@@ -1094,6 +1256,9 @@ GameObject:
   m_Component:
   - component: {fileID: 4772723962351454}
   - component: {fileID: 65588083131822096}
+  - component: {fileID: 183893231854484447}
+  - component: {fileID: 3433545437658278009}
+  - component: {fileID: 3144334849611561802}
   m_Layer: 0
   m_Name: MechBiped_Minigun_Main
   m_TagString: Untagged
@@ -1132,12 +1297,86 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1.28, y: 0.63, z: 0.62}
   m_Center: {x: -0.18, y: -0.48, z: 0}
+--- !u!114 &183893231854484447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1259917279625570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36f05e5de3deea844aad9555ef2547a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  part: {fileID: 3433545437658278009}
+  damageMultiplier: 1
+--- !u!114 &3433545437658278009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1259917279625570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 752b0311441b77a43a49db6a9e1a3373, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
+  ownerBoss: {fileID: 5229534055421300864}
+  partId: Core
+  zeroHPBehavior: 0
+  forwardDamageAfterBreak: 1
+  behavioursToDisable: []
+  extraObjectsToDeactivate: []
+  disableHitboxesOnBreak: 1
+  destroyOnZero: 0
+  onHit:
+    m_PersistentCalls:
+      m_Calls: []
+  onDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3144334849611561802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1259917279625570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20953285a4e988e4e99285f6ffbdbd94, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 0}
+  muzzle: {fileID: 4734725980082611046}
+  muzzles:
+  - {fileID: 573665777291615032}
+  - {fileID: 4734725980082611046}
+  enemyProjectilePrefab: {fileID: 2216547676952783978, guid: 37bdb03f8f3906a48ba0d4aaac381d23,
+    type: 3}
+  rpm: 900
+  spreadDeg: 2
+  bulletSpeed: 60
+  bulletDamage: 6
+  continuousFire: 1
+  burstCount: 20
+  burstRest: 0.2
+  enragedRpmMultiplier: 1.5
+  spawnForwardOffset: 1.5
+  aimOffsetY: 1.2
+  autoStartOnEnable: 1
+  enraged: 0
+  sfxLoop: {fileID: 0}
+  muzzleFlashes: []
 --- !u!1 &1266499247266134
 GameObject:
   m_ObjectHideFlags: 0
@@ -1575,6 +1814,8 @@ GameObject:
   - component: {fileID: 65688455255383462}
   - component: {fileID: 65031771843617602}
   - component: {fileID: 136350167563855134}
+  - component: {fileID: 8176524246042370477}
+  - component: {fileID: 7229687728242156975}
   m_Layer: 0
   m_Name: MechBiped_Cockpit
   m_TagString: Untagged
@@ -1616,7 +1857,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -1907,6 +2148,47 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 0
   m_Center: {x: -1.56, y: -0.72, z: -0.78}
+--- !u!114 &8176524246042370477
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1312706095772266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36f05e5de3deea844aad9555ef2547a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  part: {fileID: 7229687728242156975}
+  damageMultiplier: 1
+--- !u!114 &7229687728242156975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1312706095772266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 752b0311441b77a43a49db6a9e1a3373, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
+  ownerBoss: {fileID: 0}
+  partId: Core
+  zeroHPBehavior: 0
+  forwardDamageAfterBreak: 1
+  behavioursToDisable: []
+  extraObjectsToDeactivate: []
+  disableHitboxesOnBreak: 1
+  destroyOnZero: 0
+  onHit:
+    m_PersistentCalls:
+      m_Calls: []
+  onDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1315892328645548
 GameObject:
   m_ObjectHideFlags: 0
@@ -2074,6 +2356,13 @@ GameObject:
   m_Component:
   - component: {fileID: 4377748316588964}
   - component: {fileID: 95955008306747350}
+  - component: {fileID: 486865275800287390}
+  - component: {fileID: 771200237851308596}
+  - component: {fileID: 5229534055421300864}
+  - component: {fileID: 3945805987857126941}
+  - component: {fileID: 3628420163516485617}
+  - component: {fileID: 4226851261942924837}
+  - component: {fileID: 1540030358360367214}
   m_Layer: 0
   m_Name: MechBiped@AllWeapons
   m_TagString: Enemy
@@ -2091,7 +2380,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4654874383696404}
@@ -2119,6 +2408,236 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &486865275800287390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc14504cde426fd42a9fb0ca6891e40b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  anim: {fileID: 95955008306747350}
+  agent: {fileID: 3628420163516485617}
+  rb: {fileID: 0}
+  moveXParam: MoveX
+  moveZParam: MoveZ
+  speedParam: Speed
+  maxRefSpeed: 1
+  dampTime: 0.08
+  invertX: 0
+  invertZ: 0
+--- !u!114 &771200237851308596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8323967914f40db459afe32f77f7818e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  upperRig: {fileID: 6041275415584476009}
+  speed: 3
+--- !u!114 &5229534055421300864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d261858a2695fa4da191e1cea876bdb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 5000
+  currentHP: 0
+  globalDamageMultiplier: 1
+  onHpChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onBossDead:
+    m_PersistentCalls:
+      m_Calls: []
+  onPartDamaged:
+    m_PersistentCalls:
+      m_Calls: []
+  onPartDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3945805987857126941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26431ac0562227442bd34b1db905dfe0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoAssignBossOnParts: 0
+--- !u!195 &3628420163516485617
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 1
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!114 &4226851261942924837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9694005c6cdfaa14985e075fdb27061d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 0}
+  agent: {fileID: 3628420163516485617}
+  animator: {fileID: 95955008306747350}
+  jumpTriggerName: JumpBack
+  boss: {fileID: 5229534055421300864}
+  minigun: {fileID: 3144334849611561802}
+  missile: {fileID: 5443248833439712293}
+  onMinigunStart:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3144334849611561802}
+        m_TargetAssemblyTypeName: BossWeaponMinigun, Assembly-CSharp
+        m_MethodName: StartFiring
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onMinigunStop:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3144334849611561802}
+        m_TargetAssemblyTypeName: BossWeaponMinigun, Assembly-CSharp
+        m_MethodName: StopFiring
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onMissileBarrage:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 5443248833439712293}
+        m_TargetAssemblyTypeName: BossWeaponMissile, Assembly-CSharp
+        m_MethodName: StartFiring
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  weakPointOnMissileId: 
+  clearWeakAfterMissile: 1
+  farSpeed: 3.2
+  nearSpeed: 2.2
+  nearDistance: 18
+  navAcceleration: 8
+  navAngularSpeed: 540
+  manualMoveSpeed: 3
+  stopDistance: 40
+  enableStrafe: 1
+  strafeRadius: 12
+  strafeTolerance: 2
+  strafeAhead: 4
+  strafeSpeedMul: 0.85
+  strafeSwitchInterval: 2.5
+  strafeObstacleCheck: 2
+  keepOutDistance: 40
+  ringBias: 0.6
+  postJumpKeepOutTime: 1.5
+  autoJumpBack: 1
+  minJumpBackDistance: 10
+  maxJumpBackDistance: 10
+  jumpTargetRange: 12
+  jumpBackDistance: 5
+  jumpAirTime: 1
+  jumpArcHeight: 5
+  afterJumpDelay: 0.25
+  missileDuration: 6
+  afterMissileCooldown: 1
+  usePercent: 1
+  damageChunkPercent: 0.18
+  damageChunkFlat: 150
+  phases:
+  - enterAtHpRatio: 0.7
+    enragedWeapons: 0
+    missilePattern: 0
+    agentSpeed: 6
+    newStopDistance: 10
+    damageChunkPercentOverride: 0
+  - enterAtHpRatio: 0.4
+    enragedWeapons: 1
+    missilePattern: 1
+    agentSpeed: 6.5
+    newStopDistance: 9
+    damageChunkPercentOverride: 0.15
+  - enterAtHpRatio: 0.1
+    enragedWeapons: 1
+    missilePattern: 3
+    agentSpeed: 7.2
+    newStopDistance: 8
+    damageChunkPercentOverride: 0.12
+  logEnabled: 1
+--- !u!114 &1540030358360367214
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fff0960ef4ea6e04eac66b4a7fd2189d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RigLayers:
+  - m_Rig: {fileID: 6041275415584476009}
+    m_Active: 1
+  m_Effectors: []
 --- !u!1 &1393827434736326
 GameObject:
   m_ObjectHideFlags: 0
@@ -2148,7 +2667,8 @@ Transform:
   m_LocalPosition: {x: -0.5529744, y: -0.516337, z: -0.0022833634}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 573665777291615032}
   m_Father: {fileID: 4220299527863164}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &136218239808338320
@@ -2830,6 +3350,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4637093578814508}
   - component: {fileID: 65333129506195648}
+  - component: {fileID: 1827144297605688449}
+  - component: {fileID: 1199872651519434999}
   m_Layer: 0
   m_Name: MechBiped_CockpitDoor
   m_TagString: Untagged
@@ -2867,12 +3389,53 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 2.08, y: 0.28, z: 1}
   m_Center: {x: -1.01, y: 0.27, z: 0}
+--- !u!114 &1827144297605688449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1526918813171322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36f05e5de3deea844aad9555ef2547a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  part: {fileID: 7229687728242156975}
+  damageMultiplier: 1
+--- !u!114 &1199872651519434999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1526918813171322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 752b0311441b77a43a49db6a9e1a3373, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 50
+  ownerBoss: {fileID: 5229534055421300864}
+  partId: Core
+  zeroHPBehavior: 0
+  forwardDamageAfterBreak: 1
+  behavioursToDisable: []
+  extraObjectsToDeactivate: []
+  disableHitboxesOnBreak: 1
+  destroyOnZero: 0
+  onHit:
+    m_PersistentCalls:
+      m_Calls: []
+  onDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1530616378638056
 GameObject:
   m_ObjectHideFlags: 0
@@ -3239,7 +3802,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.000000043306414, y: 0.000000029802322, z: 0.00000016986574,
     w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1.019, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3754,6 +4317,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4220299527863164}
   - component: {fileID: 65477061336975306}
+  - component: {fileID: 4842576715795107427}
+  - component: {fileID: 4032968856137239545}
   m_Layer: 0
   m_Name: MechBiped_Minigun_Main
   m_TagString: Untagged
@@ -3770,7 +4335,7 @@ Transform:
   m_GameObject: {fileID: 1666715948871660}
   serializedVersion: 2
   m_LocalRotation: {x: -0.010811045, y: 0.7070693, z: -0.007693449, w: 0.7070198}
-  m_LocalPosition: {x: -0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1.019, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3792,12 +4357,53 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1.28, y: 0.63, z: 0.62}
   m_Center: {x: -0.18, y: -0.48, z: 0}
+--- !u!114 &4842576715795107427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1666715948871660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36f05e5de3deea844aad9555ef2547a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  part: {fileID: 4032968856137239545}
+  damageMultiplier: 1
+--- !u!114 &4032968856137239545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1666715948871660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 752b0311441b77a43a49db6a9e1a3373, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
+  ownerBoss: {fileID: 5229534055421300864}
+  partId: Core
+  zeroHPBehavior: 0
+  forwardDamageAfterBreak: 1
+  behavioursToDisable: []
+  extraObjectsToDeactivate: []
+  disableHitboxesOnBreak: 1
+  destroyOnZero: 0
+  onHit:
+    m_PersistentCalls:
+      m_Calls: []
+  onDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1681222508590822
 GameObject:
   m_ObjectHideFlags: 0
@@ -3926,6 +4532,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4175050348538468}
   - component: {fileID: 65682363756479286}
+  - component: {fileID: 304795309429330017}
+  - component: {fileID: 5901804797150700449}
   m_Layer: 0
   m_Name: MechBiped_Hips1Right
   m_TagString: Untagged
@@ -3966,12 +4574,53 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 0.43, y: 0.66, z: 1.09}
   m_Center: {x: -0.31, y: 0, z: -0.72}
+--- !u!114 &304795309429330017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1735515452342118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36f05e5de3deea844aad9555ef2547a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  part: {fileID: 5901804797150700449}
+  damageMultiplier: 1
+--- !u!114 &5901804797150700449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1735515452342118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 752b0311441b77a43a49db6a9e1a3373, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
+  ownerBoss: {fileID: 5229534055421300864}
+  partId: Core
+  zeroHPBehavior: 0
+  forwardDamageAfterBreak: 1
+  behavioursToDisable: []
+  extraObjectsToDeactivate: []
+  disableHitboxesOnBreak: 1
+  destroyOnZero: 0
+  onHit:
+    m_PersistentCalls:
+      m_Calls: []
+  onDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1767221708579360
 GameObject:
   m_ObjectHideFlags: 0
@@ -4125,7 +4774,8 @@ Transform:
   m_LocalPosition: {x: -0.5529744, y: -0.516337, z: -0.0022833634}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 4734725980082611046}
   m_Father: {fileID: 4772723962351454}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &136176356509100164
@@ -4493,6 +5143,8 @@ GameObject:
   - component: {fileID: 23426466248177544}
   - component: {fileID: 65111213569407760}
   - component: {fileID: 65316584556765954}
+  - component: {fileID: 4041190076076710029}
+  - component: {fileID: 4407970482008348490}
   m_Layer: 0
   m_Name: MechBiped_MissileRack_Right
   m_TagString: Untagged
@@ -4585,7 +5237,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -4612,6 +5264,47 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.3, y: 0.62, z: 0.49709696}
   m_Center: {x: 0.58, y: -0.02, z: 0.0007564798}
+--- !u!114 &4041190076076710029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1979364559997744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36f05e5de3deea844aad9555ef2547a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  part: {fileID: 4407970482008348490}
+  damageMultiplier: 1
+--- !u!114 &4407970482008348490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1979364559997744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 752b0311441b77a43a49db6a9e1a3373, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
+  ownerBoss: {fileID: 5229534055421300864}
+  partId: Core
+  zeroHPBehavior: 0
+  forwardDamageAfterBreak: 1
+  behavioursToDisable: []
+  extraObjectsToDeactivate: []
+  disableHitboxesOnBreak: 1
+  destroyOnZero: 0
+  onHit:
+    m_PersistentCalls:
+      m_Calls: []
+  onDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1981622670354056
 GameObject:
   m_ObjectHideFlags: 0
@@ -4674,4 +5367,112 @@ Transform:
   m_Children:
   - {fileID: 4983781694686780}
   m_Father: {fileID: 4127250686305862}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1837701935654420769
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6505399615920564222}
+  - component: {fileID: 6041275415584476009}
+  m_Layer: 0
+  m_Name: UpperRIg
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6505399615920564222
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837701935654420769}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4654874383696404}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6041275415584476009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837701935654420769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70b342d8ce5c2fd48b8fa3147d48d1d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Weight: 1
+  m_Effectors: []
+--- !u!1 &8789775093060610438
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4734725980082611046}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4734725980082611046
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8789775093060610438}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.825, y: 0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4122945414317442}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &9033590888434479699
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 573665777291615032}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &573665777291615032
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9033590888434479699}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.73, y: 0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4941190668004406}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

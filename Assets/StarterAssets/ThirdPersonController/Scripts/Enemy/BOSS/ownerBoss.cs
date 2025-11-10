@@ -1,4 +1,3 @@
-// Assets/Scripts/Boss/BossMonsterAutoLinker.cs
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -7,11 +6,11 @@ using UnityEditor;
 [RequireComponent(typeof(BossMonster))]
 public class BossMonsterAutoLinker : MonoBehaviour
 {
-    [Tooltip("자식에서 DamageablePart를 찾아 boss 필드를 자동 연결합니다.")]
+    [Tooltip("자식에서 DamageablePart를 찾아 ownerBoss 필드를 자동 연결합니다.")]
     public bool autoAssignBossOnParts = true;
 
 #if UNITY_EDITOR
-    [ContextMenu("Auto Link Parts (Assign DamageablePart.boss)")]
+    [ContextMenu("Auto Link Parts (Assign DamageablePart.ownerBoss)")]
     public void AutoLink()
     {
         var boss = GetComponent<BossMonster>();
@@ -22,17 +21,20 @@ public class BossMonsterAutoLinker : MonoBehaviour
         }
 
         var parts = GetComponentsInChildren<DamageablePart>(includeInactive: true);
-        int linked = 0;
+        int linkedBoss = 0;
+        int linkedHitbox = 0;
 
         foreach (var p in parts)
         {
             if (p == null) continue;
-            if (autoAssignBossOnParts && p.boss == null)
+
+            // ownerBoss 자동 연결
+            if (autoAssignBossOnParts && p.ownerBoss == null)
             {
                 Undo.RecordObject(p, "Assign Boss on Part");
-                p.boss = boss;
+                p.ownerBoss = boss;
                 EditorUtility.SetDirty(p);
-                linked++;
+                linkedBoss++;
             }
 
             // Hitbox.part 자동 연결(누락 대비)
@@ -44,11 +46,12 @@ public class BossMonsterAutoLinker : MonoBehaviour
                     Undo.RecordObject(hb, "Assign Part on Hitbox");
                     hb.part = p;
                     EditorUtility.SetDirty(hb);
+                    linkedHitbox++;
                 }
             }
         }
 
-        Debug.Log($"[AutoLink] DamageablePart {parts.Length}개 검색, boss 자동 연결 {linked}개 완료");
+        Debug.Log($"[AutoLink] DamageablePart {parts.Length}개, ownerBoss 연결 {linkedBoss}개, Hitbox 연결 {linkedHitbox}개 완료");
     }
 #endif
 }

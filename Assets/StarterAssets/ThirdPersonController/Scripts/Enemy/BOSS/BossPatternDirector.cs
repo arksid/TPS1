@@ -21,6 +21,10 @@ public class BossPatternDirector : MonoBehaviour
     public UnityEvent onMinigunStop;
     public UnityEvent onMissileBarrage;
 
+    [Header("미사일 페이즈 약점 표시")]
+    public string weakPointOnMissileId = "";    // 예: "Core" (비워두면 사용 안 함)
+    public bool clearWeakAfterMissile = true;   // 끝나면 전부 끔
+
     // ---------------- 이동/속도 프로파일 ----------------
     [Header("속도 프로파일")]
     public float farSpeed = 3.2f;        // 멀리 있을 때 속도
@@ -37,18 +41,32 @@ public class BossPatternDirector : MonoBehaviour
     // ---------------- 스트레이프(원형 이동) ----------------
     [Header("스트레이프(좌우 원형 이동)")]
     public bool enableStrafe = true;
-    public float strafeRadius = 12f;       // 플레이어 기준 유지하고 싶은 반경
-    public float strafeTolerance = 2f;     // 반경 허용 오차(±)
-    public float strafeAhead = 4f;         // 원 둘레를 따라 목표점을 약간 앞에 두는 거리
-    public float strafeSpeedMul = 0.85f;   // 원형 이동 시 속도 배율( farSpeed * 이 값 )
-    public float strafeSwitchInterval = 2.5f; // 방향 전환 주기
-    public float strafeObstacleCheck = 2.0f;  // 전방 장애물 감지 거리
-    int _strafeDir = 1;                    // +1: 오른쪽으로 회전, -1: 왼쪽
+    public float strafeRadius = 12f;         // 플레이어 기준 유지 반경
+    public float strafeTolerance = 2f;       // 반경 허용 오차(±)
+    public float strafeAhead = 4f;           // 원 둘레 방향으로 앞지점 오프셋
+    public float strafeSpeedMul = 0.85f;     // 원형 이동 시 속도 배율
+    public float strafeSwitchInterval = 2.5f;// 방향 전환 주기
+    public float strafeObstacleCheck = 2.0f; // 전방 장애물 감지 거리
+    int _strafeDir = 1;
     float _strafeTimer;
+
+    // ---------------- 간격 유지(붙지 않기) ----------------
+    [Header("간격 유지(붙지 않기)")]
+    public float keepOutDistance = 11.5f;     // 최소 유지 거리( stopDistance보다 약간 큼 )
+    public float ringBias = 0.6f;             // 반경으로 밀어낼 때 가중치(0~1)
+    public float postJumpKeepOutTime = 1.5f;  // 점프 후 강제 반경 유지 시간
+    float _keepOutUntil = 0f;                 // 내부 타이머
+
+    // ---------------- 점프백 거리 자동 조절 ----------------
+    [Header("점프백 거리(자동 조절)")]
+    public bool autoJumpBack = true;          // true면 상황에 맞춰 필요한 만큼만 뒤로
+    public float minJumpBackDistance = 2.5f;  // 최소 물러남
+    public float maxJumpBackDistance = 10f;   // 최대 물러남(기존 18 대신 상한)
+    public float jumpTargetRange = 12f;       // 점프 후 대략 유지하고 싶은 거리(보통 strafeRadius와 유사)
 
     // ---------------- 점프/미사일 패턴 ----------------
     [Header("점프 이탈")]
-    public float jumpBackDistance = 18f;
+    public float jumpBackDistance = 18f;      // autoJumpBack=false인 경우 사용되는 고정값
     public float jumpAirTime = 0.9f;
     public float jumpArcHeight = 4f;
     public float afterJumpDelay = 0.25f;
@@ -61,7 +79,6 @@ public class BossPatternDirector : MonoBehaviour
     public bool usePercent = true;                // true: 퍼센트, false: 절대값
     [Range(0.05f, 0.5f)] public float damageChunkPercent = 0.18f;
     public float damageChunkFlat = 150f;
-
 
     [System.Serializable]
     public class Phase
@@ -85,7 +102,7 @@ public class BossPatternDirector : MonoBehaviour
     float _snapEps = 1f;
 
     // HP/누적데미지
-    float _prevHp;
+    int _prevHp;
     float _accDamage;
     bool _isSequenceRunning, _isStagger;
     int _phaseIndex = -1;
@@ -122,10 +139,12 @@ public class BossPatternDirector : MonoBehaviour
 
         onMinigunStart?.Invoke();
 
+        // HP 이벤트 구독 + 초기값 안전 동기화
         if (boss)
         {
-            _prevHp = boss.currentHP;
             boss.onHpChanged.AddListener(OnBossHpChanged); // (current,max)
+            int cur = Mathf.RoundToInt(boss.HpRatio * boss.maxHP);
+            _prevHp = cur; // 시작 시점 기준값
         }
     }
 
@@ -147,27 +166,40 @@ public class BossPatternDirector : MonoBehaviour
         FacePlayerHard();
 
         float dist = Vector3.Distance(transform.position, player.position);
+        bool forceKeepOut = Time.time < _keepOutUntil; // 점프 직후 강제 반경 유지
         bool inStrafeBand = enableStrafe &&
                             dist > Mathf.Max(stopDistance, strafeRadius - strafeTolerance) &&
                             dist < (strafeRadius + strafeTolerance);
 
-        if (Time.time - _lastPlan < 0.05f) return; // 너무 자주 SetDestination 방지
+        if (Time.time - _lastPlan < 0.05f) return; // 너무 자주 계획 변경 방지
         _lastPlan = Time.time;
 
-        if (inStrafeBand)
+        if (forceKeepOut)
         {
-            DoStrafe(dist);
+            Vector3 ring = GetRingPos(Mathf.Max(keepOutDistance, strafeRadius));
+            Vector3 toPlayer = (player.position - transform.position); toPlayer.y = 0f;
+            Vector3 tangent = Vector3.Cross(Vector3.up, toPlayer.normalized) * _strafeDir;
+            Vector3 dest = Vector3.Lerp(transform.position, ring, 0.8f) + tangent * strafeAhead;
+
+            if (agent && agent.enabled)
+            {
+                if (NavMesh.SamplePosition(dest, out var hit, 2f, NavMesh.AllAreas)) agent.SetDestination(hit.position);
+                else agent.SetDestination(dest);
+                agent.isStopped = false;
+            }
+            else
+            {
+                transform.position += (dest - transform.position).normalized * Mathf.Max(0.1f, manualMoveSpeed) * 0.1f;
+            }
+            return;
         }
-        else
-        {
-            DoApproach(dist);
-        }
+
+        if (inStrafeBand) DoStrafe(dist);
+        else DoApproach(dist);
     }
 
-    // 가까우면 원형 이동
     void DoStrafe(float dist)
     {
-        // 좌우 전환 타이머/장애물 체크
         _strafeTimer -= Time.deltaTime;
         Vector3 toPlayer = (player.position - transform.position); toPlayer.y = 0f;
         Vector3 tangent = Vector3.Cross(Vector3.up, toPlayer.normalized) * _strafeDir;
@@ -179,12 +211,10 @@ public class BossPatternDirector : MonoBehaviour
             _strafeTimer = Random.Range(strafeSwitchInterval * 0.7f, strafeSwitchInterval * 1.3f);
         }
 
-        // 반경 유지용 목표점(플레이어 주변 원 위의 지점 + 약간 앞쪽)
         Vector3 ringPos = player.position + toPlayer.normalized * Mathf.Clamp(strafeRadius, stopDistance + 0.5f, 999f);
         Vector3 dest = ringPos + tangent.normalized * strafeAhead;
 
-        // 반경 오류 보정(너무 가까우면 바깥으로, 멀면 안쪽으로 살짝)
-        float radialErr = dist - strafeRadius;                 // +면 멀다 / -면 가깝다
+        float radialErr = dist - strafeRadius;
         dest += (-toPlayer.normalized) * Mathf.Clamp(radialErr, -1.5f, 1.5f);
 
         float targetSpeed = Mathf.Max(0.5f, farSpeed * strafeSpeedMul);
@@ -203,17 +233,40 @@ public class BossPatternDirector : MonoBehaviour
         }
         else
         {
-            // 수동 이동 (부드럽게)
             float accel = navAcceleration;
             _curManualSpeed = Mathf.MoveTowards(_curManualSpeed, targetSpeed, accel * Time.deltaTime);
-            transform.position += (dest - transform.position).normalized * _curManualSpeed * 0.1f; // 0.1은 프레임기반 보정
+            transform.position += (dest - transform.position).normalized * _curManualSpeed * 0.1f;
         }
     }
 
-    // 멀리 있거나 너무 가까우면 접근/이탈
     void DoApproach(float dist)
     {
         float targetSpeed = (dist > nearDistance) ? farSpeed : nearSpeed;
+
+        if (dist <= keepOutDistance)
+        {
+            Vector3 ring = GetRingPos(Mathf.Max(keepOutDistance, strafeRadius));
+            Vector3 toPl = (player.position - transform.position); toPl.y = 0f;
+            Vector3 tangent = Vector3.Cross(Vector3.up, toPl.normalized) * _strafeDir;
+            Vector3 dest = Vector3.Lerp(transform.position, ring, ringBias) + tangent * (strafeAhead * 0.5f);
+
+            if (agent && agent.enabled)
+            {
+                agent.speed = Mathf.MoveTowards(agent.speed, targetSpeed, navAcceleration * Time.deltaTime);
+                agent.acceleration = navAcceleration;
+                agent.angularSpeed = navAngularSpeed;
+                agent.isStopped = false;
+
+                if (NavMesh.SamplePosition(dest, out var hit, 2f, NavMesh.AllAreas)) agent.SetDestination(hit.position);
+                else agent.SetDestination(dest);
+            }
+            else
+            {
+                _curManualSpeed = Mathf.MoveTowards(_curManualSpeed, targetSpeed, navAcceleration * Time.deltaTime);
+                transform.position += (dest - transform.position).normalized * _curManualSpeed * 0.1f;
+            }
+            return;
+        }
 
         if (agent && agent.enabled)
         {
@@ -225,14 +278,13 @@ public class BossPatternDirector : MonoBehaviour
             agent.acceleration = navAcceleration;
             agent.angularSpeed = navAngularSpeed;
 
-            // 너무 붙지 않도록
-            agent.isStopped = (dist <= stopDistance);
-            if (!agent.isStopped) agent.SetDestination(dest);
+            agent.isStopped = false;
+            agent.SetDestination(dest);
         }
         else
         {
             Vector3 to = player.position - transform.position; to.y = 0f;
-            float tgt = (dist > stopDistance) ? targetSpeed : 0f;
+            float tgt = targetSpeed;
             _curManualSpeed = Mathf.MoveTowards(_curManualSpeed, tgt, navAcceleration * Time.deltaTime);
             if (_curManualSpeed > 0.001f)
                 transform.position += to.normalized * _curManualSpeed * 0.1f;
@@ -247,7 +299,7 @@ public class BossPatternDirector : MonoBehaviour
         float targetYaw = Quaternion.LookRotation(dir, Vector3.up).eulerAngles.y;
         float curYaw = transform.eulerAngles.y;
         float delta = Mathf.DeltaAngle(curYaw, targetYaw);
-        float step = navAngularSpeed * Time.deltaTime; // 회전도 Nav 설정과 일치
+        float step = navAngularSpeed * Time.deltaTime;
 
         if (Mathf.Abs(delta) <= Mathf.Max(step, _snapEps))
             transform.rotation = Quaternion.Euler(0f, targetYaw, 0f);
@@ -255,15 +307,30 @@ public class BossPatternDirector : MonoBehaviour
             transform.rotation = Quaternion.Euler(0f, curYaw + Mathf.Sign(delta) * step, 0f);
     }
 
-    // ---------------- HP 이벤트/페이즈/시퀀스 ----------------
+    Vector3 GetRingPos(float radius)
+    {
+        Vector3 away = transform.position - player.position;
+        away.y = 0f;
+        if (away.sqrMagnitude < 0.0001f) away = -transform.forward;
+        return player.position + away.normalized * Mathf.Max(radius, stopDistance + 0.5f);
+    }
+
+    float GetAutoJumpBackDistance()
+    {
+        float dist = Vector3.Distance(transform.position, player.position);
+        float want = Mathf.Max(jumpTargetRange, keepOutDistance);
+        float need = Mathf.Max(0f, want - dist);
+        return Mathf.Clamp(need, minJumpBackDistance, maxJumpBackDistance);
+    }
+
     void OnBossHpChanged(int current, int max)
     {
         float ratio = (max > 0) ? (float)current / max : 0f;
         TryEnterPhaseByRatio(ratio);
 
-        float taken = Mathf.Max(0f, _prevHp - current);
+        int taken = Mathf.Max(0, _prevHp - current);
         _prevHp = current;
-        if (taken <= 0f) return;
+        if (taken <= 0) return;
 
         _accDamage += taken;
         float need = usePercent ? (max * GetActiveChunkPercent()) : damageChunkFlat;
@@ -271,6 +338,7 @@ public class BossPatternDirector : MonoBehaviour
         if (!_isSequenceRunning && !_isStagger && _state == State.ChaseAndSpray && _accDamage >= need)
         {
             _accDamage = 0f;
+            if (logEnabled) Debug.Log("[Boss] Damage chunk reached → Jump+Missile");
             StartCoroutine(Co_JumpAndMissile());
         }
     }
@@ -298,7 +366,7 @@ public class BossPatternDirector : MonoBehaviour
         var ph = phases[idx];
 
         stopDistance = ph.newStopDistance;
-        farSpeed = ph.agentSpeed; // 프로파일 최댓속도 갱신
+        farSpeed = ph.agentSpeed;
         if (agent) agent.speed = farSpeed;
 
         if (minigun) minigun.SetEnraged(ph.enragedWeapons);
@@ -322,7 +390,9 @@ public class BossPatternDirector : MonoBehaviour
         Vector3 awayDir = (transform.position - player.position); awayDir.y = 0f;
         if (awayDir.sqrMagnitude < 0.001f) awayDir = -transform.forward;
         awayDir.Normalize();
-        Vector3 to = from + awayDir * jumpBackDistance;
+
+        float back = autoJumpBack ? GetAutoJumpBackDistance() : jumpBackDistance;
+        Vector3 to = from + awayDir * back;
 
         if (agent) agent.enabled = false;
 
@@ -348,6 +418,10 @@ public class BossPatternDirector : MonoBehaviour
 
         yield return new WaitForSeconds(afterJumpDelay);
 
+        // --- 미사일 페이즈 시작: 약점 표시 (선택) ---
+        if (boss && !string.IsNullOrEmpty(weakPointOnMissileId))
+            boss.MarkWeakPointById(weakPointOnMissileId);
+
         _state = State.Missile;
         onMissileBarrage?.Invoke();
         float mt = 0f;
@@ -359,18 +433,24 @@ public class BossPatternDirector : MonoBehaviour
         }
         yield return new WaitForSeconds(afterMissileCooldown);
 
+        // --- 미사일 끝: 약점 해제(선택) ---
+        if (boss && clearWeakAfterMissile)
+            boss.ClearAllWeakPoints();
+
         if (agent) agent.enabled = true;
+
+        _keepOutUntil = Time.time + postJumpKeepOutTime;
+
         _state = State.ChaseAndSpray;
         onMinigunStart?.Invoke();
-
         _isSequenceRunning = false;
     }
 
-    // 외부에서 경직 호출 가능(선택)
     public void Stagger(float duration = 1.2f)
     {
         if (gameObject.activeInHierarchy) StartCoroutine(Co_Stagger(duration));
     }
+
     IEnumerator Co_Stagger(float sec)
     {
         if (_isStagger) yield break;

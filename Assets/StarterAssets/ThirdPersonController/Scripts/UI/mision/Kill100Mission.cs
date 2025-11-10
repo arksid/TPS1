@@ -26,6 +26,9 @@ public class Kill100Mission : MonoBehaviour
     public bool activateNextTriggerOnSuccess = true;  // 성공 시 트리거 SetActive(true)
     public bool showWaypointOnSuccess = true;         // 성공 시 웨이포인트 표시
 
+    [Tooltip("홀드존 트리거의 '부모' 컨테이너가 꺼져 있으면 먼저 이걸 켭니다(선택).")]
+    public GameObject nextTriggerRoot;                // ← 추가
+
     [Header("튜토리얼 UI 연동")]
     public TutorialUI tutorialUIToHide;       // 미션1 성공 시 끌 튜토리얼 UI
 
@@ -49,7 +52,7 @@ public class Kill100Mission : MonoBehaviour
             currentKills = targetKills;
             isCompleted = true;
             UpdateUI();
-            OnMissionSuccess(); // 여기서도 안전 (코루틴은 GameFlowRunner가 돌림)
+            OnMissionSuccess();
         }
     }
 
@@ -78,18 +81,40 @@ public class Kill100Mission : MonoBehaviour
     {
         if (subLabel) subLabel.text = "✅ 미션 성공! (적 100마리 처치)";
 
-        // (선택) 웨이브 종료 훅 (없어도 됨)
+        // (선택) 웨이브 종료 훅
         TryEndWave();
 
-        // 1) 내 미션1 UI 패널만 끄기 (캔버스/웨이포인트UI는 유지!)
+        // 1) 내 미션1 UI 패널만 끄기
         TryHideOwnUI();
 
         // 2) 튜토리얼 UI 끄기
         if (tutorialUIToHide) tutorialUIToHide.Hide();
 
-        // 3) 다음 트리거 켜기
-        if (activateNextTriggerOnSuccess && nextMissionTrigger)
-            nextMissionTrigger.gameObject.SetActive(true);
+        // 3) 다음 트리거(홀드존) 켜기
+        if (activateNextTriggerOnSuccess)
+        {
+            if (nextTriggerRoot)
+            {
+                if (!nextTriggerRoot.activeSelf)
+                {
+                    nextTriggerRoot.SetActive(true);
+                    Debug.Log("[Kill100Mission] nextTriggerRoot 활성화");
+                }
+            }
+
+            if (nextMissionTrigger)
+            {
+                if (!nextMissionTrigger.gameObject.activeSelf)
+                {
+                    nextMissionTrigger.gameObject.SetActive(true);
+                    Debug.Log($"[Kill100Mission] 홀드존 트리거 활성화: {nextMissionTrigger.name}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[Kill100Mission] nextMissionTrigger 미지정(Transform). 인스펙터 연결 필요!");
+            }
+        }
 
         // 4) 다음 웨이포인트 표시 (한 프레임 뒤, 항상 활성 보장)
         if (showWaypointOnSuccess && waypointUI && nextMissionTrigger)
@@ -130,14 +155,11 @@ public class Kill100Mission : MonoBehaviour
 
     void TryHideOwnUI()
     {
-        // 1순위: 사용자 지정 루트만 끈다 (절대 캔버스 전체 넣지 말 것)
         if (uiRootToHideOnSuccess != null)
         {
             uiRootToHideOnSuccess.SetActive(false);
             return;
         }
-
-        // 2순위: 자동 생성 UI의 '패널'만 끈다 (캔버스는 계속 ON)
         if (_autoUiPanel != null)
         {
             _autoUiPanel.SetActive(false);
@@ -238,7 +260,6 @@ public class Kill100Mission : MonoBehaviour
         sr.anchorMax = new Vector2(0.95f, 0.35f);
         sr.offsetMin = Vector2.zero; sr.offsetMax = Vector2.zero;
 
-        // 자동 생성된 '패널'만 기억 (캔버스는 끄지 않음)
         _autoUiPanel = panelGO;
     }
 

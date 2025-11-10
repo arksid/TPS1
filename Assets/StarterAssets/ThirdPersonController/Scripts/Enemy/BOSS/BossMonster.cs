@@ -8,22 +8,22 @@ public class BossMonster : MonoBehaviour
     [SerializeField] private int currentHP;
 
     [Header("Global Damage Rule")]
-    [Tooltip("분노 등 상태에 따라 전체 배수를 조정하고 싶을 때 사용")]
     public float globalDamageMultiplier = 1f;
 
     [Header("Events")]
-    public UnityEvent<int, int> onHpChanged;          // (current, max)
+    public UnityEvent<int, int> onHpChanged;               // (current, max)
     public UnityEvent onBossDead;
-    public UnityEvent<DamageablePart> onPartDamaged; // 부위가 맞을 때
-    public UnityEvent<DamageablePart> onPartDestroyed;
+    public UnityEvent<DamageablePart> onPartDamaged;       // 부위가 맞을 때
+    public UnityEvent<DamageablePart> onPartDestroyed;     // 부위가 파괴될 때
+
+    public int CurrentHP => currentHP;
+    public float HpRatio => (maxHP <= 0) ? 0f : (float)currentHP / maxHP;
 
     void Awake()
     {
         currentHP = maxHP;
         onHpChanged?.Invoke(currentHP, maxHP);
     }
-
-    public float HpRatio => (maxHP <= 0) ? 0f : (float)currentHP / maxHP;
 
     /// <summary>부위에서 전달되는 데미지를 보스 전체에 적용</summary>
     public void ApplyDamage(int amount, DamageablePart fromPart)
@@ -51,4 +51,10 @@ public class BossMonster : MonoBehaviour
         onPartDestroyed?.Invoke(part);
         Debug.Log($"[BossPartBreak] part='{(part ? part.name : "Unknown")}'  BossHP={currentHP}/{maxHP}");
     }
+
+    // ===== 약점 관련 API (호환용, 전부 no-op) =====
+    public void MarkWeakPoint(DamageablePart part) { /* no-op */ }
+    public void ClearWeakPoint(DamageablePart part) { /* no-op */ }
+    public void ClearAllWeakPoints() { /* no-op */ }
+    public void MarkWeakPointById(string id) { /* no-op */ }
 }

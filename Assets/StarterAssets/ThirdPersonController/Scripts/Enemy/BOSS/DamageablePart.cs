@@ -3,107 +3,140 @@ using UnityEngine.Events;
 
 public class DamageablePart : MonoBehaviour
 {
-    [Header("Part HP")]
-    public int maxHP = 100;
-    [SerializeField] private int currentHP;
+    // ---------- HP ----------
+    [Header("HP")]
+    public int maxHP = 50;
+    int _curHP;
+    bool _destroyed;
 
-    [Header("Link")]
-    public BossMonster boss;   // 보스 전체 HP
+    // ---------- Boss Link ----------
+    [Header("보스 연동")]
+    public BossMonster ownerBoss;     // 보스 본체 Drag
+    public string partId = "Core";    // 보스가 식별할 키
+    // (AutoLinker 호환용)
+    public BossMonster boss { get => ownerBoss; set => ownerBoss = value; }
 
-    [Header("Damage Multipliers")]
-    [Tooltip("부위가 멀쩡할 때: 이 부위를 맞추면 보스에게 함께 들어가는 배수(머리 2.0, 장갑 0.7 등)")]
-    public float partToBossDamageMultiplier = 1f;
+    // ---------- 0HP 처리(무기 안 사라지게 기본값) ----------
+    public enum ZeroHPBehavior
+    {
+        None,                 // 아무것도 안 함(무기/모양 유지)
+        DisableHitbox,        // Hitbox만 꺼서 더 맞지 않게
+        DisableBehaviours,    // 지정한 스크립트만 끔(기능 제한)
+        DisableRenderers,     // 렌더러만 끔(모양만 숨김)
+        DeactivateGameObject  // 통째로 비활성화(권장 X)
+    }
 
-    [Tooltip("부위가 '파괴된 후' 이 자리를 맞추면 보스에게 전달될 배수(약점화). 예: 1.5")]
-    public float destroyedForwardMultiplier = 1.2f;
+    [Header("부서짐 처리(0HP)")]
+    public ZeroHPBehavior zeroHPBehavior = ZeroHPBehavior.None;  // 기본: 유지
+    [Tooltip("부서진 뒤에도 계속 보스에게 데미지를 전달할지")]
+    public bool forwardDamageAfterBreak = true;                  // ★ 추가
+    [Tooltip("DisableBehaviours일 때 끌 스크립트들")]
+    public MonoBehaviour[] behavioursToDisable;
+    [Tooltip("추가로 비활성화할 오브젝트(옵션)")]
+    public GameObject[] extraObjectsToDeactivate;
+    [Tooltip("부서지면 Hitbox를 꺼줄지(계속 맞게 하려면 끄세요=false)")]
+    public bool disableHitboxesOnBreak = false;                  // ★ 기본 false 권장
+    [Tooltip("레거시 호환: 켜져 있으면 무조건 전체 비활성화")]
+    public bool destroyOnZero = false;                           // 무기 유지하려면 false
 
-    [Header("Destroyed Behavior")]
-    [Tooltip("부위가 파괴된 뒤에도 그 자리를 맞추면 보스에게 데미지를 '계속' 전달할지?")]
-    public bool forwardDamageAfterDestroyed = true;
-
-    [Tooltip("파괴 시 콜라이더/히트박스를 꺼서 더 이상 맞지 않게 만들지? (약점을 유지하려면 false 권장)")]
-    public bool disableColliderOnDestroyed = false;
-
-    [Tooltip("파괴 시 이 모델로 교체(옵션)")]
-    public GameObject destroyedSwap;
-
-    [Header("Events / VFX hooks")]
-    public UnityEvent onDamaged;
+    // ---------- Events ----------
+    [Header("이벤트")]
+    public UnityEvent onHit;
     public UnityEvent onDestroyed;
 
-    void Awake() => currentHP = maxHP;
-
-    /// <summary>
-    /// Projectile → Hitbox → 여기로 최종 들어옴
-    /// </summary>
-    public void ApplyDamage(int amount)
+    void Awake()
     {
-        if (amount <= 0) return;
+        _curHP = maxHP;
+    }
 
-        // 1) 아직 파괴 전이라면: 부위 HP를 먼저 깎고, 동시에 보스에게도 전달
-        if (currentHP > 0)
+    public void ApplyDamage(int dmg)
+    {
+        // 부서진 이후에도 보스에 전달하고 싶으면, 리턴하지 않음
+        if (!_destroyed)
         {
-            int appliedToPart = Mathf.Clamp(amount, 0, currentHP);
-            currentHP = Mathf.Max(0, currentHP - amount);
+            _curHP = Mathf.Max(0, _curHP - dmg);
+            onHit?.Invoke();
 
-            onDamaged?.Invoke();
-            Debug.Log($"[PartHit] 부위='{name}'  데미지={appliedToPart}  HP={currentHP}/{maxHP}");
+            // 매 타격 시 보스 HP에 반영 (오버플로우 고민 無: 항상 전체 전달)
+            if (ownerBoss) ownerBoss.ApplyDamage(dmg, this);
 
-            // 보스에 동시 전달
-            if (boss != null && appliedToPart > 0)
+            if (_curHP <= 0)
             {
-                int toBoss = Mathf.RoundToInt(appliedToPart * partToBossDamageMultiplier);
-                boss.ApplyDamage(toBoss, this);
-            }
+                _destroyed = true;
 
-            // 1-1) 지금 타격으로 부위가 막 파괴되었으면 파괴 처리
-            if (currentHP == 0)
-            {
-                HandleDestroyed();
+                onDestroyed?.Invoke();
+                if (ownerBoss) ownerBoss.NotifyPartDestroyed(this);
+
+                HandleZeroHPBehavior();
             }
+        }
+        else
+        {
+            // 이미 부서진 상태
+            if (forwardDamageAfterBreak)
+            {
+                // 계속 들어오는 타격은 그대로 보스에게 전달
+                if (ownerBoss) ownerBoss.ApplyDamage(dmg, this);
+            }
+            // forwardDamageAfterBreak=false면 무시
+        }
+    }
+
+    void HandleZeroHPBehavior()
+    {
+        if (destroyOnZero)
+        {
+            gameObject.SetActive(false);
             return;
         }
 
-        // 2) 이미 파괴된 상태라면: 옵션에 따라 보스에게 '바로' 전달(약점화)
-        if (forwardDamageAfterDestroyed && boss != null)
+        switch (zeroHPBehavior)
         {
-            int toBoss = Mathf.RoundToInt(amount * destroyedForwardMultiplier);
-            boss.ApplyDamage(toBoss, this);
-            Debug.Log($"[PartHit-DESTROYED] 부위='{name}'  (직통)보스데미지={toBoss}  x{destroyedForwardMultiplier:0.00}");
+            case ZeroHPBehavior.None:
+                // 아무것도 안 함 (무기/모양/로직 모두 유지)
+                if (disableHitboxesOnBreak)
+                {
+                    var hitboxes0 = GetComponentsInChildren<Hitbox>(true);
+                    foreach (var hb in hitboxes0) if (hb) hb.enabled = false;
+                }
+                break;
+
+            case ZeroHPBehavior.DisableHitbox:
+                var hitboxes = GetComponentsInChildren<Hitbox>(true);
+                foreach (var hb in hitboxes) if (hb) hb.enabled = false;
+                break;
+
+            case ZeroHPBehavior.DisableBehaviours:
+                if (behavioursToDisable != null)
+                    foreach (var b in behavioursToDisable) if (b) b.enabled = false;
+                if (disableHitboxesOnBreak)
+                {
+                    var hitboxes2 = GetComponentsInChildren<Hitbox>(true);
+                    foreach (var hb in hitboxes2) if (hb) hb.enabled = false;
+                }
+                break;
+
+            case ZeroHPBehavior.DisableRenderers:
+                var rends = GetComponentsInChildren<Renderer>(true);
+                foreach (var r in rends) if (r) r.enabled = false;
+                if (disableHitboxesOnBreak)
+                {
+                    var hitboxes3 = GetComponentsInChildren<Hitbox>(true);
+                    foreach (var hb in hitboxes3) if (hb) hb.enabled = false;
+                }
+                break;
+
+            case ZeroHPBehavior.DeactivateGameObject:
+                gameObject.SetActive(false);
+                break;
         }
-        // forwardDamageAfterDestroyed가 false면 아무 일도 안 함(말 그대로 '막힘')
+
+        if (extraObjectsToDeactivate != null)
+            foreach (var go in extraObjectsToDeactivate) if (go) go.SetActive(false);
     }
 
-    private void HandleDestroyed()
-    {
-        onDestroyed?.Invoke();
-        if (boss != null) boss.NotifyPartDestroyed(this);
-
-        // 파괴 비주얼 스왑
-        if (destroyedSwap != null)
-        {
-            destroyedSwap.SetActive(true);
-            gameObject.SetActive(false); // 스왑 모델을 쓰는 경우, 이 파트 자체를 끈다
-            return; // 이 경우엔 더 이상 맞을 수 없으니 주의!
-        }
-
-        // 콜라이더 유지/비활성 선택
-        if (disableColliderOnDestroyed)
-        {
-            var col = GetComponent<Collider>();
-            if (col) col.enabled = false;
-            // 약점을 유지하려면 false로 두는 게 좋다(계속 맞게).
-        }
-
-        // 스크립트는 남겨둔다(약점 구간 유지 위해)
-        enabled = true;
-    }
-
-    public int GetCurrentHP() => currentHP;
-    public bool IsDestroyed() => currentHP <= 0;
-
-    void Reset()
-    {
-        if (boss == null) boss = GetComponentInParent<BossMonster>();
-    }
+#if UNITY_EDITOR
+    [ContextMenu("Test Damage 10")]
+    void __DebugDamage() { ApplyDamage(10); }
+#endif
 }
