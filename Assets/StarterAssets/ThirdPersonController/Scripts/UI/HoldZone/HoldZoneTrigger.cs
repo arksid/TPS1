@@ -1,243 +1,111 @@
-using System.Collections;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
-using System.Reflection;
 
 [RequireComponent(typeof(Collider))]
 public class HoldZoneTrigger : MonoBehaviour
 {
-    [Header("ÇÃ·¹ÀÌ¾î ½Äº°")]
+    [Header("Player")]
     public string playerTag = "Player";
 
-    [Header("¿¬°á")]
-    public SimpleWaypointUI waypointUI; // ¸¶Ä¿ UI
-    public Transform holdZone;          // °ÅÁ¡ÀÇ °¡½Ã ¿ÀºêÁ§Æ®(¾Æ¿ô¶óÀÎ ´ë»ó). ºñ¿ì¸é ÀÚ±â transform
-    public HoldZoneMission mission;     // °°Àº ±¸¿ªÀÇ ¹Ì¼Ç ÄÄÆ÷³ÍÆ®
-    public EnemySwarmDirector swarm;    // ¿şÀÌºê µğ·ºÅÍ
+    [Header("Guide/UI")]
+    public SimpleWaypointUI waypointUI;
+    public Transform holdZone; // ë¹„ìš°ë©´ ìê¸° transform
+    [TextArea] public string message = "ì§€ì •ëœ êµ¬ì—­ìœ¼ë¡œ ì´ë™í•´ ê±°ì ì„ ìœ ì§€í•˜ì„¸ìš”!";
 
-    [Header("Ç¥½Ã ¹®±¸")]
-    [TextArea] public string message = "ÁöÁ¤µÈ ±¸¿ªÀ¸·Î ÀÌµ¿ÇØ °ÅÁ¡À» À¯ÁöÇÏ¼¼¿ä!";
+    [Header("Mission link")]
+    public HoldZoneMission mission;
 
-    [Header("µ¿ÀÛ ¿É¼Ç")]
-    public bool hideWaypointUIOnEnable = true; // Æ®¸®°Å ÄÑÁö¸é UI¸¸ ²û(¾Æ¿ô¶óÀÎ À¯Áö)
-    public bool clearOnEnter = true;           // µé¾î¿À¸é Ç¥½Ä ¿ÏÀü Á¤¸®
-    public bool startSwarmOnEnable = true;     // ÄÑÁö´Â ¼ø°£ ¿şÀÌºê ½ÃÀÛ(Æ©Åä¸®¾ó ¿Ï·á ÀÌÈÄ¿¡¸¸)
-    public bool startSwarmOnEnter = false;    // µé¾î¿À¸é ½ÃÀÛ
+    [Header("Spawner enable on enter")]
+    [Tooltip("í”Œë ˆì´ì–´ê°€ íŠ¸ë¦¬ê±°ì— ë“¤ì–´ì˜¤ë©´ ì•„ë˜ ìŠ¤í¬ë„ˆ(ë˜ëŠ” ê·¸ ì»¨í…Œì´ë„ˆ) GOë¥¼ SetActive(true)")]
+    public bool enableSpawnersOnEnter = true;
+    public GameObject[] spawnersToEnable;   // ì‹œì‘ ì‹œ ë¹„í™œì„± ìƒíƒœì—¬ì•¼ í•¨
+    public bool enableOnlyOnce = true;
 
-    [Header("ÇÃ·¹ÀÌ¾î/±ÙÁ¢ ½ÃÀÛ(º¸Á¶)")]
-    public Transform player;                  // ºñ¿öµÎ¸é Tag=Player ÀÚµ¿ Å½»ö
-    public bool useProximityStart = true;     // Æ®¸®°Å°¡ ¾È ¸Ô´Â °æ¿ì¸¦ À§ÇØ ±ÙÁ¢À¸·Îµµ ½ÃÀÛ
-    public float startRadius = 3f;            // ÀÌ °Å¸® ¾È¿¡ µé¾î¿À¸é ½ÃÀÛ
+    [Header("Misc")]
+    public bool clearWaypointOnEnter = true;
+    public bool hideWaypointUIOnEnable = true;
+    public bool warmStartOverlap = true;
+    public float warmStartDelay = 0.05f;
 
-    // ÇÊµå Ãß°¡(Å¬·¡½º »ó´Ü)
-    [Header("¿ú ½ºÅ¸Æ®(È°¼ºÈ­ ½Ã °ãÄ§ Ã¼Å©)")]
-    public bool warmStartOnEnable = true;
-    public float warmStartDelay = 0.05f;   // ÇÑ ÇÁ·¹ÀÓ Á¤µµ ¿©À¯
-    [Header("½º¿ú ½ÃÀÛ ¿É¼Ç")]
-    public bool allowRestart = true;         // ÀÌ¹Ì ½ÃÀÛ »óÅÂ¿©µµ °­Á¦ Àç½ÃÀÛ Çã¿ë
-    public bool resetSwarmFlagOnEnable = true; // Æ®¸®°Å°¡ ÄÑÁú ¶§ ³»ºÎ ½ÃÀÛ ÇÃ·¡±× ÃÊ±âÈ­
+    Transform _player;
+    bool _enabledOnce;
 
-    bool _fired;
-    bool _swarmStarted;
+    void Reset() { GetComponent<Collider>().isTrigger = true; }
 
-    void Reset()
+    void Awake()
     {
-        var col = GetComponent<Collider>();
-        col.isTrigger = true;
+        var p = GameObject.FindGameObjectWithTag(playerTag);
+        if (p) _player = p.transform;
     }
-    void Start()
-    {
-
-        Debug.Log("[HZT] Start");
-        if (player == null)
-        {
-            var p = GameObject.FindGameObjectWithTag("Player");
-            if (p) player = p.transform;
-        }
-    }
-
-    void Update()
-    {
-        if (useProximityStart && !_swarmStarted && player != null)
-        {
-            var target = holdZone ? holdZone.position : transform.position;
-            if ((player.position - target).sqrMagnitude <= startRadius * startRadius)
-            {
-                Debug.Log("[HoldZoneTrigger] ±ÙÁ¢ ½ÃÀÛ Á¶°Ç ÃæÁ· ¡æ ¿şÀÌºê ½ÃÀÛ");
-                TryStartSwarmOnce();
-            }
-        }
-    }
-
 
     void OnEnable()
     {
-        Debug.Log("[HZT] OnEnable");
+        _enabledOnce = false;
 
-        if (resetSwarmFlagOnEnable) _swarmStarted = false;
-
-        // UI¸¸ ¼û±è(¾Æ¿ô¶óÀÎÀº À¯Áö)
         if (hideWaypointUIOnEnable)
             WaypointDirector.HideUIOnly();
 
-        // (¼±ÅÃ) ÇÃ·¹ÀÌ¾î À¯µµ Ç¥½Ã´Â ÈùÆ®°¡ ÄÑÁ® ÀÖÀ» ¶§¸¸
         var target = holdZone ? holdZone : transform;
-        if (WaypointDirector.HintsEnabled)
-            WaypointDirector.Show(waypointUI, target, message);
+        WaypointDirector.EnableHints();
+        WaypointDirector.Show(waypointUI, target, message);
 
-        // ¡Ú ¼öÁ¤: ÈùÆ®¿Í ¹«°üÇÏ°Ô ¿şÀÌºê ½ÃÀÛ °¡´É
-        if (startSwarmOnEnable)
-            TryStartSwarmOnce();
-
-        if (warmStartOnEnable) StartCoroutine(Co_WarmStartOverlapCheck());
+        if (warmStartOverlap) StartCoroutine(CoWarmStart());
     }
-    System.Collections.IEnumerator Co_WarmStartOverlapCheck()
+
+    System.Collections.IEnumerator CoWarmStart()
     {
-        // 1ÇÁ·¹ÀÓ ¾çº¸ (SetActive(true) Á÷ÈÄ ÃÊ±âÈ­µé ¸ÕÀú µ¹µµ·Ï)
         yield return new WaitForSeconds(warmStartDelay);
-
-        if (player == null)
-        {
-            var p = GameObject.FindGameObjectWithTag(playerTag);
-            if (p) player = p.transform;
-        }
         var col = GetComponent<Collider>();
-        if (!col || !col.enabled || player == null) yield break;
+        if (!_player || !col || !col.enabled) yield break;
 
-        // ¡Ú 'ÀÌ¹Ì ¾È¿¡ ÀÖ´ÂÁö' ÆÇÁ¤: ClosestPoint°¡ ÀÚ±â ÀÚ½ÅÀÌ¸é ³»ºÎ·Î °£ÁÖ
-        Vector3 pp = player.position + Vector3.up * 0.2f; // »ìÂ¦ ¶ç¿ö »ùÇÃ
-        bool inside = (col.ClosestPoint(pp) - pp).sqrMagnitude < 0.000001f;
-
+        Vector3 pp = _player.position + Vector3.up * 0.2f;
+        bool inside = (col.ClosestPoint(pp) - pp).sqrMagnitude < 1e-6f;
         if (inside)
         {
-            Debug.Log("[HoldZoneTrigger] WarmStart: ÇÃ·¹ÀÌ¾î°¡ ÀÌ¹Ì ¿µ¿ª ¾È ¡æ °­Á¦ ÁøÀÔ Ã³¸®");
-
-            // 1) (¼±ÅÃ) ¿şÀÌÆ÷ÀÎÆ®/¾Æ¿ô¶óÀÎ Á¤¸® ±ÔÄ¢ÀÌ ÀÖ´Ù¸é ¿©±â¼­ ½ÇÇà
-            // if (clearOnEnter) WaypointDirector.Clear();  // ÇÁ·ÎÁ§Æ® ¼³Á¤¿¡ ¸Â°Ô
-
-            // 2) ¹Ì¼Ç °ÔÀÌÁö ·ÎÁ÷ °­Á¦ ½ÃÀÛ
             if (mission) mission.ForceEnter();
-
-            // 3) ¿şÀÌºê ½ÃÀÛ (ÇÑ ¹ø¸¸)
-            TryStartSwarmOnce();
+            OnPlayerEntered();
         }
     }
+
     void OnTriggerEnter(Collider other)
     {
-        Debug.Log($"[HZT] OnTriggerEnter: {other.tag}");
         if (!other.CompareTag(playerTag)) return;
-
-        if (clearOnEnter)
-            WaypointDirector.Clear(); // Ç¥½Ä Á¤¸®
-
-        // ¡Ú Ãß°¡: °ÅÁ¡ °ÔÀÌÁö °­Á¦ ½ÃÀÛ (¹Ì¼ÇÀÌ ºĞ¸® ¿ÀºêÁ§Æ®¿©µµ OK)
         if (mission) mission.ForceEnter();
-
-        if (!_fired)
-        {
-            _fired = true;
-            if (startSwarmOnEnter)
-                TryStartSwarmOnce();
-
-            if (mission && mission.ui) mission.ui.Show();
-        }
+        OnPlayerEntered();
     }
 
-
-    void TryStartSwarmOnce()
+    void OnPlayerEntered()
     {
-        GameFlowRunner.Run(Co_StartSwarmNow());
-    }
+        if (clearWaypointOnEnter)
+            WaypointDirector.Clear();
 
-    System.Collections.IEnumerator Co_StartSwarmNow()
-    {
-        if (!swarm)
+        if (mission && mission.ui)
+            mission.ui.Show();
+
+        if (enableSpawnersOnEnter && (!enableOnlyOnce || !_enabledOnce))
         {
-            Debug.LogWarning("[HoldZoneTrigger] swarm ¹ÌÁöÁ¤");
-            yield break;
-        }
-
-        // 0) ½º¿ú ¿ÀºêÁ§Æ®/ÄÄÆ÷³ÍÆ® È°¼º º¸Àå
-        if (!swarm.gameObject.activeSelf) swarm.gameObject.SetActive(true);
-        if (!swarm.enabled) swarm.enabled = true;
-
-        // 1) ÇÃ·¹ÀÌ¾î ·¹ÆÛ·±½º°¡ ÇÊ¿äÇÑ µğ·ºÅÍ¶ó¸é ÀÚµ¿ ÁÖÀÔ(ÇÊµå¸í/ÇÁ·ÎÆÛÆ¼ ¸í ÈçÇÑ ÆĞÅÏ Áö¿ø)
-        if (player == null)
-        {
-            var pGo = GameObject.FindGameObjectWithTag(playerTag);
-            if (pGo) player = pGo.transform;
-        }
-        var t = swarm.GetType();
-        var fPlayer = t.GetField("player", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-        var pPlayer = t.GetProperty("player", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-        if (fPlayer != null && fPlayer.GetValue(swarm) == null && player) fPlayer.SetValue(swarm, player);
-        if (pPlayer != null && pPlayer.CanWrite && pPlayer.GetValue(swarm) == null && player) pPlayer.SetValue(swarm, player, null);
-
-        // 2) ½ºÆù Æ÷ÀÎÆ®/¿şÀÌºê ±¸¼º Á¡°Ë (0°³¸é ¹Ù·Î ·Î±×·Î ¿øÀÎ ÆÄ¾Ç)
-        int spCount = -1, waveCount = -1;
-        var fSP = t.GetField("spawnPoints", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-        if (fSP != null) { var arr = fSP.GetValue(swarm) as Transform[]; spCount = (arr == null ? -1 : arr.Length); }
-
-        var fWaves = t.GetField("waves", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-        if (fWaves != null) { var list = fWaves.GetValue(swarm) as System.Collections.ICollection; waveCount = (list == null ? -1 : list.Count); }
-        Debug.Log($"[HoldZoneTrigger] ½º¿ú Á¡°Ë: spawnPoints={spCount}, waves={waveCount}");
-
-        if (spCount == 0 || waveCount == 0)
-        {
-            Debug.LogWarning("[HoldZoneTrigger] ½ºÆùÆ÷ÀÎÆ®/¿şÀÌºê°¡ ºñ¾ú½À´Ï´Ù. EnemySwarmDirector ÀÎ½ºÆåÅÍ ¿¬°áÀ» È®ÀÎÇÏ¼¼¿ä.");
-            yield break;
-        }
-
-        // 3) ÀÌ¹Ì µ¹¾Ò´ø ½º¿úÀÌ¸é ¾ÈÀüÇÏ°Ô Á¤Áö ÈÄ Àç½ÃÀÛ
-        if (_swarmStarted && !allowRestart)
-        {
-            Debug.Log("[HoldZoneTrigger] ÀÌ¹Ì ½ÃÀÛµÊ(allowRestart=false) ¡æ Àç½ÃÀÛ ¾ÈÇÔ");
-            yield break;
-        }
-
-        // EndWave°¡ ÀÖÀ¸¸é ¸ÕÀú È£ÃâÇØ ÀÜ·ù »óÅÂ ÃÊ±âÈ­
-        var endWave = t.GetMethod("EndWave",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-        if (endWave != null)
-        {
-            endWave.Invoke(swarm, null);
-            Debug.Log("[HoldZoneTrigger] EndWave() È£Ãâ (Àç½ÃÀÛ ÁØºñ)");
-            // ÇÑ Æ½ ½¬°í ½ÃÀÛ(ÄÚ·çÆ¾/»óÅÂ Á¤¸® ½Ã°£)
-            yield return null;
-        }
-        else
-        {
-            // ÃÖ¼ÒÇÑ ¸ğµç ÄÚ·çÆ¾Àº ÁßÁö
-            swarm.StopAllCoroutines();
-        }
-
-        // 4) ½ÇÁ¦ ½ÃÀÛ: StartWaves() ¶Ç´Â RunWaves() Áß ÀÖ´Â °É·Î
-        var startWaves = t.GetMethod("StartWaves",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-        var runWaves = t.GetMethod("RunWaves",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-
-        if (startWaves != null)
-        {
-            startWaves.Invoke(swarm, null);
-            _swarmStarted = true;
-            Debug.Log("[HoldZoneTrigger] StartWaves() È£Ãâ ¡æ ¿şÀÌºê ½ÃÀÛ");
-            yield break;
-        }
-
-        if (runWaves != null)
-        {
-            var routine = runWaves.Invoke(swarm, null) as System.Collections.IEnumerator;
-            if (routine != null)
+            _enabledOnce = true;
+            if (spawnersToEnable != null)
             {
-                GameFlowRunner.Run(routine);
-                _swarmStarted = true;
-                Debug.Log("[HoldZoneTrigger] RunWaves() ÄÚ·çÆ¾ ½ÃÀÛ");
-                yield break;
+                foreach (var go in spawnersToEnable)
+                {
+                    if (!go) continue;
+                    ActivateHierarchy(go); // ë¶€ëª¨ê°€ êº¼ì ¸ ìˆì–´ë„ í•œë°©ì— ì¼œì§
+                    Debug.Log($"[HoldZoneTrigger] í™œì„±í™”: {go.name}");
+                }
             }
         }
-
-        Debug.LogWarning("[HoldZoneTrigger] StartWaves()/RunWaves() µÑ ´Ù ¾øÀ½ ¡æ EnemySwarmDirector¿¡ ½ÃÀÛ API¸¦ Ãß°¡ÇÏ¼¼¿ä.");
     }
 
-
+    static void ActivateHierarchy(GameObject leaf)
+    {
+        var stack = new Stack<Transform>();
+        var t = leaf.transform;
+        while (t != null) { stack.Push(t); t = t.parent; }
+        while (stack.Count > 0)
+        {
+            var cur = stack.Pop().gameObject;
+            if (!cur.activeSelf) cur.SetActive(true);
+        }
+    }
 }

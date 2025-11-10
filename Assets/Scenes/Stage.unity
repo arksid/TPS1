@@ -11578,7 +11578,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -40.28098, y: -56.516235, z: -11.484207}
-  m_LocalScale: {x: 50, y: 1, z: 50}
+  m_LocalScale: {x: 20, y: 1, z: 20}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1913498830}
@@ -11610,6 +11610,15 @@ MonoBehaviour:
   swarm: {fileID: 0}
   extraSwarms: []
   stopSwarmOnComplete: 1
+  spawnerGOToEnableOnEnter: {fileID: 1780124509}
+  enableSpawnerOnEnter: 1
+  stopWaveSpawnerOnComplete: 1
+  disableSpawnerGOOnComplete: 0
+  waveSpawnerRef: {fileID: 1780124511}
+  despawnLeftovers: 0
+  enemyTag: Enemy
+  projectileTag: EnemyProjectile
+  despawnDelay: 0
   clearWaypointOnComplete: 1
   showNextWaypointOnComplete: 1
   nextWaypointUI: {fileID: 1107432371}
@@ -11619,10 +11628,6 @@ MonoBehaviour:
   nextTriggerToActivate: {fileID: 1653371994}
   nextTriggerRoot: {fileID: 1653371988}
   hideUIOnComplete: 1
-  despawnLeftovers: 0
-  enemyTag: Enemy
-  projectileTag: EnemyProjectile
-  despawnDelay: 0
   onCompleted:
     m_PersistentCalls:
       m_Calls: []
@@ -24383,7 +24388,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -40.28098, y: -56.79, z: -11.484207}
-  m_LocalScale: {x: 50, y: 1, z: 50}
+  m_LocalScale: {x: 20, y: 1, z: 20}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1913498830}
@@ -24424,21 +24429,17 @@ MonoBehaviour:
   playerTag: Player
   waypointUI: {fileID: 1107432371}
   holdZone: {fileID: 834022394}
-  mission: {fileID: 834022395}
-  swarm: {fileID: 0}
   message: "\uC9C0\uC815\uB41C \uAD6C\uC5ED\uC73C\uB85C \uC774\uB3D9\uD574 \uAC70\uC810\uC744
     \uC720\uC9C0\uD558\uC138\uC694!"
+  mission: {fileID: 834022395}
+  enableSpawnersOnEnter: 1
+  spawnersToEnable:
+  - {fileID: 1780124509}
+  enableOnlyOnce: 1
+  clearWaypointOnEnter: 1
   hideWaypointUIOnEnable: 0
-  clearOnEnter: 1
-  startSwarmOnEnable: 0
-  startSwarmOnEnter: 1
-  player: {fileID: 1948833882}
-  useProximityStart: 1
-  startRadius: 3
-  warmStartOnEnable: 1
+  warmStartOverlap: 1
   warmStartDelay: 0.05
-  allowRestart: 1
-  resetSwarmFlagOnEnable: 1
 --- !u!23 &1751067867
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -24502,12 +24503,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startOnEnable: 0
   startOnEnter: 1
-  useProximityStart: 1
-  startRadius: 4
-  swarm: {fileID: 1780124511}
-  holdZoneCenter: {fileID: 1751067864}
-  player: {fileID: 1948833882}
   onlyOnce: 1
+  objectsToEnable:
+  - {fileID: 1780124509}
+  swarm: {fileID: 1780124511}
 --- !u!54 &1751067871
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -25015,8 +25014,8 @@ MonoBehaviour:
   - {fileID: 760885748}
   spawnRadius: 10
   enemiesPerWave: 5
-  spawnDelay: 0.5
-  waveDelay: 5
+  spawnDelay: 0.1
+  waveDelay: 2
   playerTransform: {fileID: 1948833882}
 --- !u!1 &1784894545
 GameObject:
