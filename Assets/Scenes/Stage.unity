@@ -35888,7 +35888,7 @@ MonoBehaviour:
   tutorialUIToHide: {fileID: 370866409}
   currentKills: 0
   isCompleted: 0
-  completeImmediatelyOnStart: 1
+  completeImmediatelyOnStart: 0
 --- !u!114 &6706338398097499766
 MonoBehaviour:
   m_ObjectHideFlags: 0

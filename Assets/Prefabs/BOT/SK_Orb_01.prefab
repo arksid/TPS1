@@ -910,10 +910,21 @@ MonoBehaviour:
   rotationSpeed: 5
   evadeAmplitude: 2
   evadeFrequency: 2
+  firePoint: {fileID: 9027279508422343673}
   bulletPrefab: {fileID: 2216547676952783978, guid: 37bdb03f8f3906a48ba0d4aaac381d23,
     type: 3}
-  firePoint: {fileID: 9027279508422343673}
   fireRate: 0.2
+  bulletSpeed: 30
+  bulletDamage: 15
+  fireRange: 35
+  lineOfSightMask:
+    serializedVersion: 2
+    m_Bits: 0
+  burstCount: 5
+  shotIntervalInBurst: 0.08
+  burstCooldown: 1.2
+  spreadDegrees: 4
+  aimChestOffsetY: 1.2
   maxHealth: 25
   expReward: 25
   ultimateGaugeReward: 10
@@ -979,9 +990,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6784377fb6815b44a65f019e0a87e53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponDropWeight: 50
-  healDropWeight: 30
-  ammoDropWeight: 20
+  weaponDropWeight: 0
+  healDropWeight: 50
+  ammoDropWeight: 50
   noDropWeight: 0
   healPackPrefab: {fileID: 307774420219124244, guid: 24db9d00414b4424898134e422683eb5,
     type: 3}
