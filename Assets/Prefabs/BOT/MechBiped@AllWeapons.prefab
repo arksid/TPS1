@@ -2363,6 +2363,7 @@ GameObject:
   - component: {fileID: 3628420163516485617}
   - component: {fileID: 4226851261942924837}
   - component: {fileID: 1540030358360367214}
+  - component: {fileID: 1388319632323041170}
   m_Layer: 0
   m_Name: MechBiped@AllWeapons
   m_TagString: Enemy
@@ -2638,6 +2639,19 @@ MonoBehaviour:
   - m_Rig: {fileID: 6041275415584476009}
     m_Active: 1
   m_Effectors: []
+--- !u!114 &1388319632323041170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9102b3d7ed478c24585c2cc978192ef9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  displayNameOverride: BossUI
 --- !u!1 &1393827434736326
 GameObject:
   m_ObjectHideFlags: 0

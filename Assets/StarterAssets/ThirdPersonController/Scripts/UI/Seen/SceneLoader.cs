@@ -14,18 +14,16 @@ public class SceneLoader : MonoBehaviour
     [SerializeField] private string resourcesPath = "UI/LoadingScreen"; // Resources/UI/LoadingScreen.prefab
 
     [Header("Timing")]
-    [Tooltip("로딩 화면 최소 표시 시간(초)")]
-    public float minDisplaySeconds = 1.2f;                    // ▶ 숫자 올리면 오래 보임
-    [Tooltip("최소 표시 후 추가로 더 보여줄 시간(초)")]
-    public float extraHoldSeconds = 0.5f;                     // ▶ 보너스 대기
-
-    [Header("Progress Smoothing")]
-    [Tooltip("진행바가 부드럽게 차는 속도(값이 클수록 빨리 따라감)")]
-    public float visualLerpSpeed = 1.6f;                      // ▶ 1.2~2.0 권장
+    [Tooltip("로딩 UI 최소 표시 시간(초)")]
+    public float minDisplaySeconds = 0.75f;
+    [Tooltip("씬 전환 직후 추가로 잠깐 붙잡는 시간(초)")]
+    public float extraHoldSeconds = 0.15f;
 
     [Header("Fade")]
-    [Tooltip("로딩 시작 시 페이드 인 시간(초)")]
-    public float fadeInSeconds = 0.25f;
+    [Tooltip("로딩 UI 등장 페이드 시간(초)")]
+    public float fadeInSeconds = 0.2f;
+    [Tooltip("로딩 진행바 수치 보간 속도")]
+    public float visualLerpSpeed = 2.0f;
     [Tooltip("씬 전환 직후 페이드 아웃 시간(초)")]
     public float fadeOutSeconds = 0.25f;
 
@@ -72,15 +70,16 @@ public class SceneLoader : MonoBehaviour
             yield return null;
         }
 
-        // 최소 표시 + 추가 대기 보장
+        // 최소 노출 시간 보장
         float remain = minDisplaySeconds - (Time.unscaledTime - _shownAt);
         if (remain < 0f) remain = 0f;
         yield return new WaitForSecondsRealtime(remain + extraHoldSeconds);
 
-        op.allowSceneActivation = true;               // 실제 씬 활성화
-        yield return null;                             // 다음 프레임까지 대기
+        // 씬 활성화
+        op.allowSceneActivation = true;
+        yield return null;
 
-        // 페이드 아웃 후 UI 제거
+        // 페이드 아웃 및 UI 정리
         yield return FadeCanvas(_uiCanvasGroup, 1f, 0f, fadeOutSeconds);
         HideLoadingUI();
     }
@@ -126,100 +125,95 @@ public class SceneLoader : MonoBehaviour
 
     private CanvasGroup _uiCanvasGroup;
 
-    private void ShowLoadingUI()
+    void ShowLoadingUI()
     {
         if (_ui != null) return;
 
-        // 1) 인스펙터 프리팹
-        if (loadingScreenPrefab != null)
+        // 우선순위 1: 인스펙터 프리팹, 2: Resources 경로
+        LoadingScreen prefab = loadingScreenPrefab;
+        if (prefab == null)
+            prefab = Resources.Load<LoadingScreen>(resourcesPath);
+
+        if (prefab != null)
         {
-            _ui = Instantiate(loadingScreenPrefab);
+            _ui = Instantiate(prefab);
             SetupUICommon(_ui.gameObject);
-            return;
         }
-
-        // 2) Resources 폴백
-        var res = Resources.Load<LoadingScreen>(resourcesPath);
-        if (res != null)
+        else
         {
-            _ui = Instantiate(res);
-            SetupUICommon(_ui.gameObject);
-            return;
+            // 최소한의 임시 UI 생성(슬라이더+퍼센트)
+            var go = new GameObject("LoadingScreen (Auto)");
+            var canvas = go.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            go.AddComponent<GraphicRaycaster>();
+            var cg = go.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+
+            // 슬라이더
+            var sliderGO = new GameObject("Bar");
+            sliderGO.transform.SetParent(go.transform, false);
+            var slider = sliderGO.AddComponent<Slider>();
+            var rt = sliderGO.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.1f, 0.48f);
+            rt.anchorMax = new Vector2(0.9f, 0.52f);
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+
+            // 텍스트
+            var textGO = new GameObject("Percent");
+            textGO.transform.SetParent(go.transform, false);
+            var rt2 = textGO.AddComponent<RectTransform>();
+            rt2.anchorMin = new Vector2(0.5f, 0.6f);
+            rt2.anchorMax = new Vector2(0.5f, 0.6f);
+            rt2.sizeDelta = new Vector2(200, 60);
+
+            TextMeshProUGUI tmp = textGO.AddComponent<TextMeshProUGUI>();
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.fontSize = 38f;
+            tmp.text = "0%";
+
+            var ls = go.AddComponent<LoadingScreen>();
+            ls.progressBar = slider;
+            ls.percentText = tmp;
+            ls.canvasGroup = cg;
+
+            _ui = ls;
+            SetupUICommon(go);
         }
-
-        // 3) 최종 폴백: 즉석 UI 생성(슬라이더 + 텍스트)
-        var go = new GameObject("LoadingScreen(Fallback)");
-        var canvas = go.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        go.AddComponent<CanvasScaler>();
-        go.AddComponent<GraphicRaycaster>();
-        var cg = go.AddComponent<CanvasGroup>();
-        cg.alpha = 0f;
-
-        // 슬라이더
-        var sliderGO = new GameObject("Bar");
-        sliderGO.transform.SetParent(go.transform, false);
-        var slider = sliderGO.AddComponent<Slider>();
-        var rt = sliderGO.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.1f, 0.48f);
-        rt.anchorMax = new Vector2(0.9f, 0.52f);
-        rt.offsetMin = rt.offsetMax = Vector2.zero;
-
-        // 텍스트
-        var textGO = new GameObject("Percent");
-        textGO.transform.SetParent(go.transform, false);
-        var rt2 = textGO.AddComponent<RectTransform>();
-        rt2.anchorMin = new Vector2(0.5f, 0.6f);
-        rt2.anchorMax = new Vector2(0.5f, 0.6f);
-        rt2.sizeDelta = new Vector2(200, 60);
-
-        TextMeshProUGUI tmp = textGO.AddComponent<TextMeshProUGUI>();
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontSize = 38f;
-        tmp.text = "0%";
-
-        var ls = go.AddComponent<LoadingScreen>();
-        ls.progressBar = slider;
-        ls.percentText = tmp;
-        ls.canvasGroup = cg;
-
-        _ui = ls;
-        SetupUICommon(go);
     }
 
-    private void SetupUICommon(GameObject go)
+    void SetupUICommon(GameObject go)
     {
-        DontDestroyOnLoad(go);
-        var canvas = go.GetComponentInChildren<Canvas>();
-        if (canvas != null) canvas.sortingOrder = 5000;
-
-        _uiCanvasGroup = _ui.canvasGroup != null ? _ui.canvasGroup : go.GetComponent<CanvasGroup>();
+        _uiCanvasGroup = go.GetComponent<CanvasGroup>();
         if (_uiCanvasGroup == null) _uiCanvasGroup = go.AddComponent<CanvasGroup>();
+        _uiCanvasGroup.alpha = 0f;
 
-        go.SetActive(true);
-        UpdateLoadingUI(0f);
+        var canvas = go.GetComponent<Canvas>();
+        if (canvas == null) canvas = go.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        go.AddComponent<GraphicRaycaster>();
+        go.transform.SetParent(null, false);
+        DontDestroyOnLoad(go);
     }
 
-    private void UpdateLoadingUI(float t)
+    void UpdateLoadingUI(float t)
     {
-        if (_ui != null) _ui.SetProgress(t);
+        if (_ui == null) return;
+        _ui.SetProgress(t);
     }
 
-    private void HideLoadingUI()
+    void HideLoadingUI()
     {
-        if (_ui != null)
+        if (_ui == null) return;
+        if (_ui.canvasGroup != null) _ui.canvasGroup.alpha = 0f;
+        Destroy(_ui.gameObject);
+        _ui = null;
+    }
+
+    IEnumerator FadeCanvas(CanvasGroup cg, float from, float to, float seconds)
+    {
+        if (cg == null)
         {
-            Destroy(_ui.gameObject);
-            _ui = null;
-            _uiCanvasGroup = null;
-        }
-    }
-
-    private IEnumerator FadeCanvas(CanvasGroup cg, float from, float to, float seconds)
-    {
-        if (cg == null || seconds <= 0f)
-        {
-            if (cg != null) cg.alpha = to;
+            yield return null;
             yield break;
         }
 
@@ -232,5 +226,46 @@ public class SceneLoader : MonoBehaviour
             yield return null;
         }
         cg.alpha = to;
+    }
+
+    // ===================== [ Post-Load Cutscene ] =====================
+    [Header("Post-Load Cutscene")]
+    public PrologueSequence prologuePrefab;                 // (선택) 인스펙터에서 프리팹 직접 연결
+    [SerializeField] private string prologueResourcePath = "UI/PrologueSequence"; // Resources 경로 폴백
+
+    /// <summary>
+    /// 첫 씬을 로드 → 프롤로그를 재생 → 다음 씬을 로드하는 일괄 실행 메서드
+    /// </summary>
+    /// <param name="firstScene">먼저 보여줄 씬 이름(로딩 UI 표시)</param>
+    /// <param name="nextScene">프롤로그 후에 넘어갈 다음 씬 이름</param>
+    public void LoadSceneThenPrologueThenNext(string firstScene, string nextScene)
+    {
+        StartCoroutine(CoLoadThenPrologueThenNext(firstScene, nextScene));
+    }
+
+    private IEnumerator CoLoadThenPrologueThenNext(string firstScene, string nextScene)
+    {
+        // 1) 첫 씬 로딩 (기존 로딩 UI 로직 재사용)
+        yield return CoLoadByName(firstScene);   // 로딩 → 활성화 → 페이드아웃까지 완료
+        yield return null;                       // 다음 프레임 안전 대기
+
+        // 2) 프롤로그 프리팹 인스턴스(인스펙터 우선, 없으면 Resources 폴백)
+        PrologueSequence prefab = prologuePrefab;
+        if (prefab == null)
+            prefab = Resources.Load<PrologueSequence>(prologueResourcePath);
+
+        if (prefab != null)
+        {
+            var seq = Instantiate(prefab);
+            seq.playOnSceneStart = false;        // 수동으로 Play
+            // 프롤로그 실행 & 완료까지 대기
+            yield return seq.PlayAndWait();
+            if (seq) Destroy(seq.gameObject);
+        }
+        // (prefab이 없어도 에러 없이 그냥 건너뜀)
+
+        // 3) 다음 스테이지로 로딩
+        if (!string.IsNullOrEmpty(nextScene))
+            yield return CoLoadByName(nextScene);
     }
 }

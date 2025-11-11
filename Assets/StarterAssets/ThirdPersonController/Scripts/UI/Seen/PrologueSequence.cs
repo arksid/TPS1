@@ -1,3 +1,5 @@
+// Assets/Scripts/UI/PrologueSequence.cs
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,6 +36,9 @@ public class PrologueSequence : MonoBehaviour
     public KeyCode nextKey = KeyCode.Space;
     public KeyCode skipKey = KeyCode.Escape;
 
+    [Header("Font")]
+    public TMP_FontAsset koreanFont;
+
     // 내부 UI
     Canvas _canvas;
     CanvasGroup _rootCg;
@@ -43,6 +48,23 @@ public class PrologueSequence : MonoBehaviour
     bool _isPlaying;
     bool _requestedNext;
     bool _requestedSkip;
+
+    // (New) 끝남 이벤트: 외부에서 재생 완료를 받을 수 있어요.
+    public event Action OnFinished;
+
+    // (New) 외부에서 재생 상태 확인
+    public bool IsPlaying => _isPlaying;
+
+    // (New) 바깥에서 '끝날 때까지 기다리기' 코루틴
+    public IEnumerator PlayAndWait()
+    {
+        if (!_isPlaying)
+            yield return CoPlay();        // 처음 실행
+        else
+        {
+            while (_isPlaying) yield return null;
+        }
+    }
 
     void Start()
     {
@@ -121,6 +143,7 @@ public class PrologueSequence : MonoBehaviour
         // 정리
         Destroy(_canvas.gameObject);
         _isPlaying = false;
+        OnFinished?.Invoke();
     }
 
     void BuildUI()
@@ -158,13 +181,13 @@ public class PrologueSequence : MonoBehaviour
         var tx = new GameObject("Text");
         tx.transform.SetParent(go.transform, false);
         _txt = tx.AddComponent<TextMeshProUGUI>();
+        if (koreanFont != null) _txt.font = koreanFont;
         _txt.alignment = TextAlignmentOptions.Center;
         _txt.fontSize = 42;
         _txt.enableWordWrapping = true;
         _txt.raycastTarget = false;
         _txt.color = Color.white;
-        // 가독용 외곽선/그림자(간단)
-        _txt.outlineWidth = 0.15f;
+        _txt.outlineWidth = 0.15f; // 가독
         var txRt = tx.GetComponent<RectTransform>();
         txRt.anchorMin = new Vector2(0.1f, 0.1f);
         txRt.anchorMax = new Vector2(0.9f, 0.35f);
