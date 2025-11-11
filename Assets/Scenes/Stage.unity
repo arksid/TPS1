@@ -4046,7 +4046,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.14117648, b: 0, a: 1}
+  m_Color: {r: 1, g: 0.42352942, b: 0.3254902, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4464,7 +4464,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.14117648, b: 0, a: 0.6862745}
+  m_Color: {r: 1, g: 0.42352942, b: 0.3254902, a: 0.6862745}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -5557,7 +5557,7 @@ MonoBehaviour:
   rollDoubleTapWindow: 0.3
   waypointUI: {fileID: 1107432371}
   tutorialTriggerTarget: {fileID: 187823247}
-  waypointMessage: "\uC800\uAE30 \uD45C\uC2DC\uB41C \uACF3\uC73C\uB85C \uC774\uB3D9\uD574!"
+  waypointMessage: "\uC5EC\uAE30\uB85C \uC774\uB3D9"
   showWaypointOnComplete: 1
 --- !u!114 &390771330
 MonoBehaviour:
@@ -7075,7 +7075,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.14117648, b: 0, a: 0.6862745}
+  m_Color: {r: 1, g: 0.42352942, b: 0.3254902, a: 0.6862745}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -11598,7 +11598,7 @@ MonoBehaviour:
   playerTag: Player
   progressPercent: 0
   targetPercent: 100
-  fillPerSec: 5
+  fillPerSec: 3
   decayPerSec: 1
   clampToZero: 1
   ui: {fileID: 509143483}
@@ -11628,6 +11628,7 @@ MonoBehaviour:
   nextTriggerToActivate: {fileID: 1653371994}
   nextTriggerRoot: {fileID: 1653371988}
   hideUIOnComplete: 1
+  disableOwnTriggerOnComplete: 1
   onCompleted:
     m_PersistentCalls:
       m_Calls: []
@@ -11925,7 +11926,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.14117648, b: 0, a: 0.039215688}
+  m_Color: {r: 1, g: 0.42352942, b: 0.3254902, a: 0.039215688}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -21072,7 +21073,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.14117648, b: 0, a: 0.039215688}
+  m_Color: {r: 1, g: 0.41960785, b: 0.3254902, a: 0.039215688}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -22165,7 +22166,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.14117648, b: 0, a: 1}
+  m_Color: {r: 1, g: 0.42352942, b: 0.3254902, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

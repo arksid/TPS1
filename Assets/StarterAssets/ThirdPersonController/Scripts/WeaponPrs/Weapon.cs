@@ -97,6 +97,7 @@ public class Weapon : Item
             recoveryX = recoilPreset.recoveryX;
             recoveryY = recoilPreset.recoveryY;
         }
+        EnsureAudioSource();
     }
 
     // ===== 발사 관련 =====
@@ -180,6 +181,8 @@ public class Weapon : Item
 
             _flash?.Play();
 
+            PlayFireSFX();
+
             // ✅ 교체 후 (반동배율 곱하기)
             float recoilMul = (StatModifierManager.Instance != null) ? StatModifierManager.Instance.RecoilMultiplier : 1f;
             recoilY += verticalRecoil * recoilMul;
@@ -191,6 +194,11 @@ public class Weapon : Item
                 CanvasManager.singleton.UpdateAmmo(_ammo, character?.ammo?.amount ?? 0);
 
             return true;
+        }
+        if (!canShootByAmmo && passedTime >= effectiveInterval)
+        {
+            PlayDrySFX();
+            _fireTimer = Time.realtimeSinceStartup;
         }
         return false;
     }
@@ -265,6 +273,7 @@ public class Weapon : Item
                 rb.AddTorque(UnityEngine.Random.insideUnitSphere * 2f, ForceMode.Impulse);
             }
             UnityEngine.Object.Destroy(casing, 5f);
+            SFX_Casing();
         }
     }
 
@@ -369,4 +378,61 @@ public class Weapon : Item
     }
     public void HideMagazineMesh() { if (magazineMesh != null) magazineMesh.SetActive(false); }
     public void ShowMagazineMesh() { if (magazineMesh != null) magazineMesh.SetActive(true); }
+
+    // ===================== Audio (Added) =====================
+    [Header("Audio")]
+    [SerializeField] private AudioSource _audio;
+    [SerializeField] private AudioClip[] _fireClips;     // 발사 소리(여러 개면 랜덤)
+    [SerializeField] private AudioClip _dryClip;          // 빈총(틱틱)
+    [SerializeField] private AudioClip _reloadStartClip;  // 장전 시작
+    [SerializeField] private AudioClip _reloadInsertClip; // 탄창 삽입
+    [SerializeField] private AudioClip _reloadEndClip;    // 장전 마무리/슬라이드
+    [SerializeField] private AudioClip _equipClip;        // 무기 장착
+    [SerializeField] private AudioClip _boltClip;         // 볼트/슬라이드 액션
+    [SerializeField] private AudioClip _casingClip;       // 탄피 튕김
+
+    [SerializeField, Range(0f, 1f)] private float _fireVolume = 1f;
+    [SerializeField] private Vector2 _firePitchRandom = new Vector2(0.97f, 1.03f);
+
+    private void EnsureAudioSource()
+    {
+        if (_audio == null)
+        {
+            _audio = GetComponent<AudioSource>();
+            if (_audio == null) _audio = gameObject.AddComponent<AudioSource>();
+        }
+        _audio.playOnAwake = false;
+        _audio.spatialBlend = 1f;   // 3D 사운드
+        _audio.minDistance = 3f;
+        _audio.maxDistance = 50f;
+    }
+
+    private void PlayOneShot(AudioClip clip, float vol = 1f, float pitchMin = 1f, float pitchMax = 1f)
+    {
+        if (clip == null) return;
+        EnsureAudioSource();
+        float old = _audio.pitch;
+        _audio.pitch = UnityEngine.Random.Range(pitchMin, pitchMax);
+        _audio.PlayOneShot(clip, vol);
+        _audio.pitch = old;
+    }
+
+    private void PlayFireSFX()
+    {
+        if (_fireClips != null && _fireClips.Length > 0)
+        {
+            var clip = _fireClips[UnityEngine.Random.Range(0, _fireClips.Length)];
+            PlayOneShot(clip, _fireVolume, _firePitchRandom.x, _firePitchRandom.y);
+        }
+    }
+
+    private void PlayDrySFX() => PlayOneShot(_dryClip, 1f, 0.98f, 1.02f);
+    public void SFX_ReloadStart() => PlayOneShot(_reloadStartClip);
+    public void SFX_ReloadInsert() => PlayOneShot(_reloadInsertClip);
+    public void SFX_ReloadEnd() => PlayOneShot(_reloadEndClip);
+    public void SFX_Equip() => PlayOneShot(_equipClip);
+    public void SFX_Bolt() => PlayOneShot(_boltClip);
+    public void SFX_Casing() => PlayOneShot(_casingClip, 0.5f, 0.95f, 1.05f);
+
 }
+

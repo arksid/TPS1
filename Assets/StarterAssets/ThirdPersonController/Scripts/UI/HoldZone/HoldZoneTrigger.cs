@@ -16,9 +16,9 @@ public class HoldZoneTrigger : MonoBehaviour
     public HoldZoneMission mission;
 
     [Header("Spawner enable on enter")]
-    [Tooltip("플레이어가 트리거에 들어오면 아래 스포너(또는 그 컨테이너) GO를 SetActive(true)")]
+    [Tooltip("플레이어가 트리거에 들어오면 아래 스포너(또는 컨테이너) GO를 SetActive(true)")]
     public bool enableSpawnersOnEnter = true;
-    public GameObject[] spawnersToEnable;   // 시작 시 비활성 상태여야 함
+    public GameObject[] spawnersToEnable;   // 시작 시 비활성 상태
     public bool enableOnlyOnce = true;
 
     [Header("Misc")]
@@ -79,7 +79,8 @@ public class HoldZoneTrigger : MonoBehaviour
         if (clearWaypointOnEnter)
             WaypointDirector.Clear();
 
-        if (mission && mission.ui)
+        // ★ 미션이 이미 완료됐으면 UI를 다시 켜지 않음
+        if (mission && mission.ui && !mission.IsCompleted)
             mission.ui.Show();
 
         if (enableSpawnersOnEnter && (!enableOnlyOnce || !_enabledOnce))
@@ -90,7 +91,7 @@ public class HoldZoneTrigger : MonoBehaviour
                 foreach (var go in spawnersToEnable)
                 {
                     if (!go) continue;
-                    ActivateHierarchy(go); // 부모가 꺼져 있어도 한방에 켜짐
+                    ActivateHierarchy(go); // 부모까지 켜기
                     Debug.Log($"[HoldZoneTrigger] 활성화: {go.name}");
                 }
             }

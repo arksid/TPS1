@@ -12,9 +12,9 @@ public class HoldZoneMission : MonoBehaviour
     [Header("게이지 설정")]
     [Range(0, 100)] public float progressPercent;      // 현재 %
     [Range(1, 100)] public float targetPercent = 100f; // 목표 %
-    public float fillPerSec = 25f;    // 안에 있을 때 /sec
-    public float decayPerSec = 15f;   // 밖에 있을 때 /sec
-    public bool clampToZero = true;   // 음수 방지
+    public float fillPerSec = 25f;    // 안에 있을 때 / 초
+    public float decayPerSec = 15f;   // 밖에 있을 때 / 초
+    public bool clampToZero = true;   // 0 미만 방지
 
     [Header("UI")]
     public HoldZoneUI ui;
@@ -23,22 +23,23 @@ public class HoldZoneMission : MonoBehaviour
     [TextArea] public string leavingMsg = "거점 밖입니다! 안으로 복귀하세요!";
     [TextArea] public string completeMsg = "거점 확보 완료!";
 
-    [Header("스폰/잔류 정리 (구 스웜 디렉터 호환)")]
+    [Header("(구) 스웜 디렉터 정지")]
     public EnemySwarmDirector swarm;
     public EnemySwarmDirector[] extraSwarms;
     public bool stopSwarmOnComplete = true;
 
-    [Header("스포너 제어 (EnemyWaveSpawner)")]
-    [Tooltip("트리거 진입 시 켜줄 스포너 게임오브젝트(시작 시 비활성이어야 함). 켜지면 EnemyWaveSpawner의 Start()가 바로 웨이브를 시작합니다.")]
+    [Header("(신) 웨이브 스포너 제어 (EnemyWaveSpawner)")]
+    [Tooltip("트리거 진입 시 켜줄 스포너 오브젝트(시작 시 비활성). 켜지면 스포너의 Start()에서 자동 시작.")]
     public GameObject spawnerGOToEnableOnEnter;
     public bool enableSpawnerOnEnter = true;
 
-    [Tooltip("클리어 시 EnemyWaveSpawner를 멈춥니다. EndWave()가 없으면 GO를 꺼서 중지합니다.")]
+    [Tooltip("클리어 시 EnemyWaveSpawner를 중지합니다. EndWave()가 없으면 GO를 꺼서 중지합니다.")]
     public bool stopWaveSpawnerOnComplete = true;
-    [Tooltip("클리어 시 스포너 GO를 끕니다(SetActive false).")]
+
+    [Tooltip("클리어 시 스포너 GO를 끕니다(SetActive(false)).")]
     public bool disableSpawnerGOOnComplete = false;
 
-    [Tooltip("직접 참조(선택). 없으면 spawnerGOToEnableOnEnter에서 EnemyWaveSpawner를 찾아 사용.")]
+    [Tooltip("참조가 비어있으면 spawnerGOToEnableOnEnter에서 자동으로 찾습니다.")]
     public EnemyWaveSpawner waveSpawnerRef;
 
     [Header("잔류 오브젝트 정리")]
@@ -47,7 +48,7 @@ public class HoldZoneMission : MonoBehaviour
     public string projectileTag = "EnemyProjectile";
     public float despawnDelay = 0f;
 
-    [Header("완료 후 네비게이션")]
+    [Header("완료 후 웨이포인트/다음 안내")]
     public bool clearWaypointOnComplete = true;
     public bool showNextWaypointOnComplete = true;
     public SimpleWaypointUI nextWaypointUI;
@@ -57,31 +58,43 @@ public class HoldZoneMission : MonoBehaviour
     [Header("완료 후 다음 트리거 활성화")]
     public bool activateNextTriggerOnComplete = true;
     public Transform nextTriggerToActivate;
-    [Tooltip("부모가 꺼져 있으면 먼저 켭니다.")]
+    [Tooltip("부모가 꺼져 있다면 먼저 켜줍니다.")]
     public GameObject nextTriggerRoot;
 
     [Header("완료 UI")]
     public bool hideUIOnComplete = true;
 
-    [Header("추가 훅")]
+    [Header("완료 시 내 트리거 처리")]
+    public bool disableOwnTriggerOnComplete = true;   // ★ 완료 후 내 콜라이더 비활성
+
+    [Header("추가 이벤트")]
     public UnityEvent onCompleted;
 
+    // 내부 상태
     bool _playerInside;
     bool _completed;
+    public bool IsCompleted => _completed;            // ★ 외부 가드용
+
+    Collider _col;
+    bool _spawnerEnabledOnce;
 
     void Reset() { GetComponent<Collider>().isTrigger = true; }
 
     public void ForceEnter()
     {
         _playerInside = true;
-        if (ui) ui.Show();
-        TryEnableSpawnerOnce(); // 워프/겹침으로 강제 진입된 경우에도 켜 주기
+        // ★ 완료된 뒤에는 UI를 다시 켜지 않음
+        if (!_completed && ui) ui.Show();
+        TryEnableSpawnerOnce();
     }
+
     public void ForceExit() => _playerInside = false;
 
     void OnEnable()
     {
         _completed = false;
+        _col = GetComponent<Collider>();
+
         if (ui)
         {
             ui.SetProgress(targetPercent > 0 ? progressPercent / targetPercent : 1f);
@@ -117,19 +130,20 @@ public class HoldZoneMission : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag(playerTag)) return;
+        if (_completed) return;                 // ★ 완료 후 재표시 차단
         _playerInside = true;
         if (ui) ui.Show();
 
-        TryEnableSpawnerOnce(); // ← 여기서 스포너 GO 켜줌
+        TryEnableSpawnerOnce();
     }
 
     void OnTriggerExit(Collider other)
     {
         if (!other.CompareTag(playerTag)) return;
+        if (_completed) return;                 // ★ 완료 후 무시
         _playerInside = false;
     }
 
-    bool _spawnerEnabledOnce;
     void TryEnableSpawnerOnce()
     {
         if (!enableSpawnerOnEnter || _spawnerEnabledOnce) return;
@@ -137,11 +151,10 @@ public class HoldZoneMission : MonoBehaviour
 
         if (spawnerGOToEnableOnEnter)
         {
-            ActivateHierarchy(spawnerGOToEnableOnEnter); // 부모까지 켜주기(부모가 꺼져 있어도 OK)
+            ActivateHierarchy(spawnerGOToEnableOnEnter); // 부모까지 켜줌
             Debug.Log("[HoldZoneMission] 스포너 활성화: " + spawnerGOToEnableOnEnter.name);
         }
 
-        // 참조 캐시: 명시 참조가 비었으면 GO에서 찾아둠
         if (!waveSpawnerRef && spawnerGOToEnableOnEnter)
             waveSpawnerRef = spawnerGOToEnableOnEnter.GetComponentInChildren<EnemyWaveSpawner>(true);
     }
@@ -150,20 +163,20 @@ public class HoldZoneMission : MonoBehaviour
     {
         yield return null;
 
-        // 1) (구) EnemySwarmDirector 정지
+        // (1) 스웜/웨이브 정지
         if (stopSwarmOnComplete)
         {
             StopSwarmSafe(swarm);
             if (extraSwarms != null) foreach (var s in extraSwarms) StopSwarmSafe(s);
         }
 
-        // 2) (신) EnemyWaveSpawner 정지/비활성
         if (stopWaveSpawnerOnComplete)
             StopWaveSpawnerSafe(ResolveWaveSpawner());
+
         if (disableSpawnerGOOnComplete && spawnerGOToEnableOnEnter)
             spawnerGOToEnableOnEnter.SetActive(false);
 
-        // 3) 잔류 적/투사체 정리
+        // (2) 잔류 정리
         if (despawnLeftovers)
         {
             if (despawnDelay > 0f) yield return new WaitForSeconds(despawnDelay);
@@ -171,10 +184,14 @@ public class HoldZoneMission : MonoBehaviour
             DespawnByTag(projectileTag);
         }
 
-        // 4) 홀드 UI 숨김
-        if (hideUIOnComplete && ui) ui.Hide();
+        // (3) UI 확실히 숨김
+        if (hideUIOnComplete) SafeHideUI();     // ★ 강제 비활성
 
-        // 5) 웨이포인트 정리/다음 안내
+        // (4) 내 트리거 비활성 (재진입 방지)
+        if (disableOwnTriggerOnComplete && _col)
+            _col.enabled = false;
+
+        // (5) 웨이포인트/다음 안내
         if (clearWaypointOnComplete) WaypointDirector.Clear();
 
         if (showNextWaypointOnComplete && nextWaypointUI && nextTarget)
@@ -185,7 +202,7 @@ public class HoldZoneMission : MonoBehaviour
             WaypointDirector.Show(nextWaypointUI, nextTarget, nextMessage);
         }
 
-        // 6) 다음 트리거 활성화(부모→자식 순서)
+        // (6) 다음 트리거 활성화 (부모→자식 순서)
         if (activateNextTriggerOnComplete)
         {
             if (nextTriggerRoot && !nextTriggerRoot.activeSelf)
@@ -197,15 +214,14 @@ public class HoldZoneMission : MonoBehaviour
             if (nextTriggerToActivate && !nextTriggerToActivate.gameObject.activeSelf)
             {
                 nextTriggerToActivate.gameObject.SetActive(true);
-                Debug.Log($"[HoldZoneMission] 보스방 트리거 활성화: {nextTriggerToActivate.name}");
+                Debug.Log($"[HoldZoneMission] 다음 트리거 활성화: {nextTriggerToActivate.name}");
             }
         }
 
         onCompleted?.Invoke();
     }
 
-    // --- 헬퍼들 ---
-
+    // ───── 헬퍼 ─────
     void StopSwarmSafe(EnemySwarmDirector s)
     {
         if (!s) return;
@@ -225,8 +241,6 @@ public class HoldZoneMission : MonoBehaviour
     void StopWaveSpawnerSafe(EnemyWaveSpawner s)
     {
         if (!s) return;
-
-        // EndWave()가 있다면 호출, 없으면 GO를 꺼서 중지
         var m = s.GetType().GetMethod("EndWave", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         if (m != null)
         {
@@ -251,7 +265,6 @@ public class HoldZoneMission : MonoBehaviour
 
     static void ActivateHierarchy(GameObject leaf)
     {
-        // 부모가 꺼져 있어도 루트→리프 순으로 전부 켠다
         var stack = new System.Collections.Generic.Stack<Transform>();
         var t = leaf.transform;
         while (t != null) { stack.Push(t); t = t.parent; }
@@ -260,5 +273,14 @@ public class HoldZoneMission : MonoBehaviour
             var cur = stack.Pop().gameObject;
             if (!cur.activeSelf) cur.SetActive(true);
         }
+    }
+
+    void SafeHideUI()
+    {
+        if (!ui) return;
+        ui.Hide();                           // 내부 Hide
+        ui.gameObject.SetActive(false);      // 이중 안전
+        var cg = ui.canvasGroup;
+        if (cg) cg.alpha = 0f;
     }
 }
