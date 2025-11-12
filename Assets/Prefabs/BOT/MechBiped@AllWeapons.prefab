@@ -2428,6 +2428,8 @@ GameObject:
   - component: {fileID: 3628420163516485617}
   - component: {fileID: 1540030358360367214}
   - component: {fileID: 1388319632323041170}
+  - component: {fileID: 1701086180713194394}
+  - component: {fileID: 4498962616975254663}
   m_Layer: 0
   m_Name: MechBiped@AllWeapons
   m_TagString: Enemy
@@ -2564,7 +2566,7 @@ MonoBehaviour:
   farSpeed: 3.2
   nearSpeed: 2.2
   nearDistance: 18
-  navAcceleration: 3
+  navAcceleration: 8
   navAngularSpeed: 540
   manualMoveSpeed: 3
   stopDistance: 40
@@ -2579,12 +2581,12 @@ MonoBehaviour:
   ringBias: 0.6
   postJumpKeepOutTime: 1.5
   autoJumpBack: 1
-  minJumpBackDistance: 10
+  minJumpBackDistance: 5
   maxJumpBackDistance: 10
   jumpTargetRange: 12
-  jumpBackDistance: 10
-  jumpAirTime: 1
-  jumpArcHeight: 10
+  jumpBackDistance: 18
+  jumpAirTime: 0.9
+  jumpArcHeight: 4
   afterJumpDelay: 0.25
   useCollisionMoveWhenNoAgent: 1
   bodyCapsule: {fileID: 0}
@@ -2593,14 +2595,14 @@ MonoBehaviour:
     m_Bits: 4294967295
   skinWidth: 0.03
   limitJumpBackDistance: 1
-  tinyJumpBackDistance: 1
+  tinyJumpBackDistance: 2
   jumpInPlace: 0
   missileLockPosition: 1
   disableRootMotionDuringMissile: 1
   missileBackstepMax: 0.6
   missileBackstepSpeed: 0.6
-  missileDuration: 6
-  afterMissileCooldown: 1
+  missileDuration: 2
+  afterMissileCooldown: 0.6
   usePercent: 1
   damageChunkPercent: 0.18
   damageChunkFlat: 150
@@ -2608,23 +2610,23 @@ MonoBehaviour:
   - enterAtHpRatio: 0.7
     enragedWeapons: 0
     missilePattern: 0
-    agentSpeed: 6
+    agentSpeed: 3
     newStopDistance: 10
-    damageChunkPercentOverride: 0
+    damageChunkPercentOverride: 0.2
   - enterAtHpRatio: 0.4
     enragedWeapons: 1
-    missilePattern: 1
-    agentSpeed: 6.5
-    newStopDistance: 9
-    damageChunkPercentOverride: 0.15
-  - enterAtHpRatio: 0.1
-    enragedWeapons: 1
+    missilePattern: 2
+    agentSpeed: 3.2
+    newStopDistance: 11
+    damageChunkPercentOverride: 0.16
+  - enterAtHpRatio: 0.2
+    enragedWeapons: 0
     missilePattern: 3
-    agentSpeed: 7.2
-    newStopDistance: 8
+    agentSpeed: 3.4
+    newStopDistance: 12
     damageChunkPercentOverride: 0.12
   _localTimeScale: 1
-  logEnabled: 1
+  logEnabled: 0
 --- !u!114 &771200237851308596
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2730,6 +2732,49 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   displayNameOverride: BossUI
+--- !u!114 &1701086180713194394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e36872b3c60f264c947fb6ec11e6212, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boss: {fileID: 5229534055421300864}
+  animator: {fileID: 95955008306747350}
+  pattern: {fileID: 4226851261942924837}
+  locomotionDriver: {fileID: 486865275800287390}
+  agent: {fileID: 3628420163516485617}
+  deathTrigger: Die
+  deathWaitSeconds: 3
+  fadeCanvasGroup: {fileID: 0}
+  autoCreateFadeOverlay: 1
+  fadeDuration: 1.5
+  fadeColor: {r: 0, g: 0, b: 0, a: 1}
+  blockRaycastsDuringFade: 1
+  endingSceneName: Ending
+--- !u!114 &4498962616975254663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 0
+  outlineColor: {r: 1, g: 0, b: 0, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &1393827434736326
 GameObject:
   m_ObjectHideFlags: 0

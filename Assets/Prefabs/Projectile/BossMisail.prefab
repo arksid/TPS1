@@ -162,7 +162,7 @@ MonoBehaviour:
   homingDelay: 0
   proximityFuse: 1.4
   explosionRadius: 3.5
-  damage: 45
+  damage: 30
   damageFalloff: 1
   hitMask:
     serializedVersion: 2
