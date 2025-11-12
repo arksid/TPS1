@@ -347,6 +347,7 @@ public class Character : MonoBehaviour
 
         // ✅ 실제 현재 무기 참조 업데이트 (사격/조준/UI가 _weapon을 참조하므로 필수)
         _weapon = weaponSlots[currentSlot];
+        if (_weapon) StripDroppedComponentsForEquipped(_weapon.gameObject);
 
         // ✅ UI 갱신(있을 경우)
         if (CanvasManager.singleton != null && _weapon != null)
@@ -421,7 +422,7 @@ public class Character : MonoBehaviour
         }
 
         _weapon.gameObject.SetActive(true);
-
+        StripDroppedComponentsForEquipped(_weapon.gameObject);
         // 탄약 찾기
         _ammo = null;
         foreach (var item in _items)
@@ -497,22 +498,21 @@ public class Character : MonoBehaviour
 
         if (pickedWeaponPrefab != null)
         {
-            // ✅ 새 무기 생성
             Weapon newWeapon = Instantiate(pickedWeaponPrefab, weaponParent);
+
+            // ✅ 바닥 전용 컴포넌트 제거 (중요!)
+            StripDroppedComponentsForEquipped(newWeapon.gameObject);
+
             newWeapon.transform.localPosition = newWeapon.rightHandPosition;
             newWeapon.transform.localEulerAngles = newWeapon.rightHandRotation;
 
-            // ✅ 물리 비활성화
             var rb = newWeapon.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
-
             foreach (var col in newWeapon.GetComponentsInChildren<Collider>())
                 col.enabled = false;
 
-            // ✅ 슬롯 갱신 및 장착
             weaponSlots[slotIndex] = newWeapon;
             EquipWeapon(slotIndex);
-
             _switchingWeapon = false;
             Debug.Log($"✅ 슬롯 {slotIndex + 1}번 무기 교체 완료: {newWeapon.name}");
         }
@@ -1026,6 +1026,23 @@ private IEnumerator BulletDecayTimer(float seconds)
         }
     }
 
+    // Character 클래스 안 아무 메서드들 아래에 추가
+    private void StripDroppedComponentsForEquipped(GameObject go)
+    {
+        if (!go) return;
+
+        // 1) 자동 삭제 금지 (핵심!)
+        var despawns = go.GetComponentsInChildren<AutoDespawn>(true);
+        foreach (var d in despawns) Destroy(d);
+
+        // 2) 바닥 상호작용용 컴포넌트 제거(있다면)
+        var interactables = go.GetComponentsInChildren<InteractableWeapon>(true);
+        foreach (var it in interactables) Destroy(it);
+
+        // 3) 하이라이트 제거(있다면)
+        var outlines = go.GetComponentsInChildren<Outline>(true);
+        foreach (var ol in outlines) ol.enabled = false;
+    }
 
 
     public void OnReloadFinished_GearUp()
