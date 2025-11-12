@@ -2594,9 +2594,9 @@ MonoBehaviour:
   minJumpBackDistance: 10
   maxJumpBackDistance: 10
   jumpTargetRange: 12
-  jumpBackDistance: 5
+  jumpBackDistance: 10
   jumpAirTime: 1
-  jumpArcHeight: 5
+  jumpArcHeight: 10
   afterJumpDelay: 0.25
   missileDuration: 6
   afterMissileCooldown: 1

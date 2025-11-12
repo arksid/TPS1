@@ -50,7 +50,7 @@ MonoBehaviour:
     text: "\uC6D0\uC778\uBAA8\uB97C \uCE68\uACF5\uC73C\uB85C \uC778\uD574 \uC138\uACC4\uAC00
       \uBA78\uB9DD\uD574 \uBC84\uB838\uB2E4."
     holdSeconds: 3
-  - background: {fileID: 21300000, guid: c7a7e4f223bc82347afc4d12f6998df6, type: 3}
+  - background: {fileID: 21300000, guid: 1d809af4e0b6b5748b4a218073cbaf75, type: 3}
     text: "\uC815\uD654\uC790\uAC00 \uB418\uC5B4 \uC138\uACC4\uB97C \uAD6C\uD558\uC5EC\uB77C."
     holdSeconds: 3
   fadeSeconds: 0.2
