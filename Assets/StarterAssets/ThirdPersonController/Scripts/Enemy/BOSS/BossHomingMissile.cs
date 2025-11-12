@@ -1,30 +1,30 @@
-ï»¿using UnityEngine;
+using UnityEngine;
 using System;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
-public class BossHomingMissile : MonoBehaviour
+public class BossHomingMissile : MonoBehaviour, ISlowable
 {
     [Header("Guidance")]
-    public Transform target;                 // ê¸°ë³¸: í”Œë ˆì´ì–´
-    public Transform owner;                  // ì†Œìœ ì(ìê¸° ì¶©ëŒ ë¬´ì‹œ)
-    public float aimOffsetY = 1.2f;          // ë¨¸ë¦¬/ìƒë‹¨ ì¡°ì¤€
-    public float turnRateDegPerSec = 140f;   // ì„ íšŒ ì†ë„
+    public Transform target;                 // ±âº»: ÇÃ·¹ÀÌ¾î
+    public Transform owner;                  // ¼ÒÀ¯ÀÚ(ÀÚ±â Ãæµ¹ ¹«½Ã)
+    public float aimOffsetY = 1.2f;          // ¸Ó¸®/»ó´Ü Á¶ÁØ
+    public float turnRateDegPerSec = 140f;   // ¼±È¸ ¼Óµµ
     public float accel = 12f;
     public float maxSpeed = 22f;
     public float startSpeed = 8f;
     public float lifeTime = 12f;
 
     [Header("Spawn Safe")]
-    public float spawnForwardOffset = 0.2f;  // ìŠ¤í° ìœ„ì¹˜ ë³´ì •
-    public float armingDelay = 0.12f;        // ìŠ¤í° ì§í›„ ì¶©ëŒ ë¬´ì‹œ
+    public float spawnForwardOffset = 0.2f;  // ½ºÆù À§Ä¡ º¸Á¤
+    public float armingDelay = 0.12f;        // ½ºÆù Á÷ÈÄ Ãæµ¹ ¹«½Ã
 
     [Header("Homing Delay")]
-    [Tooltip("ì´ ì‹œê°„ì´ ì§€ë‚œ ë’¤ë¶€í„° ìœ ë„ ì‹œì‘(ì§€ì—° ìœ ë„). 0ì´ë©´ ì¦‰ì‹œ ìœ ë„.")]
+    [Tooltip("ÀÌ ½Ã°£ÀÌ Áö³­ µÚºÎÅÍ À¯µµ ½ÃÀÛ(Áö¿¬ À¯µµ). 0ÀÌ¸é Áï½Ã À¯µµ.")]
     public float homingDelay = 0f;
 
     [Header("Fuse / Explosion")]
-    public float proximityFuse = 1.4f;       // ê·¼ì ‘ ì‹ ê´€
+    public float proximityFuse = 1.4f;       // ±ÙÁ¢ ½Å°ü
     public float explosionRadius = 3.5f;
     public float damage = 45f;
     public bool damageFalloff = true;
@@ -40,6 +40,12 @@ public class BossHomingMissile : MonoBehaviour
 
     [Header("Debug")]
     public bool enableLogging = false;
+
+    // ====== ULT ½½·Î¿ì ======
+    [Header("ULT Slow")]
+    [Range(0.05f, 1f)] public float localTimeScale = 1f; // ÇöÀç Àû¿ë ¹è¼ö
+    private float baseTurnRate, baseAccel, baseMaxSpeed;  // ¿øº» °ª º¸°ü
+    private float lastAppliedSlow = 1f;                   // ¸¶Áö¸· Àû¿ë°ª(Æú¸µ ºñ±³¿ë)
 
     public Action onDestroyed;
 
@@ -60,6 +66,11 @@ public class BossHomingMissile : MonoBehaviour
         rb.useGravity = false;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         col.isTrigger = false;
+
+        // ULT ½½·Î¿ì¿ë ¿øº» °ª ÀúÀå
+        baseTurnRate = turnRateDegPerSec;
+        baseAccel = accel;
+        baseMaxSpeed = maxSpeed;
     }
 
     void OnEnable()
@@ -80,6 +91,12 @@ public class BossHomingMissile : MonoBehaviour
 
         if (target == null && Character.Instance != null)
             target = Character.Instance.transform;
+
+        // ½ºÆù ½ÃÁ¡¿¡ ULT ÄÑÁ® ÀÖÀ¸¸é Áï½Ã ¹İ¿µ
+        if (UltimateSkill.IsUltimateActive)
+            SetLocalTimeScale(UltimateSkill.CurrentSlowFactor);
+        else
+            ResetLocalTimeScale();
     }
 
     public void Launch(Transform owner, Transform targetOverride = null)
@@ -90,26 +107,35 @@ public class BossHomingMissile : MonoBehaviour
         transform.position += transform.forward * spawnForwardOffset;
         currentSpeed = startSpeed;
         rb.velocity = transform.forward * currentSpeed;
+
+        // ¹ß»ç ¼ø°£¿¡µµ ÇÑ ¹ø ´õ º¸Á¤
+        if (UltimateSkill.IsUltimateActive)
+            SetLocalTimeScale(UltimateSkill.CurrentSlowFactor);
     }
 
     void FixedUpdate()
     {
-        // ìœ ë„ (ì§€ì—° ì „ì—ëŠ” ì§ì§„ ìœ ì§€)
+        // ¡Ú ULT »óÅÂ Æú¸µ(Áß°£¿¡ On/Off µÇ¾îµµ ºñÇà Áß Áï½Ã ¹İ¿µ)
+        float desiredSlow = UltimateSkill.IsUltimateActive ? UltimateSkill.CurrentSlowFactor : 1f;
+        if (Mathf.Abs(desiredSlow - lastAppliedSlow) > 0.001f)
+            SetLocalTimeScale(desiredSlow);
+
+        // À¯µµ (Áö¿¬ Àü¿¡´Â Á÷Áø À¯Áö)
         if (target != null && CanHome)
         {
             Vector3 aimPoint = target.position + Vector3.up * aimOffsetY;
             Vector3 desiredDir = (aimPoint - transform.position).normalized;
 
-            float maxDelta = turnRateDegPerSec * Time.fixedDeltaTime;
+            float maxDelta = turnRateDegPerSec * Time.fixedDeltaTime; // ¡ç ½½·Î¿ì ¹İ¿µµÈ ¼±È¸¼Óµµ
             Vector3 newDir = Vector3.RotateTowards(transform.forward, desiredDir, Mathf.Deg2Rad * maxDelta, 0f);
             transform.rotation = Quaternion.LookRotation(newDir);
         }
 
-        // ê°€ì†
+        // °¡¼Ó(½½·Î¿ì ¹İ¿µµÈ accel, maxSpeed »ç¿ë)
         currentSpeed = Mathf.Min(maxSpeed, currentSpeed + accel * Time.fixedDeltaTime);
         rb.velocity = transform.forward * currentSpeed;
 
-        // ê·¼ì ‘ ì‹ ê´€
+        // ±ÙÁ¢ ½Å°ü
         if (IsArmed && target != null && !detonated)
         {
             float d = Vector3.Distance(transform.position, target.position);
@@ -176,5 +202,25 @@ public class BossHomingMissile : MonoBehaviour
         }
         onDestroyed?.Invoke();
         Destroy(gameObject);
+    }
+
+    // ====== ISlowable ±¸Çö ======
+    public void SetLocalTimeScale(float scale)
+    {
+        localTimeScale = Mathf.Clamp(scale, 0.05f, 1f);
+        lastAppliedSlow = localTimeScale;
+
+        // ¿øº» °ªÀ» ±âÁØÀ¸·Î ½ºÄÉÀÏ Àû¿ë
+        turnRateDegPerSec = baseTurnRate * localTimeScale;
+        accel = baseAccel * localTimeScale;
+        maxSpeed = baseMaxSpeed * localTimeScale;
+
+        // ÀÌ¹Ì ³ôÀº ¼Óµµ·Î ´Ş¸®´Â °æ¿ì, »óÇÑ ÀçÅ¬·¥ÇÁ
+        currentSpeed = Mathf.Min(currentSpeed, maxSpeed);
+    }
+
+    public void ResetLocalTimeScale()
+    {
+        SetLocalTimeScale(1f);
     }
 }

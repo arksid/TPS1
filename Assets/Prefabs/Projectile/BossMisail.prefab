@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 23967030406061618}
   - component: {fileID: 136577091837880070}
   - component: {fileID: 7803162812662906143}
-  - component: {fileID: 4953107952597972532}
+  - component: {fileID: 3551933646836961525}
   m_Layer: 0
   m_Name: BossMisail
   m_TagString: Untagged
@@ -137,7 +137,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &4953107952597972532
+--- !u!114 &3551933646836961525
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -146,21 +146,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 1592024424479722}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e015b23d701d0354b8ea0e9fb9341b2a, type: 3}
+  m_Script: {fileID: 11500000, guid: bf3720ca2ea6cf4408dba4fce1b1b60a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 0}
   owner: {fileID: 0}
   aimOffsetY: 1.2
-  turnRateDegPerSec: 160
-  accel: 20
-  maxSpeed: 10
-  startSpeed: 10
+  turnRateDegPerSec: 140
+  accel: 12
+  maxSpeed: 22
+  startSpeed: 8
   lifeTime: 12
   spawnForwardOffset: 0.2
   armingDelay: 0.12
   homingDelay: 0
-  proximityFuse: 1.2
+  proximityFuse: 1.4
   explosionRadius: 3.5
   damage: 45
   damageFalloff: 1
@@ -173,3 +173,4 @@ MonoBehaviour:
   explosionFxLife: 2
   trailFx: {fileID: 0}
   enableLogging: 0
+  localTimeScale: 1

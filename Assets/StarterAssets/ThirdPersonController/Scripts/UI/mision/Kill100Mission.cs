@@ -1,63 +1,73 @@
-﻿using System.Collections;
+﻿using System;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using TMPro;
 
 public class Kill100Mission : MonoBehaviour
 {
     [Header("목표")]
-    [Min(1)] public int targetKills = 100;
+    [Min(1)] public int targetKills = 50;   // ✅ 기본값 50
 
-    [Header("UI (비워두면 자동 생성)")]
-    public Slider progressSlider;
-    public TextMeshProUGUI mainLabel; // "처치: 0/100"
-    public TextMeshProUGUI subLabel;  // "미션: 적 100마리 처치"
-    [Tooltip("성공 시 숨기고 싶은 UI 루트(캔버스 전체 말고, '패널' 오브젝트만 지정 권장)")]
+    [Header("UI (비워두면 옵션)")]
+    public Slider progressSlider;           // 진행도 슬라이더
+    public TextMeshProUGUI mainLabel;       // "처치: X/Y"
+    public TextMeshProUGUI subLabel;        // "미션: 적 Y마리 처치" / 성공 문구
+    [Tooltip("성공 시 숨기고 싶은 UI 루트(패널 오브젝트만 지정 권장)")]
     public GameObject uiRootToHideOnSuccess;
 
-    [Header("미션 성공 시 호출(선택)")]
-    public MonoBehaviour waveController;      // 예: EnemySwarmDirector
-    public string endWaveMethodName = "EndWave";
+    // ★ 추가: 미션 시작 시 UI를 강제로 보이게 할 대상(패널 루트)
+    [Header("미션 시작 시 UI 강제 표시")]
+    [Tooltip("예: Canvas/QuestUI/KillMissionPanel (미션 시작 시 SetActive(true)로 켭니다)")]
+    public GameObject uiRootToShowOnStart;
+    [Tooltip("있으면 알파/상호작용까지 켜줍니다(없으면 자동으로 CanvasGroup을 붙여서 씀)")]
+    public CanvasGroup uiCanvasGroupOnStart;
 
-    [Header("미션2(홀드존) 연동")]
-    public SimpleWaypointUI waypointUI;       // 웨이포인트 UI
-    public Transform nextMissionTrigger;      // HoldZoneTrigger 오브젝트(Transform)
-    [TextArea] public string nextMessage = "다음 거점으로 이동!";
-    public bool activateNextTriggerOnSuccess = true;  // 성공 시 트리거 SetActive(true)
-    public bool showWaypointOnSuccess = true;         // 성공 시 웨이포인트 표시
+    [Header("다음 미션 유도(웨이포인트)")]
+    public bool showNextWaypointOnSuccess = true;
+    public SimpleWaypointUI waypointUI;     // 화면에 띄울 마커 UI
+    public Transform nextMissionTarget;     // 다음 거점(트리거) 위치
+    public string nextMissionLabel = "다음 거점으로 이동";
+    public GameObject nextOutlineTarget;    // 아웃라인 걸 대상(비우면 nextMissionTarget)
 
-    [Tooltip("홀드존 트리거의 '부모' 컨테이너가 꺼져 있으면 먼저 이걸 켭니다(선택).")]
-    public GameObject nextTriggerRoot;                // ← 추가
+    [Header("성공 시 활성화할 오브젝트(트리거/에리어 등)")]
+    [Tooltip("미션 성공 순간 SetActive(true)로 만들 오브젝트들(예: HoldZoneTrigger, HoldZoneArea 루트 등)")]
+    public GameObject[] activateOnSuccess;
 
-    [Header("튜토리얼 UI 연동")]
-    public TutorialUI tutorialUIToHide;       // 미션1 성공 시 끌 튜토리얼 UI
+    [Header("이벤트(선택)")]
+    public UnityEvent onMissionStart;
+    public UnityEvent onMissionSuccess;
 
-    [Header("상태(읽기전용)")]
-    public int currentKills = 0;
-    public bool isCompleted = false;
+    int currentKills;
+    bool isCompleted;
 
-    [Header("디버그/테스트")]
-    public bool completeImmediatelyOnStart = false;   // 시작하자마자 클리어(테스트용)
+    // ─────────────────────────────────────────────────────────────────────────────
 
-    // 내부
-    GameObject _autoUiPanel;   // 자동 생성된 '패널'만 기억해서 끈다(캔버스는 건드리지 않음)
-
-    void Awake()
+    void OnEnable()
     {
-        EnsureUI();
-        UpdateUI();
+        // ★ 미션 시작 순간 UI 패널을 '확실히' 켠다
+        ForceShowUIAtStart();
 
-        if (completeImmediatelyOnStart)
+        MissionEvents.OnEnemyKilled += HandleEnemyKilled;
+
+        if (progressSlider)
         {
-            currentKills = targetKills;
-            isCompleted = true;
-            UpdateUI();
-            OnMissionSuccess();
+            progressSlider.minValue = 0;
+            progressSlider.maxValue = Mathf.Max(1, targetKills);
+            progressSlider.value = 0;
         }
+
+        UpdateUI(initialize: true);
+        onMissionStart?.Invoke();
     }
 
-    void OnEnable() => MissionEvents.OnEnemyKilled += HandleEnemyKilled;
-    void OnDisable() => MissionEvents.OnEnemyKilled -= HandleEnemyKilled;
+    void OnDisable()
+    {
+        MissionEvents.OnEnemyKilled -= HandleEnemyKilled;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
 
     void HandleEnemyKilled()
     {
@@ -69,6 +79,7 @@ public class Kill100Mission : MonoBehaviour
             currentKills = targetKills;
             isCompleted = true;
             UpdateUI();
+
             OnMissionSuccess();
         }
         else
@@ -77,198 +88,162 @@ public class Kill100Mission : MonoBehaviour
         }
     }
 
+    void UpdateUI(bool initialize = false)
+    {
+        // 메인 라벨: "처치: X/Y"
+        if (mainLabel)
+            mainLabel.text = $"처치: {currentKills}/{targetKills}";
+
+        // 서브 라벨: 진행 중 / 성공
+        if (subLabel)
+        {
+            if (!isCompleted)
+                subLabel.text = $"미션: 적 {targetKills}마리 처치";
+            else
+                subLabel.text = $"✅ 미션 성공! (적 {targetKills}마리 처치)";
+        }
+
+        if (progressSlider)
+            progressSlider.value = currentKills;
+
+        if (initialize) return;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+
     void OnMissionSuccess()
     {
-        if (subLabel) subLabel.text = "✅ 미션 성공! (적 100마리 처치)";
-
-        // (선택) 웨이브 종료 훅
-        TryEndWave();
-
-        // 1) 내 미션1 UI 패널만 끄기
-        TryHideOwnUI();
-
-        // 2) 튜토리얼 UI 끄기
-        if (tutorialUIToHide) tutorialUIToHide.Hide();
-
-        // 3) 다음 트리거(홀드존) 켜기
-        if (activateNextTriggerOnSuccess)
+        // 0) 다음 단계 필요한 트리거/에리어 활성화
+        if (activateOnSuccess != null && activateOnSuccess.Length > 0)
         {
-            if (nextTriggerRoot)
+            foreach (var go in activateOnSuccess)
             {
-                if (!nextTriggerRoot.activeSelf)
-                {
-                    nextTriggerRoot.SetActive(true);
-                    Debug.Log("[Kill100Mission] nextTriggerRoot 활성화");
-                }
-            }
-
-            if (nextMissionTrigger)
-            {
-                if (!nextMissionTrigger.gameObject.activeSelf)
-                {
-                    nextMissionTrigger.gameObject.SetActive(true);
-                    Debug.Log($"[Kill100Mission] 홀드존 트리거 활성화: {nextMissionTrigger.name}");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("[Kill100Mission] nextMissionTrigger 미지정(Transform). 인스펙터 연결 필요!");
+                if (!go) continue;
+                if (!go.activeSelf) go.SetActive(true);
             }
         }
 
-        // 4) 다음 웨이포인트 표시 (한 프레임 뒤, 항상 활성 보장)
-        if (showWaypointOnSuccess && waypointUI && nextMissionTrigger)
-            GameFlowRunner.Run(Co_ShowNextMissionWaypointSafely());
-    }
-
-    IEnumerator Co_ShowNextMissionWaypointSafely()
-    {
-        // 트리거 OnEnable 초기화/숨김 등이 먼저 끝나도록 한 프레임 대기
-        yield return null;
-
-        WaypointDirector.EnableHints();
-
-        // 표시 직전, UI/캔버스 활성 보장
-        if (!waypointUI.gameObject.activeSelf)
-            waypointUI.gameObject.SetActive(true);
-        if (waypointUI.canvas && !waypointUI.canvas.gameObject.activeSelf)
-            waypointUI.canvas.gameObject.SetActive(true);
-
-        WaypointDirector.Show(waypointUI, nextMissionTrigger, nextMessage);
-
-        // 필요하면 1~2프레임 여유로 재표시
-        yield return null;
-        WaypointDirector.Show(waypointUI, nextMissionTrigger, nextMessage);
-    }
-
-    void TryEndWave()
-    {
-        if (waveController == null || string.IsNullOrEmpty(endWaveMethodName)) return;
-
-        var m = waveController.GetType().GetMethod(
-            endWaveMethodName,
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
-        );
-        if (m != null) m.Invoke(waveController, null);
-        else Debug.LogWarning($"[Kill100Mission] {waveController.GetType().Name}에 {endWaveMethodName} 없음");
-    }
-
-    void TryHideOwnUI()
-    {
-        if (uiRootToHideOnSuccess != null)
+        // 1) 다음 웨이포인트 + 아웃라인 표시
+        if (showNextWaypointOnSuccess && waypointUI && nextMissionTarget)
         {
+            WaypointDirector.Clear();
+            WaypointDirector.Show(waypointUI, nextMissionTarget, nextMissionLabel);
+
+            var outlineGO = nextOutlineTarget ? nextOutlineTarget : nextMissionTarget.gameObject;
+            EnsureOutlineNow(outlineGO);
+        }
+
+        // 2) 성공 시 UI 패널 숨김(선택)
+        if (uiRootToHideOnSuccess)
             uiRootToHideOnSuccess.SetActive(false);
-            return;
-        }
-        if (_autoUiPanel != null)
+
+        // 3) 외부 이벤트
+        onMissionSuccess?.Invoke();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 시작 시 UI를 '무조건' 보이게 만든다 (부모가 꺼져 있어도 끌어올림)
+
+    void ForceShowUIAtStart()
+    {
+        if (uiRootToShowOnStart)
         {
-            _autoUiPanel.SetActive(false);
-            return;
+            if (!uiRootToShowOnStart.activeSelf) uiRootToShowOnStart.SetActive(true);
+
+            var cg = uiCanvasGroupOnStart ? uiCanvasGroupOnStart
+                   : uiRootToShowOnStart.GetComponent<CanvasGroup>();
+            if (!cg) cg = uiRootToShowOnStart.AddComponent<CanvasGroup>();
+            cg.alpha = 1f;
+            cg.interactable = true;
+            cg.blocksRaycasts = true;
+
+            // 상위 계층에 비활성 부모가 있으면 몇 단계까지는 깨워줌
+            var t = uiRootToShowOnStart.transform.parent;
+            for (int i = 0; i < 4 && t != null; i++)
+            {
+                if (!t.gameObject.activeSelf) t.gameObject.SetActive(true);
+                t = t.parent;
+            }
+        }
+        else
+        {
+            // 패널을 직접 지정 안 했을 경우: 슬라이더/라벨 기준으로 부모 패널을 깨워줌
+            TryWakeUpByComponent(progressSlider);
+            TryWakeUpByComponent(mainLabel);
+            TryWakeUpByComponent(subLabel);
         }
     }
 
-    void UpdateUI()
+    void TryWakeUpByComponent(Component c)
     {
-        if (progressSlider)
+        if (!c) return;
+
+        // CanvasGroup/Canvas를 찾아서 보이도록
+        var cg = c.GetComponentInParent<CanvasGroup>(true);
+        if (cg)
         {
-            float ratio = targetKills <= 0 ? 0f : (float)currentKills / targetKills;
-            progressSlider.minValue = 0f;
-            progressSlider.maxValue = 1f;
-            progressSlider.value = ratio;
+            if (!cg.gameObject.activeSelf) cg.gameObject.SetActive(true);
+            cg.alpha = 1f; cg.interactable = true; cg.blocksRaycasts = true;
         }
 
-        if (mainLabel) mainLabel.text = $"처치: {currentKills}/{targetKills}";
-        if (subLabel && !isCompleted) subLabel.text = "미션: 적 100마리 처치";
+        var canvas = c.GetComponentInParent<Canvas>(true);
+        if (canvas && !canvas.gameObject.activeSelf) canvas.gameObject.SetActive(true);
+
+        // 최상위 몇 단계의 비활성 부모도 깨우기
+        var t = c.transform;
+        for (int i = 0; i < 4 && t != null; i++)
+        {
+            if (!t.gameObject.activeSelf) t.gameObject.SetActive(true);
+            t = t.parent;
+        }
     }
 
-    void EnsureUI()
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 아웃라인 보강: "바로" 켭니다.
+
+    void EnsureOutlineNow(GameObject go)
     {
-        if (progressSlider && mainLabel && subLabel) return;
+        if (!go) return;
 
-        var canvasGO = new GameObject("Kill100MissionUI");
-        var canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        var scaler = canvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
-        scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
-        canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+        OutlineHelper.SetOutline(go, true);
 
-        var panelGO = new GameObject("Panel");
-        panelGO.transform.SetParent(canvasGO.transform, false);
-        var panel = panelGO.AddComponent<Image>();
-        panel.color = new Color(0, 0, 0, 0.35f);
-        var pr = panel.GetComponent<RectTransform>();
-        pr.anchorMin = new Vector2(0.02f, 0.88f);
-        pr.anchorMax = new Vector2(0.40f, 0.98f);
-        pr.offsetMin = Vector2.zero;
-        pr.offsetMax = Vector2.zero;
+        if (HasEnabledOutline(go)) return;
 
-        // Slider
-        var sliderGO = new GameObject("ProgressSlider");
-        sliderGO.transform.SetParent(panelGO.transform, false);
-        progressSlider = sliderGO.AddComponent<Slider>();
+        var qo = GetOrAddBehaviour(go, "QuickOutline");
+        if (qo == null) qo = GetOrAddBehaviour(go, "Outline");
+        if (qo != null) qo.enabled = true;
+    }
 
-        var bg = new GameObject("Background");
-        bg.transform.SetParent(sliderGO.transform, false);
-        var bgImg = bg.AddComponent<Image>();
-        bgImg.color = new Color(1, 1, 1, 0.15f);
-        var bgRT = bgImg.GetComponent<RectTransform>();
-        bgRT.anchorMin = new Vector2(0.05f, 0.25f);
-        bgRT.anchorMax = new Vector2(0.95f, 0.65f);
-        bgRT.offsetMin = Vector2.zero;
-        bgRT.offsetMax = Vector2.zero;
+    bool HasEnabledOutline(GameObject go)
+    {
+        var comps = go.GetComponents<Behaviour>();
+        foreach (var c in comps)
+        {
+            if (c == null) continue;
+            var n = c.GetType().Name;
+            if ((n == "QuickOutline" || n == "Outline") && c.enabled) return true;
+        }
+        return false;
+    }
 
-        var fillArea = new GameObject("Fill Area");
-        fillArea.transform.SetParent(sliderGO.transform, false);
-        var faRT = fillArea.AddComponent<RectTransform>();
-        faRT.anchorMin = new Vector2(0.05f, 0.25f);
-        faRT.anchorMax = new Vector2(0.95f, 0.65f);
-        faRT.offsetMin = Vector2.zero;
-        faRT.offsetMax = Vector2.zero;
+    Behaviour GetOrAddBehaviour(GameObject go, string typeName)
+    {
+        var t = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(a => {
+                try { return a.GetTypes(); } catch { return Array.Empty<Type>(); }
+            })
+            .FirstOrDefault(x => x != null && x.Name == typeName && typeof(Behaviour).IsAssignableFrom(x));
+        if (t == null) return null;
 
-        var fill = new GameObject("Fill");
-        fill.transform.SetParent(fillArea.transform, false);
-        var fillImg = fill.AddComponent<Image>();
-        fillImg.color = new Color(0.2f, 0.8f, 1f, 0.85f);
-        var fr = fillImg.GetComponent<RectTransform>();
-        fr.anchorMin = Vector2.zero; fr.anchorMax = Vector2.one;
-        fr.offsetMin = Vector2.zero; fr.offsetMax = Vector2.zero;
+        var exist = go.GetComponent(t) as Behaviour;
+        if (exist != null) return exist;
 
-        progressSlider.fillRect = fillImg.rectTransform;
-        progressSlider.targetGraphic = fillImg;
-        progressSlider.minValue = 0f;
-        progressSlider.maxValue = 1f;
-        progressSlider.value = 0f;
-
-        var mainGO = new GameObject("MainLabel");
-        mainGO.transform.SetParent(panelGO.transform, false);
-        mainLabel = mainGO.AddComponent<TextMeshProUGUI>();
-        mainLabel.alignment = TextAlignmentOptions.Left;
-        mainLabel.fontSize = 24;
-        var mr = mainLabel.GetComponent<RectTransform>();
-        mr.anchorMin = new Vector2(0.05f, 0.65f);
-        mr.anchorMax = new Vector2(0.95f, 0.95f);
-        mr.offsetMin = Vector2.zero; mr.offsetMax = Vector2.zero;
-
-        var subGO = new GameObject("SubLabel");
-        subGO.transform.SetParent(panelGO.transform, false);
-        subLabel = subGO.AddComponent<TextMeshProUGUI>();
-        subLabel.alignment = TextAlignmentOptions.Left;
-        subLabel.fontSize = 18;
-        var sr = subLabel.GetComponent<RectTransform>();
-        sr.anchorMin = new Vector2(0.05f, 0.05f);
-        sr.anchorMax = new Vector2(0.95f, 0.35f);
-        sr.offsetMin = Vector2.zero; sr.offsetMax = Vector2.zero;
-
-        _autoUiPanel = panelGO;
+        return go.AddComponent(t) as Behaviour;
     }
 
 #if UNITY_EDITOR
     [ContextMenu("테스트: +10킬")]
-    void Context_Add10Kills()
-    {
-        for (int i = 0; i < 10; i++) MissionEvents.RaiseEnemyKilled();
-    }
+    void Context_Add10() { for (int i = 0; i < 10; i++) MissionEvents.RaiseEnemyKilled(); }
 
     [ContextMenu("테스트: 즉시 완료")]
     void Context_CompleteNow()

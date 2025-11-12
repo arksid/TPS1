@@ -161,6 +161,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   part: {fileID: 3850277248420644129}
   damageMultiplier: 1
+  showDamagePopup: 1
+  popupAnchor: {fileID: 0}
+  addUltOnHit: 1
+  ultPerHit: 1
+  gaugeUsePerDamage: 1
+  gaugePerDamage: 0.02
+  gaugePerHitBonus: 0
+  isBoss: 0
+  bossGaugeMultiplier: 1.2
+  isWeakPoint: 0
+  weakPointGaugeMultiplier: 1.5
+  minGaugeAdd: 0
+  maxGaugeAdd: 5
+  onHitDamage:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &3850277248420644129
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1167,6 +1183,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   part: {fileID: 7361716768189752789}
   damageMultiplier: 1
+  showDamagePopup: 1
+  popupAnchor: {fileID: 0}
+  addUltOnHit: 1
+  ultPerHit: 1
+  gaugeUsePerDamage: 1
+  gaugePerDamage: 0.02
+  gaugePerHitBonus: 0
+  isBoss: 0
+  bossGaugeMultiplier: 1.2
+  isWeakPoint: 0
+  weakPointGaugeMultiplier: 1.5
+  minGaugeAdd: 0
+  maxGaugeAdd: 5
+  onHitDamage:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &7361716768189752789
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1317,6 +1349,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   part: {fileID: 3433545437658278009}
   damageMultiplier: 1
+  showDamagePopup: 1
+  popupAnchor: {fileID: 0}
+  addUltOnHit: 1
+  ultPerHit: 1
+  gaugeUsePerDamage: 1
+  gaugePerDamage: 0.02
+  gaugePerHitBonus: 0
+  isBoss: 0
+  bossGaugeMultiplier: 1.2
+  isWeakPoint: 0
+  weakPointGaugeMultiplier: 1.5
+  minGaugeAdd: 0
+  maxGaugeAdd: 5
+  onHitDamage:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &3433545437658278009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2162,6 +2210,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   part: {fileID: 7229687728242156975}
   damageMultiplier: 1
+  showDamagePopup: 1
+  popupAnchor: {fileID: 0}
+  addUltOnHit: 1
+  ultPerHit: 1
+  gaugeUsePerDamage: 1
+  gaugePerDamage: 0.02
+  gaugePerHitBonus: 0
+  isBoss: 0
+  bossGaugeMultiplier: 1.2
+  isWeakPoint: 0
+  weakPointGaugeMultiplier: 1.5
+  minGaugeAdd: 0
+  maxGaugeAdd: 5
+  onHitDamage:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &7229687728242156975
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2175,7 +2239,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHP: 100
-  ownerBoss: {fileID: 0}
+  ownerBoss: {fileID: 5229534055421300864}
   partId: Core
   zeroHPBehavior: 0
   forwardDamageAfterBreak: 1
@@ -2357,11 +2421,11 @@ GameObject:
   - component: {fileID: 4377748316588964}
   - component: {fileID: 95955008306747350}
   - component: {fileID: 486865275800287390}
+  - component: {fileID: 4226851261942924837}
   - component: {fileID: 771200237851308596}
   - component: {fileID: 5229534055421300864}
   - component: {fileID: 3945805987857126941}
   - component: {fileID: 3628420163516485617}
-  - component: {fileID: 4226851261942924837}
   - component: {fileID: 1540030358360367214}
   - component: {fileID: 1388319632323041170}
   m_Layer: 0
@@ -2431,82 +2495,6 @@ MonoBehaviour:
   dampTime: 0.08
   invertX: 0
   invertZ: 0
---- !u!114 &771200237851308596
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1370704105751684}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8323967914f40db459afe32f77f7818e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  upperRig: {fileID: 6041275415584476009}
-  speed: 3
---- !u!114 &5229534055421300864
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1370704105751684}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d261858a2695fa4da191e1cea876bdb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxHP: 5000
-  currentHP: 0
-  globalDamageMultiplier: 1
-  onHpChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  onBossDead:
-    m_PersistentCalls:
-      m_Calls: []
-  onPartDamaged:
-    m_PersistentCalls:
-      m_Calls: []
-  onPartDestroyed:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &3945805987857126941
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1370704105751684}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26431ac0562227442bd34b1db905dfe0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  autoAssignBossOnParts: 0
---- !u!195 &3628420163516485617
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1370704105751684}
-  m_Enabled: 1
-  m_AgentTypeID: 0
-  m_Radius: 0.5
-  m_Speed: 1
-  m_Acceleration: 8
-  avoidancePriority: 50
-  m_AngularSpeed: 120
-  m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 2
-  m_BaseOffset: 0
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
 --- !u!114 &4226851261942924837
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2576,7 +2564,7 @@ MonoBehaviour:
   farSpeed: 3.2
   nearSpeed: 2.2
   nearDistance: 18
-  navAcceleration: 8
+  navAcceleration: 3
   navAngularSpeed: 540
   manualMoveSpeed: 3
   stopDistance: 40
@@ -2598,6 +2586,19 @@ MonoBehaviour:
   jumpAirTime: 1
   jumpArcHeight: 10
   afterJumpDelay: 0.25
+  useCollisionMoveWhenNoAgent: 1
+  bodyCapsule: {fileID: 0}
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  skinWidth: 0.03
+  limitJumpBackDistance: 1
+  tinyJumpBackDistance: 1
+  jumpInPlace: 0
+  missileLockPosition: 1
+  disableRootMotionDuringMissile: 1
+  missileBackstepMax: 0.6
+  missileBackstepSpeed: 0.6
   missileDuration: 6
   afterMissileCooldown: 1
   usePercent: 1
@@ -2622,7 +2623,84 @@ MonoBehaviour:
     agentSpeed: 7.2
     newStopDistance: 8
     damageChunkPercentOverride: 0.12
+  _localTimeScale: 1
   logEnabled: 1
+--- !u!114 &771200237851308596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8323967914f40db459afe32f77f7818e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  upperRig: {fileID: 6041275415584476009}
+  speed: 3
+--- !u!114 &5229534055421300864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d261858a2695fa4da191e1cea876bdb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 10000
+  currentHP: 0
+  globalDamageMultiplier: 1
+  onHpChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onBossDead:
+    m_PersistentCalls:
+      m_Calls: []
+  onPartDamaged:
+    m_PersistentCalls:
+      m_Calls: []
+  onPartDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3945805987857126941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26431ac0562227442bd34b1db905dfe0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoAssignBossOnParts: 0
+--- !u!195 &3628420163516485617
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370704105751684}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 1
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!114 &1540030358360367214
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3423,6 +3501,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   part: {fileID: 7229687728242156975}
   damageMultiplier: 1
+  showDamagePopup: 1
+  popupAnchor: {fileID: 0}
+  addUltOnHit: 1
+  ultPerHit: 1
+  gaugeUsePerDamage: 1
+  gaugePerDamage: 0.02
+  gaugePerHitBonus: 0
+  isBoss: 0
+  bossGaugeMultiplier: 1.2
+  isWeakPoint: 0
+  weakPointGaugeMultiplier: 1.5
+  minGaugeAdd: 0
+  maxGaugeAdd: 5
+  onHitDamage:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &1199872651519434999
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4391,6 +4485,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   part: {fileID: 4032968856137239545}
   damageMultiplier: 1
+  showDamagePopup: 1
+  popupAnchor: {fileID: 0}
+  addUltOnHit: 1
+  ultPerHit: 1
+  gaugeUsePerDamage: 1
+  gaugePerDamage: 0.02
+  gaugePerHitBonus: 0
+  isBoss: 0
+  bossGaugeMultiplier: 1.2
+  isWeakPoint: 0
+  weakPointGaugeMultiplier: 1.5
+  minGaugeAdd: 0
+  maxGaugeAdd: 5
+  onHitDamage:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &4032968856137239545
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4608,6 +4718,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   part: {fileID: 5901804797150700449}
   damageMultiplier: 1
+  showDamagePopup: 1
+  popupAnchor: {fileID: 0}
+  addUltOnHit: 1
+  ultPerHit: 1
+  gaugeUsePerDamage: 1
+  gaugePerDamage: 0.02
+  gaugePerHitBonus: 0
+  isBoss: 0
+  bossGaugeMultiplier: 1.2
+  isWeakPoint: 0
+  weakPointGaugeMultiplier: 1.5
+  minGaugeAdd: 0
+  maxGaugeAdd: 5
+  onHitDamage:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &5901804797150700449
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5292,6 +5418,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   part: {fileID: 4407970482008348490}
   damageMultiplier: 1
+  showDamagePopup: 1
+  popupAnchor: {fileID: 0}
+  addUltOnHit: 1
+  ultPerHit: 1
+  gaugeUsePerDamage: 1
+  gaugePerDamage: 0.02
+  gaugePerHitBonus: 0
+  isBoss: 0
+  bossGaugeMultiplier: 1.2
+  isWeakPoint: 0
+  weakPointGaugeMultiplier: 1.5
+  minGaugeAdd: 0
+  maxGaugeAdd: 5
+  onHitDamage:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &4407970482008348490
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -92,7 +92,7 @@ MonoBehaviour:
   _category: 0
   _ammoID: 9mm
   _damage: 45
-  _fireRate: 0.06
+  _fireRate: 0.1
   _clipSize: 30
   _burstCount: 3
   _burstInterval: 0.1
@@ -115,6 +115,18 @@ MonoBehaviour:
     type: 3}
   magazineDropPoint: {fileID: 5946336859904355246}
   magazineMesh: {fileID: 3119837159395566628}
+  _audio: {fileID: 0}
+  _fireClips:
+  - {fileID: 8300000, guid: 26c10d4a3e808a644b0f5b098fffa1d1, type: 3}
+  _dryClip: {fileID: 0}
+  _reloadStartClip: {fileID: 0}
+  _reloadInsertClip: {fileID: 0}
+  _reloadEndClip: {fileID: 0}
+  _equipClip: {fileID: 0}
+  _boltClip: {fileID: 0}
+  _casingClip: {fileID: 0}
+  _fireVolume: 0.03
+  _firePitchRandom: {x: 0.97, y: 1.03}
 --- !u!114 &-1783808447837256900
 MonoBehaviour:
   m_ObjectHideFlags: 0

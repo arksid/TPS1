@@ -147,6 +147,18 @@ MonoBehaviour:
   magazineDropPoint: {fileID: 8188970510932773175}
   magazineMesh: {fileID: 5667360438793515642, guid: cb14c468cc8eecf4a980b11de06407fb,
     type: 3}
+  _audio: {fileID: 0}
+  _fireClips:
+  - {fileID: 8300000, guid: a22b8fdf70f98c143a76b3cf86effa8b, type: 3}
+  _dryClip: {fileID: 0}
+  _reloadStartClip: {fileID: 0}
+  _reloadInsertClip: {fileID: 0}
+  _reloadEndClip: {fileID: 0}
+  _equipClip: {fileID: 0}
+  _boltClip: {fileID: 0}
+  _casingClip: {fileID: 0}
+  _fireVolume: 0.03
+  _firePitchRandom: {x: 0.97, y: 1.03}
 --- !u!114 &9077187703724465511
 MonoBehaviour:
   m_ObjectHideFlags: 0

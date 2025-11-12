@@ -1619,6 +1619,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6a8da5f4a12a7ec469bc8be775cb15d4, type: 3}
+--- !u!1 &501407390 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8585387905218658219, guid: 79e624e6a8770a946afb866fd94b394b,
+    type: 3}
+  m_PrefabInstance: {fileID: 3243356335002712501}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &504506497 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8718778828885884488, guid: e5f4daf24146ee040b5a2d7a73b30aa0,
@@ -4023,6 +4029,22 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 3243356335002712501}
   m_PrefabAsset: {fileID: 0}
+--- !u!208 &1303904942
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 501407390}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 7.13, y: 3.4940002, z: 5.2510004}
+  m_MoveThreshold: 0.1
+  m_Carve: 0
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 3.4970002, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &1320638076
 GameObject:
   m_ObjectHideFlags: 0
@@ -7419,6 +7441,16 @@ PrefabInstance:
       propertyPath: _cameraBrain
       value: 
       objectReference: {fileID: 3188944531664511372}
+    - target: {fileID: 2170205190894909572, guid: 6edf94f5596715443996d0c1dd8aa848,
+        type: 3}
+      propertyPath: _aimingSensitivity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2170205190894909572, guid: 6edf94f5596715443996d0c1dd8aa848,
+        type: 3}
+      propertyPath: _deflaultSensitivity
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 3587905479273681426, guid: 6edf94f5596715443996d0c1dd8aa848,
         type: 3}
       propertyPath: m_Name
@@ -7552,6 +7584,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3241880604189725250, guid: da592e4107fbb2145ade0d7b534aefe7,
+        type: 3}
+      propertyPath: AimRotationSpeed
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 5797133863652098141, guid: da592e4107fbb2145ade0d7b534aefe7,
         type: 3}
       propertyPath: scriptsToDisableOnDeath.Array.data[0]
@@ -7908,7 +7945,11 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8585387905218658219, guid: 79e624e6a8770a946afb866fd94b394b,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1303904942}
   m_SourcePrefab: {fileID: 100100000, guid: 79e624e6a8770a946afb866fd94b394b, type: 3}
 --- !u!1 &3255767147177541462 stripped
 GameObject:

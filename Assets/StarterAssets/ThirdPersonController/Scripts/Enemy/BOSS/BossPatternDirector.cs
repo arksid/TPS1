@@ -38,7 +38,7 @@ public class BossPatternDirector : MonoBehaviour
     [Header("정지 임계(너무 붙는 것 방지)")]
     public float stopDistance = 10f;     // 절대 붙지 않을 최소 거리
 
-    // ---------------- 스트레이프(원형 이동) ----------------
+    // ---------------- 스트레이프(좌우 원형 이동) ----------------
     [Header("스트레이프(좌우 원형 이동)")]
     public bool enableStrafe = true;
     public float strafeRadius = 12f;         // 플레이어 기준 유지 반경
@@ -61,15 +61,36 @@ public class BossPatternDirector : MonoBehaviour
     [Header("점프백 거리(자동 조절)")]
     public bool autoJumpBack = true;          // true면 상황에 맞춰 필요한 만큼만 뒤로
     public float minJumpBackDistance = 2.5f;  // 최소 물러남
-    public float maxJumpBackDistance = 10f;   // 최대 물러남(기존 18 대신 상한)
-    public float jumpTargetRange = 12f;       // 점프 후 대략 유지하고 싶은 거리(보통 strafeRadius와 유사)
+    public float maxJumpBackDistance = 10f;   // 최대 물러남
+    public float jumpTargetRange = 12f;       // 점프 후 대략 유지하고 싶은 거리
 
     // ---------------- 점프/미사일 패턴 ----------------
     [Header("점프 이탈")]
-    public float jumpBackDistance = 18f;      // autoJumpBack=false인 경우 사용되는 고정값
+    public float jumpBackDistance = 18f;      // autoJumpBack=false일 때 사용
     public float jumpAirTime = 0.9f;
     public float jumpArcHeight = 4f;
     public float afterJumpDelay = 0.25f;
+
+    // BossPatternDirector.cs 상단 필드 근처에 추가
+    [Header("충돌 이동 (Agent OFF일 때)")]
+    public bool useCollisionMoveWhenNoAgent = true;
+    public CapsuleCollider bodyCapsule;           // 보스 몸통 캡슐(없으면 기본 치수 사용)
+    public LayerMask collisionMask = ~0;          // 충돌 고려 레이어
+    public float skinWidth = 0.03f;               // 살짝 여유
+
+
+
+
+    [Header("점프 이탈 - 미세 조절")]
+    public bool limitJumpBackDistance = true;               // ★ 최대 이동거리 캡(아주 살짝만 뒤로)
+    [Range(0f, 2f)] public float tinyJumpBackDistance = 0.7f; // ★ 권장 0.5~0.8m
+    public bool jumpInPlace = false;                        // 완전 제자리 점프 원할 때
+
+    [Header("미사일 중 위치 제어")]
+    public bool missileLockPosition = true;       // ★ 미사일 쏘는 동안 자리 고정
+    public bool disableRootMotionDuringMissile = true; // ★ 루트모션이 뒤로 미는 애니면 끔
+    [Range(0f, 2f)] public float missileBackstepMax = 0.6f; // ★ 잠깐 뒤로 가더라도 최대치
+    public float missileBackstepSpeed = 0.6f;     // 뒤로 미는 속도(초당 m). 0이면 사실상 이동 없음.
 
     [Header("미사일 연사")]
     public float missileDuration = 2.0f;
@@ -91,6 +112,10 @@ public class BossPatternDirector : MonoBehaviour
         public float damageChunkPercentOverride = -1f; // 음수면 기본값
     }
     public Phase[] phases;
+
+    [Header("ULT 슬로우")]
+    [Tooltip("보스 전용 로컬 타임스케일 (ULT 중 느려짐)")]
+    [Range(0.05f, 1f)] public float _localTimeScale = 1f;
 
     [Header("디버그")]
     public bool logEnabled = false;
@@ -139,12 +164,12 @@ public class BossPatternDirector : MonoBehaviour
 
         onMinigunStart?.Invoke();
 
-        // HP 이벤트 구독 + 초기값 안전 동기화
+        // HP 이벤트 구독 + 초기값 동기화
         if (boss)
         {
             boss.onHpChanged.AddListener(OnBossHpChanged); // (current,max)
             int cur = Mathf.RoundToInt(boss.HpRatio * boss.maxHP);
-            _prevHp = cur; // 시작 시점 기준값
+            _prevHp = cur; // 시작 기준
         }
     }
 
@@ -156,9 +181,22 @@ public class BossPatternDirector : MonoBehaviour
     void Update()
     {
         if (!player) return;
+
+        // ★ ULT 슬로우가 SetLocalTimeScale(...)로 들어오지 않는 환경에서도 대응하고 싶다면,
+        //    UltimateSkill의 정적 상태를 폴링해 배수 적용하는 코드를 추가해도 됩니다.
+        //    (프로젝트마다 다르므로 기본 제공 X)
+
         if (_state == State.ChaseAndSpray && !_isSequenceRunning && !_isStagger)
             TickChase();
     }
+
+    // --------- 외부에서 호출해 슬로우 적용(ULT 연동용) ---------
+    public void SetLocalTimeScale(float scale)
+    {
+        _localTimeScale = Mathf.Clamp(scale, 0.05f, 1f);
+        if (animator) animator.speed = _localTimeScale;
+    }
+    public void ResetLocalTimeScale() => SetLocalTimeScale(1f);
 
     // ---------------- 메인 로직 ----------------
     void TickChase()
@@ -218,6 +256,7 @@ public class BossPatternDirector : MonoBehaviour
         dest += (-toPlayer.normalized) * Mathf.Clamp(radialErr, -1.5f, 1.5f);
 
         float targetSpeed = Mathf.Max(0.5f, farSpeed * strafeSpeedMul);
+        targetSpeed *= _localTimeScale; // ★ ULT 슬로우 반영
 
         if (agent && agent.enabled)
         {
@@ -235,13 +274,17 @@ public class BossPatternDirector : MonoBehaviour
         {
             float accel = navAcceleration;
             _curManualSpeed = Mathf.MoveTowards(_curManualSpeed, targetSpeed, accel * Time.deltaTime);
-            transform.position += (dest - transform.position).normalized * _curManualSpeed * 0.1f;
+            if (useCollisionMoveWhenNoAgent)
+                CollisionMove((dest - transform.position).normalized * _curManualSpeed * 0.1f);
+            else
+                transform.position += (dest - transform.position).normalized * _curManualSpeed * 0.1f;
         }
     }
 
     void DoApproach(float dist)
     {
         float targetSpeed = (dist > nearDistance) ? farSpeed : nearSpeed;
+        targetSpeed *= _localTimeScale; // ★ ULT 슬로우 반영
 
         if (dist <= keepOutDistance)
         {
@@ -287,7 +330,10 @@ public class BossPatternDirector : MonoBehaviour
             float tgt = targetSpeed;
             _curManualSpeed = Mathf.MoveTowards(_curManualSpeed, tgt, navAcceleration * Time.deltaTime);
             if (_curManualSpeed > 0.001f)
-                transform.position += to.normalized * _curManualSpeed * 0.1f;
+                if (useCollisionMoveWhenNoAgent)
+                    CollisionMove(to.normalized * _curManualSpeed * 0.1f);
+                else
+                    transform.position += to.normalized * _curManualSpeed * 0.1f;
         }
     }
 
@@ -379,70 +425,134 @@ public class BossPatternDirector : MonoBehaviour
         if (logEnabled) Debug.Log($"[Boss] Enter Phase {idx} ({ph.enterAtHpRatio:P0})");
     }
 
+    // --------- 시퀀스: 점프 → 미사일 → 복귀 ---------
     IEnumerator Co_JumpAndMissile()
     {
         _isSequenceRunning = true;
 
+        // 1) Chase 종료: 미니건 잠시 OFF
         onMinigunStop?.Invoke();
 
+        // 2) 점프 이탈
         _state = State.JumpBack;
+
+        // 목적 위치(플레이어 반대 방향)
         Vector3 from = transform.position;
-        Vector3 awayDir = (transform.position - player.position); awayDir.y = 0f;
+        Vector3 awayDir = (transform.position - player.position);
+        awayDir.y = 0f;
         if (awayDir.sqrMagnitude < 0.001f) awayDir = -transform.forward;
         awayDir.Normalize();
 
-        float back = autoJumpBack ? GetAutoJumpBackDistance() : jumpBackDistance;
-        Vector3 to = from + awayDir * back;
+        // ★ 이동 거리 산출 (auto / 수동 / 제자리) + '아주 살짝' 캡
+        float backDist;
+        if (jumpInPlace)
+            backDist = 0f;
+        else if (autoJumpBack)
+            backDist = GetAutoJumpBackDistance();
+        else
+            backDist = jumpBackDistance;
 
-        if (agent) agent.enabled = false;
+        if (limitJumpBackDistance)
+            backDist = Mathf.Min(backDist, tinyJumpBackDistance);
 
+        Vector3 to = from + awayDir * backDist;
+
+        if (agent) agent.enabled = false; // 에이전트 임시 비활성 (충돌 방지)
+
+        // 애니메이션 트리거(있을 때만)
         if (animator && !string.IsNullOrEmpty(jumpTriggerName))
             animator.SetTrigger(jumpTriggerName);
 
+        // 포물선 이동
         float t = 0f;
         while (t < jumpAirTime)
         {
             t += Time.deltaTime;
             float u = Mathf.Clamp01(t / jumpAirTime);
-            Vector3 pos = Vector3.Lerp(from, to, u);
-            pos.y += Mathf.Sin(u * Mathf.PI) * jumpArcHeight;
+
+            Vector3 pos;
+            if (jumpInPlace || backDist <= 0.001f)
+            {
+                // 제자리 점프(또는 이동 거리 거의 0): XZ 고정, 높이만
+                pos = new Vector3(from.x, from.y + Mathf.Sin(u * Mathf.PI) * jumpArcHeight, from.z);
+            }
+            else
+            {
+                // 뒤로 점프(아주 짧은 거리 포함)
+                pos = Vector3.Lerp(from, to, u);
+                pos.y += Mathf.Sin(u * Mathf.PI) * jumpArcHeight;
+            }
+
             transform.position = pos;
+
+            // 공중에서도 플레이어 바라보기
             FacePlayerHard();
             yield return null;
         }
 
-        if (NavMesh.SamplePosition(to, out var hit, 2f, NavMesh.AllAreas))
-            transform.position = hit.position;
+        // 착지 보정(네브메시에 맞춤)
+        if (NavMesh.SamplePosition(to, out var hitTo, 2f, NavMesh.AllAreas))
+            transform.position = hitTo.position;
         else
             transform.position = to;
 
-        yield return new WaitForSeconds(afterJumpDelay);
-
-        // --- 미사일 페이즈 시작: 약점 표시 (선택) ---
-        if (boss && !string.IsNullOrEmpty(weakPointOnMissileId))
-            boss.MarkWeakPointById(weakPointOnMissileId);
-
-        _state = State.Missile;
-        onMissileBarrage?.Invoke();
-        float mt = 0f;
-        while (mt < missileDuration)
-        {
-            mt += Time.deltaTime;
-            FacePlayerHard();
-            yield return null;
-        }
-        yield return new WaitForSeconds(afterMissileCooldown);
-
-        // --- 미사일 끝: 약점 해제(선택) ---
-        if (boss && clearWeakAfterMissile)
-            boss.ClearAllWeakPoints();
-
-        if (agent) agent.enabled = true;
-
+        // 점프 직후 일정 시간 반경 유지 강제
         _keepOutUntil = Time.time + postJumpKeepOutTime;
 
+        yield return new WaitForSeconds(afterJumpDelay);
+
+        // 3) 미사일 연사 (여기서 '뒤로 밀림' 제어)
+        _state = State.Missile;
+
+        // 미사일 동안 제자리 고정/미세 후퇴 제어 준비
+        Vector3 missileStartPos = transform.position;
+        float backed = 0f;
+        bool prevRootMotion = (animator ? animator.applyRootMotion : false);
+        if (animator && disableRootMotionDuringMissile) animator.applyRootMotion = false;
+
+        onMissileBarrage?.Invoke();  // 인스펙터에서 연사 함수 연결
+
+        float missileT = 0f;
+        while (missileT < missileDuration)
+        {
+            missileT += Time.deltaTime;
+            FacePlayerHard();
+
+            if (missileLockPosition)
+            {
+                // ★ 자리 고정: XZ를 착지 지점으로 고정
+                Vector3 p = transform.position;
+                p.x = missileStartPos.x;
+                p.z = missileStartPos.z;
+                transform.position = p;
+            }
+            else
+            {
+                // ★ 아주 조금만 뒤로: 최대 거리/속도 제한
+                float step = missileBackstepSpeed * Time.deltaTime;
+                float remain = Mathf.Max(0f, missileBackstepMax - backed);
+                float move = Mathf.Min(step, remain);
+                if (move > 1e-4f)
+                {
+                    Vector3 delta = awayDir * move; // 플레이어 반대 방향
+                    transform.position += delta;
+                    backed += move;
+                }
+            }
+
+            yield return null;
+        }
+
+        // 루트모션 복귀
+        if (animator && disableRootMotionDuringMissile) animator.applyRootMotion = prevRootMotion;
+
+        yield return new WaitForSeconds(afterMissileCooldown);
+
+        // 4) Chase 복귀 + 미니건 ON
+        if (agent) agent.enabled = true;
         _state = State.ChaseAndSpray;
         onMinigunStart?.Invoke();
+
         _isSequenceRunning = false;
     }
 
@@ -469,4 +579,49 @@ public class BossPatternDirector : MonoBehaviour
         onMinigunStart?.Invoke();
         _isStagger = false;
     }
+
+    // BossPatternDirector.cs 맨 아래 쪽에 유틸리티로 추가
+    bool CollisionMove(Vector3 delta)
+    {
+        if (delta.sqrMagnitude < 1e-8f) return false;
+
+        // 캡슐 치수(없으면 기본값)
+        float radius = 0.6f;
+        float height = 2.0f;
+        Vector3 centerLS = Vector3.zero;
+        if (bodyCapsule)
+        {
+            radius = bodyCapsule.radius;
+            height = bodyCapsule.height;
+            centerLS = bodyCapsule.center;
+        }
+
+        Vector3 centerWS = transform.TransformPoint(centerLS);
+        Vector3 bottom = centerWS + Vector3.up * (-height * 0.5f + radius);
+        Vector3 top = centerWS + Vector3.up * (height * 0.5f - radius);
+
+        float dist = delta.magnitude;
+        Vector3 dir = delta / dist;
+
+        if (Physics.CapsuleCast(bottom, top, Mathf.Max(0.01f, radius - skinWidth),
+                                 dir, out RaycastHit hit, dist, collisionMask, QueryTriggerInteraction.Ignore))
+        {
+            // 1) 막힌 지점까지 전진
+            float move = Mathf.Max(0f, hit.distance - 0.001f);
+            if (move > 1e-4f) transform.position += dir * move;
+
+            // 2) 슬라이드: 충돌면 법선 방향 성분 제거
+            Vector3 remain = delta - dir * move;
+            Vector3 slide = Vector3.ProjectOnPlane(remain, hit.normal);
+            if (slide.sqrMagnitude > 1e-6f)
+                CollisionMove(slide); // 한번 더 시도(짧은 재귀)
+            return true;
+        }
+        else
+        {
+            transform.position += delta;
+            return false;
+        }
+    }
+
 }
